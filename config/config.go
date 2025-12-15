@@ -54,6 +54,8 @@ const (
 	DefMaxOfIndexLimit = 64 * 8
 	// DefPort is the default port of TiDB
 	DefPort = 4000
+	// DefPort is the default port of TiDBForPostgreSQL
+	DefSecondPort = 5000
 	// DefStatusPort is the default status port of TiDB
 	DefStatusPort = 10080
 	// DefHost is the default host of TiDB
@@ -86,6 +88,7 @@ type Config struct {
 	Host             string `toml:"host" json:"host"`
 	AdvertiseAddress string `toml:"advertise-address" json:"advertise-address"`
 	Port             uint   `toml:"port" json:"port"`
+	SecondPort       uint   `toml:"second-port" json:"second-port"`
 	Cors             string `toml:"cors" json:"cors"`
 	Store            string `toml:"store" json:"store"`
 	Path             string `toml:"path" json:"path"`
@@ -985,6 +988,7 @@ var defaultConf = Config{
 	Host:                         DefHost,
 	AdvertiseAddress:             "",
 	Port:                         DefPort,
+	SecondPort:                   DefSecondPort,
 	Socket:                       "/tmp/tidb-{Port}.sock",
 	Cors:                         "",
 	Store:                        "unistore",

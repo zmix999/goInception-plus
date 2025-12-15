@@ -37,6 +37,7 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"strings"
 
 	// For pprof
 	_ "net/http/pprof" // #nosec G108
@@ -47,8 +48,6 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/blacktear23/go-proxyprotocol"
-	"github.com/pingcap/errors"
 	"gitee.com/zhoujin826/goInception-plus/config"
 	"gitee.com/zhoujin826/goInception-plus/domain"
 	"gitee.com/zhoujin826/goInception-plus/errno"
@@ -65,6 +64,8 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/util/logutil"
 	"gitee.com/zhoujin826/goInception-plus/util/sys/linux"
 	"gitee.com/zhoujin826/goInception-plus/util/timeutil"
+	"github.com/blacktear23/go-proxyprotocol"
+	"github.com/pingcap/errors"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -119,6 +120,7 @@ type Server struct {
 	tlsConfig         unsafe.Pointer // *tls.Config
 	driver            IDriver
 	listener          net.Listener
+	secondListener    net.Listener
 	socket            net.Listener
 	rwlock            sync.RWMutex
 	concurrentLimiter *TokenLimiter
@@ -280,6 +282,21 @@ func NewServer(cfg *config.Config, driver IDriver) (*Server, error) {
 		}
 	}
 
+	if s.cfg.Host != "" && (s.cfg.SecondPort != 0 || runInGoTest) {
+		addr := fmt.Sprintf("%s:%d", s.cfg.Host, s.cfg.SecondPort)
+		tcpProto := "tcp"
+		if s.cfg.EnableTCP4Only {
+			tcpProto = "tcp4"
+		}
+		if s.secondListener, err = net.Listen(tcpProto, addr); err != nil {
+			return nil, errors.Trace(err)
+		}
+		logutil.BgLogger().Info("server is running PostgreSQL protocol", zap.String("addr", addr))
+		if runInGoTest && s.cfg.SecondPort == 0 {
+			s.cfg.SecondPort = uint(s.secondListener.Addr().(*net.TCPAddr).Port)
+		}
+	}
+
 	if s.cfg.Socket != "" {
 
 		err := cleanupStaleSocket(s.cfg.Socket)
@@ -397,6 +414,7 @@ func (s *Server) Run() error {
 	// channel. Otherwise end with sending a nil error to signal "done"
 	errChan := make(chan error)
 	go s.startNetworkListener(s.listener, false, errChan)
+	go s.startNetworkListener(s.secondListener, false, errChan)
 	go s.startNetworkListener(s.socket, true, errChan)
 	err := <-errChan
 	if err != nil {
@@ -510,6 +528,11 @@ func (s *Server) Close() {
 		terror.Log(errors.Trace(err))
 		s.listener = nil
 	}
+	if s.secondListener != nil {
+		err := s.secondListener.Close()
+		terror.Log(errors.Trace(err))
+		s.secondListener = nil
+	}
 	if s.socket != nil {
 		err := s.socket.Close()
 		terror.Log(errors.Trace(err))
@@ -530,25 +553,48 @@ func (s *Server) Close() {
 // onConn runs in its own goroutine, handles queries from this connection.
 func (s *Server) onConn(conn *clientConn) {
 	ctx := logutil.WithConnID(context.Background(), conn.connectionID)
-	if err := conn.handshake(ctx); err != nil {
-		if plugin.IsEnable(plugin.Audit) && conn.ctx != nil {
-			conn.ctx.GetSessionVars().ConnectionInfo = conn.connectInfo()
-			err = plugin.ForeachPlugin(plugin.Audit, func(p *plugin.Plugin) error {
-				authPlugin := plugin.DeclareAuditManifest(p.Manifest)
-				if authPlugin.OnConnectionEvent != nil {
-					pluginCtx := context.WithValue(context.Background(), plugin.RejectReasonCtxValue{}, err.Error())
-					return authPlugin.OnConnectionEvent(pluginCtx, plugin.Reject, conn.ctx.GetSessionVars().ConnectionInfo)
-				}
-				return nil
-			})
-			terror.Log(err)
+	if strings.Contains(conn.bufReadConn.Conn.LocalAddr().String(), fmt.Sprintf("%d", s.cfg.SecondPort)) {
+		if err := conn.handshake(ctx); err != nil {
+			if plugin.IsEnable(plugin.Audit) && conn.ctx != nil {
+				conn.ctx.GetSessionVars().ConnectionInfo = conn.connectInfo()
+				err = plugin.ForeachPlugin(plugin.Audit, func(p *plugin.Plugin) error {
+					authPlugin := plugin.DeclareAuditManifest(p.Manifest)
+					if authPlugin.OnConnectionEvent != nil {
+						pluginCtx := context.WithValue(context.Background(), plugin.RejectReasonCtxValue{}, err.Error())
+						return authPlugin.OnConnectionEvent(pluginCtx, plugin.Reject, conn.ctx.GetSessionVars().ConnectionInfo)
+					}
+					return nil
+				})
+				terror.Log(err)
+			}
+			// Some keep alive services will send request to TiDB and disconnect immediately.
+			// So we only record metrics.
+			metrics.HandShakeErrorCounter.Inc()
+			terror.Log(errors.Trace(err))
+			terror.Log(errors.Trace(conn.Close()))
+			return
 		}
-		// Some keep alive services will send request to TiDB and disconnect immediately.
-		// So we only record metrics.
-		metrics.HandShakeErrorCounter.Inc()
-		terror.Log(errors.Trace(err))
-		terror.Log(errors.Trace(conn.Close()))
-		return
+	} else {
+		if err := conn.mysqlhandshake(ctx); err != nil {
+			if plugin.IsEnable(plugin.Audit) && conn.ctx != nil {
+				conn.ctx.GetSessionVars().ConnectionInfo = conn.connectInfo()
+				err = plugin.ForeachPlugin(plugin.Audit, func(p *plugin.Plugin) error {
+					authPlugin := plugin.DeclareAuditManifest(p.Manifest)
+					if authPlugin.OnConnectionEvent != nil {
+						pluginCtx := context.WithValue(context.Background(), plugin.RejectReasonCtxValue{}, err.Error())
+						return authPlugin.OnConnectionEvent(pluginCtx, plugin.Reject, conn.ctx.GetSessionVars().ConnectionInfo)
+					}
+					return nil
+				})
+				terror.Log(err)
+			}
+			// Some keep alive services will send request to TiDB and disconnect immediately.
+			// So we only record metrics.
+			metrics.HandShakeErrorCounter.Inc()
+			terror.Log(errors.Trace(err))
+			terror.Log(errors.Trace(conn.Close()))
+			return
+		}
 	}
 
 	logutil.Logger(ctx).Debug("new connection", zap.String("remoteAddr", conn.bufReadConn.RemoteAddr().String()))
@@ -578,7 +624,11 @@ func (s *Server) onConn(conn *clientConn) {
 	}
 
 	connectedTime := time.Now()
-	conn.Run(ctx)
+	if strings.Contains(conn.bufReadConn.Conn.LocalAddr().String(), fmt.Sprintf("%d", s.cfg.SecondPort)) {
+		conn.Run(ctx)
+	} else {
+		conn.MysqlRun(ctx)
+	}
 
 	err = plugin.ForeachPlugin(plugin.Audit, func(p *plugin.Plugin) error {
 		// Audit plugin may be disabled before a conn is created, leading no connectionInfo in sessionVars.
@@ -615,6 +665,7 @@ func (cc *clientConn) connectInfo() *variable.ConnectionInfo {
 		ClientPort:        cc.peerPort,
 		ServerID:          1,
 		ServerPort:        int(cc.server.cfg.Port),
+		SecondServerPort:  int(cc.server.cfg.SecondPort),
 		User:              cc.user,
 		ServerOSLoginUser: osUser,
 		OSVersion:         osVersion,

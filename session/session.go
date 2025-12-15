@@ -134,7 +134,7 @@ type Session interface {
 	RollbackTxn(context.Context)
 
 	// PrepareStmt executes prepare statement in binary protocol.
-	// PrepareStmt(sql string) (stmtID uint32, paramCount int, fields []*ast.ResultField, err error)
+	MysqlPrepareStmt(sql string) (stmtID uint32, paramCount int, fields []*ast.ResultField, err error)
 	// PgSQL Modified
 	PrepareStmt(sql string, name string) (stmtID uint32, paramCount int, fields []*ast.ResultField, err error)
 
@@ -1914,33 +1914,33 @@ func (s *session) rollbackOnError(ctx context.Context) {
 }
 
 // PrepareStmt is used for executing prepare statement in binary protocol
-//func (s *session) PrepareStmt(sql string) (stmtID uint32, paramCount int, fields []*ast.ResultField, err error) {
-//	if s.sessionVars.TxnCtx.InfoSchema == nil {
-//		// We don't need to create a transaction for prepare statement, just get information schema will do.
-//		s.sessionVars.TxnCtx.InfoSchema = domain.GetDomain(s).InfoSchema()
-//	}
-//	err = s.loadCommonGlobalVariablesIfNeeded()
-//	if err != nil {
-//		return
-//	}
-//
-//	ctx := context.Background()
-//	inTxn := s.GetSessionVars().InTxn()
-//	// NewPrepareExec may need startTS to build the executor, for example prepare statement has subquery in int.
-//	// So we have to call PrepareTxnCtx here.
-//	s.PrepareTxnCtx(ctx)
-//	s.PrepareTSFuture(ctx)
-//	prepareExec := executor.NewPrepareExec(s, sql)
-//	err = prepareExec.Next(ctx, nil)
-//	if err != nil {
-//		return
-//	}
-//	if !inTxn {
-//		// We could start a transaction to build the prepare executor before, we should rollback it here.
-//		s.RollbackTxn(ctx)
-//	}
-//	return prepareExec.ID, prepareExec.ParamCount, prepareExec.Fields, nil
-//}
+func (s *session) MysqlPrepareStmt(sql string) (stmtID uint32, paramCount int, fields []*ast.ResultField, err error) {
+	if s.sessionVars.TxnCtx.InfoSchema == nil {
+		// We don't need to create a transaction for prepare statement, just get information schema will do.
+		s.sessionVars.TxnCtx.InfoSchema = domain.GetDomain(s).InfoSchema()
+	}
+	err = s.loadCommonGlobalVariablesIfNeeded()
+	if err != nil {
+		return
+	}
+
+	ctx := context.Background()
+	inTxn := s.GetSessionVars().InTxn()
+	// NewPrepareExec may need startTS to build the executor, for example prepare statement has subquery in int.
+	// So we have to call PrepareTxnCtx here.
+	s.PrepareTxnCtx(ctx)
+	s.PrepareTSFuture(ctx)
+	prepareExec := executor.NewMysqlPrepareExec(s, sql)
+	err = prepareExec.Next(ctx, nil)
+	if err != nil {
+		return
+	}
+	if !inTxn {
+		// We could start a transaction to build the prepare executor before, we should rollback it here.
+		s.RollbackTxn(ctx)
+	}
+	return prepareExec.ID, prepareExec.ParamCount, prepareExec.Fields, nil
+}
 
 func (s *session) preparedStmtExec(ctx context.Context,
 	is infoschema.InfoSchema, snapshotTS uint64,

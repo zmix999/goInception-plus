@@ -19,8 +19,6 @@ import (
 	"math"
 	"time"
 
-	"github.com/pingcap/errors"
-	"github.com/pingcap/log"
 	"gitee.com/zhoujin826/goInception-plus/expression"
 	"gitee.com/zhoujin826/goInception-plus/infoschema"
 	"gitee.com/zhoujin826/goInception-plus/parser/ast"
@@ -31,6 +29,8 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/types"
 	driver "gitee.com/zhoujin826/goInception-plus/types/parser_driver"
 	"gitee.com/zhoujin826/goInception-plus/util/chunk"
+	"github.com/pingcap/errors"
+	"github.com/pingcap/log"
 	"go.uber.org/zap"
 )
 
@@ -88,16 +88,16 @@ type PrepareExec struct {
 	needReset bool
 }
 
-//// NewPrepareExec creates a new PrepareExec.
-//func NewPrepareExec(ctx sessionctx.Context, sqlTxt string) *PrepareExec {
-//	base := newBaseExecutor(ctx, nil, 0)
-//	base.initCap = chunk.ZeroCapacity
-//	return &PrepareExec{
-//		baseExecutor: base,
-//		sqlText:      sqlTxt,
-//		needReset:    true,
-//	}
-//}
+// // NewPrepareExec creates a new PrepareExec.
+func NewMysqlPrepareExec(ctx sessionctx.Context, sqlTxt string) *PrepareExec {
+	base := newBaseExecutor(ctx, nil, 0)
+	base.initCap = chunk.ZeroCapacity
+	return &PrepareExec{
+		baseExecutor: base,
+		sqlText:      sqlTxt,
+		needReset:    true,
+	}
+}
 
 //// Next implements the Executor Next interface.
 //func (e *PrepareExec) Next(ctx context.Context, req *chunk.Chunk) error {

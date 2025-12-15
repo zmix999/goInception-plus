@@ -19,7 +19,6 @@ import (
 	"crypto/tls"
 	"sync/atomic"
 
-	"github.com/pingcap/errors"
 	"gitee.com/zhoujin826/goInception-plus/kv"
 	"gitee.com/zhoujin826/goInception-plus/parser/ast"
 	"gitee.com/zhoujin826/goInception-plus/parser/charset"
@@ -31,6 +30,7 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/types"
 	"gitee.com/zhoujin826/goInception-plus/util/chunk"
 	"gitee.com/zhoujin826/goInception-plus/util/sqlexec"
+	"github.com/pingcap/errors"
 )
 
 // TiDBDriver implements IDriver.
@@ -302,32 +302,32 @@ func (tc *TiDBContext) GetStatement(stmtID int) PreparedStatement {
 }
 
 // Prepare implements QueryCtx Prepare method.
-//func (tc *TiDBContext) Prepare(sql string) (statement PreparedStatement, columns, params []*ColumnInfo, err error) {
-//	stmtID, paramCount, fields, err := tc.Session.PrepareStmt(sql)
-//	if err != nil {
-//		return
-//	}
-//	stmt := &TiDBStatement{
-//		sql:         sql,
-//		id:          stmtID,
-//		numParams:   paramCount,
-//		boundParams: make([][]byte, paramCount),
-//		ctx:         tc,
-//	}
-//	statement = stmt
-//	columns = make([]*ColumnInfo, len(fields))
-//	for i := range fields {
-//		columns[i] = convertColumnInfo(fields[i])
-//	}
-//	params = make([]*ColumnInfo, paramCount)
-//	for i := range params {
-//		params[i] = &ColumnInfo{
-//			Type: mysql.TypeBlob,
-//		}
-//	}
-//	tc.stmts[int(stmtID)] = stmt
-//	return
-//}
+func (tc *TiDBContext) MysqlPrepare(sql string) (statement PreparedStatement, columns, params []*ColumnInfo, err error) {
+	stmtID, paramCount, fields, err := tc.Session.MysqlPrepareStmt(sql)
+	if err != nil {
+		return
+	}
+	stmt := &TiDBStatement{
+		sql:         sql,
+		id:          stmtID,
+		numParams:   paramCount,
+		boundParams: make([][]byte, paramCount),
+		ctx:         tc,
+	}
+	statement = stmt
+	columns = make([]*ColumnInfo, len(fields))
+	for i := range fields {
+		columns[i] = convertColumnInfo(fields[i])
+	}
+	params = make([]*ColumnInfo, paramCount)
+	for i := range params {
+		params[i] = &ColumnInfo{
+			Type: mysql.TypeBlob,
+		}
+	}
+	tc.stmts[int(stmtID)] = stmt
+	return
+}
 
 type tidbResultSet struct {
 	recordSet    sqlexec.RecordSet

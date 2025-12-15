@@ -1,159 +1,108 @@
-# TiDB for PostgreSQL
+# goInception
 
-[![LICENSE](https://img.shields.io/github/license/pingcap/tidb.svg)](https://github.com/DigitalChinaOpenSource/TiDB-for-PostgreSQL/blob/main/LICENSE)
-[![Language](https://img.shields.io/badge/Language-Go-blue.svg)](https://golang.org/)
-[![Build Status](http://tidb4pgci.eastasia.cloudapp.azure.com/buildStatus/icon?job=jenkins-tidb4pg-build)](http://tidb4pgci.eastasia.cloudapp.azure.com/job/jenkins-tidb4pg-build/)
-[![Go Report Card](https://goreportcard.com/badge/github.com/DigitalChinaOpenSource/TiDB-for-PostgreSQL)](https://goreportcard.com/report/github.com/DigitalChinaOpenSource/TiDB-for-PostgreSQL)
-[![codecov](https://codecov.io/gh/DigitalChinaOpenSource/TiDB-for-PostgreSQL/branch/main/graph/badge.svg?token=OZ16DNE6JH)](https://codecov.io/gh/DigitalChinaOpenSource/TiDB-for-PostgreSQL)
-![GitHub commit activity](https://img.shields.io/github/commit-activity/w/DigitalChinaOpenSource/TiDB-for-PostgreSQL)
-
-## Introduction
-
-TiDB for PostgreSQL is an open source launched by Digital China Cloud Base to promote and integrate into the open source community of TiDB. In addition to its high availability, horizontal scalability, and cloud-native features, TiDB for PostgreSQL is compatible with the PostgreSQL protocol. On the one hand, you can use the PostgreSQL client to connect to TiDB for PostgreSQL, which we have basically completed. On the other hand, you can also use the unique grammatical features of PostgreSQL in your business system, which is in the development process.
-
-More details can be found in the [Design Document](https://github.com/DigitalChinaOpenSource/TiDB-for-PostgreSQL/blob/main/DESIGN_DOCUMENT.md)
-
-## Background
-
-As the general trend of the massive explosion of information in the current data era becomes more and more obvious, the database is more and more likely to become the bottleneck of the upper-level business system. For this problem, TiDB solves most of migration problems of business system based on MySQL database through its highly compatibility of MySQL protocol. In view of its distributed transactions with strong consistency, flexible scalability, and excellent disaster recovery backup architecture, users prefer to use mature solutions of TiDB rather than scale MySQL by sharding. However, there is no mature solution for the upper-level business system based on PostgreSQL to migrate to TiDB. If you want to migrate a PostgreSQL-based business system to TiDB, you have to modify lots of code of business system. To solve this，we try to refactor the underlying source code of TiDB to make it compatible with the PostgreSQL protocol, making it possible to migrate PostgreSQL-based business systems to TiDB without modifying much code.
+[![travis-ci](https://img.shields.io/travis/hanchuanchuan/goInception.svg)](https://travis-ci.org/hanchuanchuan/goInception)
+[![CircleCI Status](https://circleci.com/gh/hanchuanchuan/goInception.svg?style=shield)](https://circleci.com/gh/hanchuanchuan/goInception)
+[![GitHub release](https://img.shields.io/github/release-pre/hanchuanchuan/goInception.svg?style=brightgreen)](https://github.com/hanchuanchuan/goInception/releases)
+[![codecov](https://codecov.io/gh/hanchuanchuan/goInception/branch/master/graph/badge.svg)](https://codecov.io/gh/hanchuanchuan/goInception)
+[![](https://img.shields.io/badge/go-1.22.1-brightgreen.svg)](https://golang.org/dl/)
+[![TiDB](https://img.shields.io/badge/TiDB-v2.1.1-brightgreen.svg)](https://github.com/pingcap/tidb)
+![](https://img.shields.io/github/downloads/hanchuanchuan/goInception/total.svg)
+![](https://img.shields.io/github/license/hanchuanchuan/goInception.svg)
 
 
-
-## Development progress
-
-The largest amount of work for the development of TiDB for PostgreSQL is compatibility with PostgreSQL, which has two things to do. One is to implement the PostgreSQL connection protocol, which we have basically achieved, So PostgreSQL client can connect to TiDB for PostgreSQL. The other is the unique PostgreSQL syntax. TiDB for PostgreSQL can support general sql syntax, but there are a certain amount of work to do to make it compatible with PostgreSQL’s unique syntax. This is one of the reasons why TiDB for PostgreSQL is open sourced. We hope that through the open source, engineers interested in our TiDB for PostgreSQL can work together to make our project bigger and better.
+**[[English]](README.md)**
+**[[Chinese]](README.zh.md)**
 
 
+goInception is a MySQL maintenance tool, which can be used to review, implement, backup, and generate SQL statements for rollback. It parses SQL syntax and returns the result of the review based on custom rules.
 
-## Quick start
+**Documentation:**
+**[[Document]](https://hanchuanchuan.github.io/goInception/)**
+**[[中文文档]](https://hanchuanchuan.github.io/goInception/zh/)**
 
-First, make sure you have a Go environment, because TiDB for PostgreSQL is based on the Go language.
+**[[Changelog]](https://hanchuanchuan.github.io/goInception/changelog.html)**
 
-TiDB for PostgreSQL can be started on a single node without pd and tikv.
 
-If there is no pd and tikv, it will create mock pd and mock tikv to maintain the stable operation of the system.
+----
 
-The following is an example of locally compiling and running TiDB for PostgreSQL on localhost.
+### Quick start
 
-```shell
-mkdir -p  $GOPATH/src/github.com/digitalchina
 
-cd  $GOPATH/src/github.com/digitalchina
+#### Binary
 
-git clone https://github.com/DigitalChinaOpenSource/TiDB-for-PostgreSQL.git
+[goInception Download](https://github.com/hanchuanchuan/goInception/releases)
 
-cd TiDB-for-PostgreSQL/tidb-server
 
-go run main.go
-
-# If you get an error: export ordinal to larger
-# Please run the following cmd:
-go run -buildmode=exe  main.go
+#### Docker Image
+```
+docker pull hanchuanchuan/goinception
 ```
 
-After starting the main program of TiDB for PostgreSQL , it will run on port 4000 of the host.
 
-How to use PostgreSQL client to connect to TiDB for PostgreSQL? Here, we take the command line tool psql that comes with PostgreSQL as an example.
+#### Source code compilation
 
-```
-Server [localhost]:
-Database [postgres]: test
-Port [5433]: 4000
-Username [postgres]: root
-psql (13.1, server 8.3.11)
-Type "help" to get help information.
+***go version 1.14+ (go mod)***
 
-test=# show tables;
- Tables_in_test
-----------------
- t1
- t2
-(2 行记录)
+```bash
+git clone https://github.com/hanchuanchuan/goInception.git
+cd goInception
+go build -o goInception tidb-server/main.go
+
+./goInception -config=config/config.toml
 ```
 
-## Docker 
+----
 
-```shell
-# Log in to your dockerhub account
-docker login
+#### Associated SQL audit platform
 
-# Pull the image and start the container
-docker pull dcleeray/tidb-for-pg
-docker run -it --name tidbforpg -p 4000:4000 -d  dcleeray/tidb-for-pg:latest
-```
+* [Archery](https://github.com/hhyo/Archery) `Query support (MySQL/MsSQL/Redis/PostgreSQL), MySQL optimization (SQLAdvisor|SOAR|SQLTuning), slow log management, table structure comparison, session management, Alibaba Cloud RDS management, etc.`
 
-## Cluster deployment
-TiDB for PostgreSQL also supports cluster deployment.
 
-Our current modification work does not involve the communication module of each component in the cluster. Therefore, the connection of TiDB for PostgreSQL to pd and tikv will not be affected in any way.
+#### Acknowledgments
+    GoInception reconstructs from the Inception which is a well-known MySQL auditing tool and uses TiDB SQL parser.
 
-We recommend using binary file to deploy TiDB for PostgreSQL cluster.
+- [Inception](https://github.com/hanchuanchuan/inception)
+- [TiDB](https://github.com/pingcap/tidb)
 
-First, download the official binary package file and unzip it.
+#### Sponsorship and support
+- [Sponsorship and support](https://hanchuanchuan.github.io/goInception/support.html)
 
-```shell
-wget http://download.pingcap.org/tidb-v5.3.0-linux-amd64.tar.gz
-wget http://download.pingcap.org/tidb-v5.3.0-linux-amd64.sha256
+#### Contact
 
-sha256sum -c tidb-v5.3.0-linux-amd64.sha256
+QQ group talk: **499262190**
+e-mail: `chuanchuanhan@gmail.com`
 
-tar -xzf tidb-v5.3.0-linux-amd64.tar.gz
-cd tidb-v5.3.0-linux-amd64/bin
-```
+### Contributing
 
-Second, deploy each node in the cluster in order. According to the cluster architecture of TiDB for PostgreSQL, pd nodes are deployed first, then the tikv node, and finally the TiDB for PostgreSQL node. The number of nodes in the cluster is not specified, but there is at least one of each type.
+Welcome and thank you very much for your contribution. For the process of submitting PR, please refer to [CONTRIBUTING.md](CONTRIBUTING.md)。
 
-Deploy a pd node
 
-```shell
-./pd-server --name=pd1 --data-dir=pd1 --client-urls="http://pdhost:2379" --peer-urls="http://host:2380" -L "info" --log-file=pd.log
-```
+## Contributors
 
-Deploy three tikv nodes
+### Code Contributors
 
-```shell
-./tikv-server --pd="pdhost:2379" --addr="kvhost1:20160"  --data-dir=tikv  --log-file=tikv1.log
-./tikv-server --pd="pdhost:2379" --addr="kvhost2:20160"  --data-dir=tikv  --log-file=tikv2.log
-./tikv-server --pd="pdhost:2379" --addr="kvhost3:20160"  --data-dir=tikv  --log-file=tikv3.log
-```
+This project exists thanks to all the people who contribute. [[Contribute](CONTRIBUTING.md)].
+<a href="https://github.com/hanchuanchuan/goInception/graphs/contributors"><img src="https://opencollective.com/goInception/contributors.svg?width=890&button=false" /></a>
 
-Deploy a TiDB for PostgreSQL node. You need to compile the TiDB for PostgreSQL project into a binary file named tidb-server and upload it to this server for replace the original tidb-server
+### Financial Contributors
 
-```shell
-## If compiled on windows, the following parameters need to be set
-SET GOARCH=amd64
-SET GOOS=linux
+Become a financial contributor and help us sustain our community. [[Contribute](https://opencollective.com/goInception/contribute)]
 
-## Running tidb-server on linux
-./tidb-server --store=tikv  --path="pdhost:2379" --log-file=tidb.log
-```
+#### Individuals
 
-With the above done, a TiDB for PostgreSQL cluster is successfully deployed, and you can connect to TiDB for PostgreSQL cluster in the same way as you did with single TiDB for PostgreSQL demonstrated earlier.
+<a href="https://opencollective.com/goInception"><img src="https://opencollective.com/goInception/individuals.svg?width=890"></a>
 
-## Contribute code to TiDB for postgresql
+#### Organizations
 
-We greatly welcome and appreciate developers who are interested in TiDB for PostgreSQL to make contributions. At present, we provide several directions to get started.
+Support this project with your organization. Your logo will show up here with a link to your website. [[Contribute](https://opencollective.com/goInception/contribute)]
 
-[Learning Guide](https://github.com/DigitalChinaOpenSource/TiDB-for-PostgreSQL/blob/main/LEARNING_GUIDANCE.zh.md)
-
-[Contribution Guide](https://github.com/DigitalChinaOpenSource/TiDB-for-PostgreSQL/blob/main/CONTRIBUTING.md)
-
-### Schema structure
-
-The database structure of PostgreSQL is very different from that of MySQL, which is also a big problem we encountered in our development. It involves the realization of database system tables, system views, and system functions. It’s a lot of work and very hard. Developers are required to be very familiar with the database table structure of both PostgreSQL and MySQL.
-
-### Postgresql grammatical features
-
-Compared with MySQL, PostgreSQL has many new syntax features. For example, Returning can return specified column or all columns of the modified row. Implementing a syntax involves modifying codes of the Parser module, TiDB for PostgreSQL's internal plan structure, plan optimization, plan execution, and data write-back, and many other parts. It’s really very hard. We recommend that developers start with clauses such as RETURNING and modify them on the basis of the original code. After being familiar with the logic of TiDB for PostgreSQL planning and execution, you can try to implement a brand new statement.
-
-## Version notice
-
-To keep our code improvement running stable, we currently choose a fixed version for development. The following is our selected version:
-
-TiDB v5.3.0
-
-PostgreSQL 13
-
-## License
-
-Apache-2.0 License
+<a href="https://opencollective.com/goInception/organization/0/website"><img src="https://opencollective.com/goInception/organization/0/avatar.svg"></a>
+<a href="https://opencollective.com/goInception/organization/1/website"><img src="https://opencollective.com/goInception/organization/1/avatar.svg"></a>
+<a href="https://opencollective.com/goInception/organization/2/website"><img src="https://opencollective.com/goInception/organization/2/avatar.svg"></a>
+<a href="https://opencollective.com/goInception/organization/3/website"><img src="https://opencollective.com/goInception/organization/3/avatar.svg"></a>
+<a href="https://opencollective.com/goInception/organization/4/website"><img src="https://opencollective.com/goInception/organization/4/avatar.svg"></a>
+<a href="https://opencollective.com/goInception/organization/5/website"><img src="https://opencollective.com/goInception/organization/5/avatar.svg"></a>
+<a href="https://opencollective.com/goInception/organization/6/website"><img src="https://opencollective.com/goInception/organization/6/avatar.svg"></a>
+<a href="https://opencollective.com/goInception/organization/7/website"><img src="https://opencollective.com/goInception/organization/7/avatar.svg"></a>
+<a href="https://opencollective.com/goInception/organization/8/website"><img src="https://opencollective.com/goInception/organization/8/avatar.svg"></a>
+<a href="https://opencollective.com/goInception/organization/9/website"><img src="https://opencollective.com/goInception/organization/9/avatar.svg"></a>

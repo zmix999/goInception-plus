@@ -1,0 +1,36 @@
+// Copyright 2021 PingCAP, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// +build !codes
+
+package testkit
+
+import (
+	"testing"
+
+	"gitee.com/zhoujin826/goInception-plus/kv"
+	"gitee.com/zhoujin826/goInception-plus/sessionctx/stmtctx"
+	"gitee.com/zhoujin826/goInception-plus/types"
+	"gitee.com/zhoujin826/goInception-plus/util/codec"
+	"github.com/stretchr/testify/require"
+)
+
+// MustNewCommonHandle create a common handle with given values.
+func MustNewCommonHandle(t *testing.T, values ...interface{}) kv.Handle {
+	encoded, err := codec.EncodeKey(new(stmtctx.StatementContext), nil, types.MakeDatums(values...)...)
+	require.Nil(t, err)
+	ch, err := kv.NewCommonHandle(encoded)
+	require.Nil(t, err)
+	return ch
+}

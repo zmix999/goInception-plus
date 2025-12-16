@@ -134,36 +134,96 @@ type Server struct {
 	statusServer   *http.Server
 	grpcServer     *grpc.Server
 	inShutdownMode bool
+	// osc进程列表
+	oscProcessList map[string]*util.OscProcessInfo
 }
 
 // AddOscProcess implements util.SessionManager.
 func (s *Server) AddOscProcess(p *util.OscProcessInfo) {
-	panic("unimplemented")
+	/*if s.rwlock == nil {
+		s.rwlock = sync.RWMutex{}
+		s.oscProcessList = make(map[string]*util.OscProcessInfo)
+	}*/
+	s.rwlock.Lock()
+	s.oscProcessList[p.Sqlsha1] = p
+	s.rwlock.Unlock()
 }
 
 // KillOscProcess implements util.SessionManager.
 func (s *Server) KillOscProcess(connectionID uint64) {
-	panic("unimplemented")
+	/*if s.rwlock == nil {
+		s.rwlock = sync.RWMutex{}
+		s.oscProcessList = make(map[string]*util.OscProcessInfo)
+		return
+	}*/
+	s.rwlock.Lock()
+	defer s.rwlock.Unlock()
+
+	// 执行完成或中止后清理osc进程信息
+	pl := s.oscProcessList
+	if len(pl) == 0 {
+		return
+	}
+	oscList := []string{}
+	for _, pi := range pl {
+		if pi.ConnID == connectionID {
+			oscList = append(oscList, pi.Sqlsha1)
+		}
+	}
+
+	if len(oscList) > 0 {
+		for _, sha1 := range oscList {
+			delete(pl, sha1)
+		}
+	}
 }
 
 // OscLock implements util.SessionManager.
 func (s *Server) OscLock() {
-	panic("unimplemented")
+	s.rwlock.Lock()
 }
 
 // OscUnLock implements util.SessionManager.
 func (s *Server) OscUnLock() {
-	panic("unimplemented")
+	s.rwlock.Unlock()
 }
 
 // ShowOscProcessList implements util.SessionManager.
+
 func (s *Server) ShowOscProcessList() map[string]*util.OscProcessInfo {
-	panic("unimplemented")
+	/*if s.rwlock == nil {
+		s.rwlock = &sync.RWMutex{}
+		s.oscProcessList = make(map[string]*util.OscProcessInfo)
+	}*/
+	s.rwlock.RLock()
+	defer s.rwlock.RUnlock()
+
+	rs := make(map[string]*util.OscProcessInfo, len(s.oscProcessList))
+	for key, client := range s.oscProcessList {
+		client.RW.Lock()
+		pi := util.OscProcessInfo{
+			ID:         client.ID,
+			ConnID:     client.ConnID,
+			Schema:     client.Schema,
+			Table:      client.Table,
+			Command:    client.Command,
+			Sqlsha1:    client.Sqlsha1,
+			Percent:    client.Percent,
+			RemainTime: client.RemainTime,
+			Info:       client.Info,
+			Killed:     client.Killed,
+			IsGhost:    client.IsGhost,
+			Pause:      client.Pause,
+		}
+		client.RW.Unlock()
+		rs[key] = &pi
+	}
+	return rs
 }
 
 // ShowOscProcessListWithWrite implements util.SessionManager.
 func (s *Server) ShowOscProcessListWithWrite() map[string]*util.OscProcessInfo {
-	panic("unimplemented")
+	return s.oscProcessList
 }
 
 // ConnectionCount gets current connection count.

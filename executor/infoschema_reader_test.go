@@ -23,10 +23,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
-	. "github.com/pingcap/check"
-	"github.com/pingcap/failpoint"
-	"github.com/pingcap/fn"
 	"gitee.com/zhoujin826/goInception-plus/config"
 	"gitee.com/zhoujin826/goInception-plus/domain"
 	"gitee.com/zhoujin826/goInception-plus/domain/infosync"
@@ -49,6 +45,10 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/util/testkit"
 	"gitee.com/zhoujin826/goInception-plus/util/testleak"
 	"gitee.com/zhoujin826/goInception-plus/util/testutil"
+	"github.com/gorilla/mux"
+	. "github.com/pingcap/check"
+	"github.com/pingcap/failpoint"
+	"github.com/pingcap/fn"
 	"google.golang.org/grpc"
 )
 
@@ -776,36 +776,32 @@ type mockSessionManager struct {
 
 // AddOscProcess implements util.SessionManager.
 func (sm *mockSessionManager) AddOscProcess(p *util.OscProcessInfo) {
-	panic("unimplemented")
 }
 
 // KillOscProcess implements util.SessionManager.
 func (sm *mockSessionManager) KillOscProcess(connectionID uint64) {
-	panic("unimplemented")
 }
 
 // OscLock implements util.SessionManager.
 func (sm *mockSessionManager) OscLock() {
-	panic("unimplemented")
 }
 
 // OscUnLock implements util.SessionManager.
 func (sm *mockSessionManager) OscUnLock() {
-	panic("unimplemented")
 }
 
 // ShowOscProcessList implements util.SessionManager.
 func (sm *mockSessionManager) ShowOscProcessList() map[string]*util.OscProcessInfo {
-	panic("unimplemented")
+	return nil
 }
 
 // ShowOscProcessListWithWrite implements util.SessionManager.
 func (sm *mockSessionManager) ShowOscProcessListWithWrite() map[string]*util.OscProcessInfo {
-	panic("unimplemented")
+	return nil
 }
 
 func (sm *mockSessionManager) ShowTxnList() []*txninfo.TxnInfo {
-	panic("unimplemented!")
+	return nil
 }
 
 func (sm *mockSessionManager) ShowProcessList() map[uint64]*util.ProcessInfo {
@@ -876,7 +872,9 @@ func (s *testInfoschemaClusterTableSuite) TestTiDBClusterInfo(c *C) {
 	}
 	fpExpr := `return("` + strings.Join(instances, ";") + `")`
 	c.Assert(failpoint.Enable("gitee.com/zhoujin826/goInception-plus/infoschema/mockClusterInfo", fpExpr), IsNil)
-	defer func() { c.Assert(failpoint.Disable("gitee.com/zhoujin826/goInception-plus/infoschema/mockClusterInfo"), IsNil) }()
+	defer func() {
+		c.Assert(failpoint.Disable("gitee.com/zhoujin826/goInception-plus/infoschema/mockClusterInfo"), IsNil)
+	}()
 	tk.MustQuery("select type, instance, status_address, version, git_hash, server_id from information_schema.cluster_info").Check(testkit.Rows(
 		row("pd", "127.0.0.1:11080", mockAddr, "mock-version", "mock-githash", "0"),
 		row("tidb", "127.0.0.1:11080", mockAddr, "mock-version", "mock-githash", "1001"),

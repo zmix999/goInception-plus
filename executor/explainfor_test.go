@@ -22,7 +22,6 @@ import (
 	"strconv"
 	"sync"
 
-	. "github.com/pingcap/check"
 	"gitee.com/zhoujin826/goInception-plus/parser/auth"
 	"gitee.com/zhoujin826/goInception-plus/planner/core"
 	"gitee.com/zhoujin826/goInception-plus/session"
@@ -32,6 +31,7 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/util/israce"
 	"gitee.com/zhoujin826/goInception-plus/util/kvcache"
 	"gitee.com/zhoujin826/goInception-plus/util/testkit"
+	. "github.com/pingcap/check"
 )
 
 // mockSessionManager is a mocked session manager which is used for test.
@@ -41,32 +41,28 @@ type mockSessionManager1 struct {
 
 // AddOscProcess implements util.SessionManager.
 func (msm *mockSessionManager1) AddOscProcess(p *util.OscProcessInfo) {
-	panic("unimplemented")
 }
 
 // KillOscProcess implements util.SessionManager.
 func (msm *mockSessionManager1) KillOscProcess(connectionID uint64) {
-	panic("unimplemented")
 }
 
 // OscLock implements util.SessionManager.
 func (msm *mockSessionManager1) OscLock() {
-	panic("unimplemented")
 }
 
 // OscUnLock implements util.SessionManager.
 func (msm *mockSessionManager1) OscUnLock() {
-	panic("unimplemented")
 }
 
 // ShowOscProcessList implements util.SessionManager.
 func (msm *mockSessionManager1) ShowOscProcessList() map[string]*util.OscProcessInfo {
-	panic("unimplemented")
+	return nil
 }
 
 // ShowOscProcessListWithWrite implements util.SessionManager.
 func (msm *mockSessionManager1) ShowOscProcessListWithWrite() map[string]*util.OscProcessInfo {
-	panic("unimplemented")
+	return nil
 }
 
 func (msm *mockSessionManager1) ShowTxnList() []*txninfo.TxnInfo {

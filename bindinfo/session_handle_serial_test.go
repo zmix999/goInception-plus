@@ -372,36 +372,32 @@ type mockSessionManager struct {
 
 // AddOscProcess implements util.SessionManager.
 func (msm *mockSessionManager) AddOscProcess(p *util.OscProcessInfo) {
-	panic("unimplemented")
 }
 
 // KillOscProcess implements util.SessionManager.
 func (msm *mockSessionManager) KillOscProcess(connectionID uint64) {
-	panic("unimplemented")
 }
 
 // OscLock implements util.SessionManager.
 func (msm *mockSessionManager) OscLock() {
-	panic("unimplemented")
 }
 
 // OscUnLock implements util.SessionManager.
 func (msm *mockSessionManager) OscUnLock() {
-	panic("unimplemented")
 }
 
 // ShowOscProcessList implements util.SessionManager.
 func (msm *mockSessionManager) ShowOscProcessList() map[string]*util.OscProcessInfo {
-	panic("unimplemented")
+	return nil
 }
 
 // ShowOscProcessListWithWrite implements util.SessionManager.
 func (msm *mockSessionManager) ShowOscProcessListWithWrite() map[string]*util.OscProcessInfo {
-	panic("unimplemented")
+	return nil
 }
 
 func (msm *mockSessionManager) ShowTxnList() []*txninfo.TxnInfo {
-	panic("unimplemented!")
+	return nil
 }
 
 func (msm *mockSessionManager) ShowProcessList() map[uint64]*util.ProcessInfo {

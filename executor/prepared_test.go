@@ -21,7 +21,6 @@ import (
 	"strings"
 	"sync/atomic"
 
-	. "github.com/pingcap/check"
 	"gitee.com/zhoujin826/goInception-plus/domain"
 	"gitee.com/zhoujin826/goInception-plus/parser/auth"
 	"gitee.com/zhoujin826/goInception-plus/parser/model"
@@ -33,6 +32,7 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/util"
 	"gitee.com/zhoujin826/goInception-plus/util/israce"
 	"gitee.com/zhoujin826/goInception-plus/util/testkit"
+	. "github.com/pingcap/check"
 )
 
 func (s *testSuite1) TestPreparedNameResolver(c *C) {
@@ -140,36 +140,32 @@ type mockSessionManager2 struct {
 
 // AddOscProcess implements util.SessionManager.
 func (sm *mockSessionManager2) AddOscProcess(p *util.OscProcessInfo) {
-	panic("unimplemented")
 }
 
 // KillOscProcess implements util.SessionManager.
 func (sm *mockSessionManager2) KillOscProcess(connectionID uint64) {
-	panic("unimplemented")
 }
 
 // OscLock implements util.SessionManager.
 func (sm *mockSessionManager2) OscLock() {
-	panic("unimplemented")
 }
 
 // OscUnLock implements util.SessionManager.
 func (sm *mockSessionManager2) OscUnLock() {
-	panic("unimplemented")
 }
 
 // ShowOscProcessList implements util.SessionManager.
 func (sm *mockSessionManager2) ShowOscProcessList() map[string]*util.OscProcessInfo {
-	panic("unimplemented")
+	return nil
 }
 
 // ShowOscProcessListWithWrite implements util.SessionManager.
 func (sm *mockSessionManager2) ShowOscProcessListWithWrite() map[string]*util.OscProcessInfo {
-	panic("unimplemented")
+	return nil
 }
 
 func (sm *mockSessionManager2) ShowTxnList() []*txninfo.TxnInfo {
-	panic("unimplemented!")
+	return nil
 }
 
 func (sm *mockSessionManager2) ShowProcessList() map[uint64]*util.ProcessInfo {

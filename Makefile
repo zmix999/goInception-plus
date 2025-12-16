@@ -361,30 +361,3 @@ br_bins:
 data_parsers: tools/bin/vfsgendev br/pkg/lightning/mydump/parser_generated.go br_web
 	PATH="$(GOPATH)/bin":"$(PATH)":"$(TOOLS)" protoc -I. -I"$(GOPATH)/src" br/pkg/lightning/checkpoints/checkpointspb/file_checkpoints.proto --gogofaster_out=.
 	tools/bin/vfsgendev -source='"github.com/pingcap/tidb/br/pkg/lightning/web".Res' && mv res_vfsdata.go br/pkg/lightning/web/
-
-build_dumpling:
-	$(DUMPLING_GOBUILD) $(RACE_FLAG) -tags codes -o $(DUMPLING_BIN) dumpling/cmd/dumpling/main.go
-
-dumpling_unit_test: export DUMPLING_ARGS=$$($(DUMPLING_PACKAGES))
-dumpling_unit_test: failpoint-enable
-	$(DUMPLING_GOTEST) $(RACE_FLAG) -coverprofile=coverage.txt -covermode=atomic -tags leak $(DUMPLING_ARGS) || ( make failpoint-disable && exit 1 )
-	@make failpoint-disable
-
-dumpling_integration_test: dumpling_bins failpoint-enable build_dumpling
-	@make failpoint-disable
-	./dumpling/tests/run.sh $(CASE)
-
-dumpling_tools:
-	@echo "install dumpling tools..."
-	@cd dumpling/tools && make
-
-dumpling_tidy:
-	@echo "go mod tidy"
-	GO111MODULE=on go mod tidy
-	git diff --exit-code go.mod go.sum dumpling/tools/go.mod dumpling/tools/go.sum
-
-dumpling_bins:
-	@which bin/tidb-server
-	@which bin/minio
-	@which bin/tidb-lightning
-	@which bin/sync_diff_inspector

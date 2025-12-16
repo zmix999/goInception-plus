@@ -25,11 +25,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cznic/mathutil"
-	"github.com/pingcap/errors"
-	"github.com/pingcap/tidb-tools/pkg/etcd"
-	"github.com/pingcap/tidb-tools/pkg/utils"
-	"github.com/pingcap/tidb-tools/tidb-binlog/node"
 	"gitee.com/zhoujin826/goInception-plus/bindinfo"
 	"gitee.com/zhoujin826/goInception-plus/config"
 	"gitee.com/zhoujin826/goInception-plus/ddl"
@@ -67,6 +62,11 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/util/set"
 	"gitee.com/zhoujin826/goInception-plus/util/sqlexec"
 	"gitee.com/zhoujin826/goInception-plus/util/stringutil"
+	"github.com/cznic/mathutil"
+	"github.com/pingcap/errors"
+	"github.com/pingcap/tidb-tools/pkg/etcd"
+	"github.com/pingcap/tidb-tools/pkg/utils"
+	"github.com/pingcap/tidb-tools/tidb-binlog/node"
 )
 
 var etcdDialTimeout = 5 * time.Second
@@ -215,10 +215,6 @@ func (e *ShowExec) fetchAll(ctx context.Context) error {
 		return e.fetchShowTableRegions()
 	case ast.ShowBuiltins:
 		return e.fetchShowBuiltins()
-	case ast.ShowBackups:
-		return e.fetchShowBRIE(ast.BRIEKindBackup)
-	case ast.ShowRestores:
-		return e.fetchShowBRIE(ast.BRIEKindRestore)
 	case ast.ShowPlacementLabels:
 		return e.fetchShowPlacementLabels(ctx)
 	case ast.ShowPlacement:

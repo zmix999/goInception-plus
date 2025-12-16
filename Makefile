@@ -284,60 +284,6 @@ build_lightning:
 build_lightning-ctl:
 	CGO_ENABLED=1 $(GOBUILD) $(RACE_FLAG) -ldflags '$(LDFLAGS) $(CHECK_FLAG)' -o $(LIGHTNING_CTL_BIN) br/cmd/tidb-lightning-ctl/main.go
 
-build_for_br_integration_test:
-	@make failpoint-enable
-	($(GOTEST) -c -cover -covermode=count \
-		-coverpkg=github.com/pingcap/tidb/br/... \
-		-o $(BR_BIN).test \
-		github.com/pingcap/tidb/br/cmd/br && \
-	$(GOTEST) -c -cover -covermode=count \
-		-coverpkg=github.com/pingcap/tidb/br/... \
-		-o $(LIGHTNING_BIN).test \
-		github.com/pingcap/tidb/br/cmd/tidb-lightning && \
-	$(GOTEST) -c -cover -covermode=count \
-		-coverpkg=github.com/pingcap/tidb/br/... \
-		-o $(LIGHTNING_CTL_BIN).test \
-		github.com/pingcap/tidb/br/cmd/tidb-lightning-ctl && \
-	$(GOBUILD) $(RACE_FLAG) -o bin/locker br/tests/br_key_locked/*.go && \
-	$(GOBUILD) $(RACE_FLAG) -o bin/gc br/tests/br_z_gc_safepoint/*.go && \
-	$(GOBUILD) $(RACE_FLAG) -o bin/oauth br/tests/br_gcs/*.go && \
-	$(GOBUILD) $(RACE_FLAG) -o bin/rawkv br/tests/br_rawkv/*.go && \
-	$(GOBUILD) $(RACE_FLAG) -o bin/parquet_gen br/tests/lightning_checkpoint_parquet/*.go \
-	) || (make failpoint-disable && exit 1)
-	@make failpoint-disable
-
-br_unit_test: export ARGS=$$($(BR_PACKAGES))
-br_unit_test:
-	@make failpoint-enable
-	@export TZ='Asia/Shanghai';
-	$(GOTEST) $(RACE_FLAG) -ldflags '$(LDFLAGS)' -tags leak $(ARGS) || ( make failpoint-disable && exit 1 )
-	@make failpoint-disable
-
-br_integration_test: br_bins build_br build_for_br_integration_test
-	@cd br && tests/run.sh
-
-br_compatibility_test_prepare:
-	@cd br && tests/run_compatible.sh prepare
-
-br_compatibility_test:
-	@cd br && tests/run_compatible.sh run
-
-# There is no FreeBSD environment for GitHub actions. So cross-compile on Linux
-# but that doesn't work with CGO_ENABLED=1, so disable cgo. The reason to have
-# cgo enabled on regular builds is performance.
-ifeq ("$(GOOS)", "freebsd")
-        GOBUILD  = CGO_ENABLED=0 GO111MODULE=on go build -trimpath -ldflags '$(LDFLAGS)'
-endif
-
-br_coverage:
-	tools/bin/gocovmerge "$(TEST_DIR)"/cov.* | grep -vE ".*.pb.go|.*__failpoint_binding__.go" > "$(TEST_DIR)/all_cov.out"
-ifeq ("$(JenkinsCI)", "1")
-	tools/bin/goveralls -coverprofile=$(TEST_DIR)/all_cov.out -service=jenkins-ci -repotoken $(COVERALLS_TOKEN)
-else
-	go tool cover -html "$(TEST_DIR)/all_cov.out" -o "$(TEST_DIR)/all_cov.html"
-	grep -F '<option' "$(TEST_DIR)/all_cov.html"
-endif
-
 # TODO: adjust bins when br integraion tests reformat.
 br_bins:
 	@which bin/tidb-server

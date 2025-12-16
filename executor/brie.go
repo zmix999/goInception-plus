@@ -16,36 +16,23 @@ package executor
 
 import (
 	"context"
-	"net/url"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/pingcap/errors"
-	backuppb "github.com/pingcap/kvproto/pkg/brpb"
-	"github.com/pingcap/kvproto/pkg/encryptionpb"
-	filter "github.com/pingcap/tidb-tools/pkg/table-filter"
 	"gitee.com/zhoujin826/goInception-plus/parser/ast"
 	"gitee.com/zhoujin826/goInception-plus/parser/model"
 	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
+	"github.com/pingcap/errors"
 	pd "github.com/tikv/pd/client"
 
-	"gitee.com/zhoujin826/goInception-plus/br/pkg/glue"
-	"gitee.com/zhoujin826/goInception-plus/br/pkg/storage"
-	"gitee.com/zhoujin826/goInception-plus/br/pkg/task"
-	"gitee.com/zhoujin826/goInception-plus/config"
 	"gitee.com/zhoujin826/goInception-plus/ddl"
 	"gitee.com/zhoujin826/goInception-plus/domain"
-	"gitee.com/zhoujin826/goInception-plus/expression"
 	"gitee.com/zhoujin826/goInception-plus/kv"
 	"gitee.com/zhoujin826/goInception-plus/sessionctx"
 	"gitee.com/zhoujin826/goInception-plus/sessionctx/stmtctx"
 	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
 	"gitee.com/zhoujin826/goInception-plus/util/printer"
-	"gitee.com/zhoujin826/goInception-plus/util/sem"
 	"gitee.com/zhoujin826/goInception-plus/util/sqlexec"
 	"github.com/tikv/client-go/v2/oracle"
 )
@@ -199,6 +186,7 @@ func (b *executorBuilder) parseTSString(ts string) (uint64, error) {
 	return oracle.GoTimeToTS(t1), nil
 }
 
+/*
 func (b *executorBuilder) buildBRIE(s *ast.BRIEStmt, schema *expression.Schema) Executor {
 	e := &BRIEExec{
 		baseExecutor: newBaseExecutor(b.ctx, schema, 0),
@@ -440,7 +428,7 @@ func (e *ShowExec) fetchShowBRIE(kind ast.BRIEKind) error {
 	})
 	globalBRIEQueue.clearTask(e.ctx.GetSessionVars().StmtCtx)
 	return nil
-}
+}*/
 
 type tidbGlueSession struct {
 	se       sessionctx.Context
@@ -454,9 +442,9 @@ func (gs *tidbGlueSession) GetDomain(store kv.Storage) (*domain.Domain, error) {
 }
 
 // CreateSession implements glue.Glue
-func (gs *tidbGlueSession) CreateSession(store kv.Storage) (glue.Session, error) {
-	return gs, nil
-}
+//func (gs *tidbGlueSession) CreateSession(store kv.Storage) (glue.Session, error) {
+//	return gs, nil
+//}
 
 // Execute implements glue.Session
 // These queries execute without privilege checking, since the calling statements
@@ -515,6 +503,7 @@ func (gs *tidbGlueSession) OwnsStorage() bool {
 	return false
 }
 
+/*
 // StartProgress implements glue.Glue
 func (gs *tidbGlueSession) StartProgress(ctx context.Context, cmdName string, total int64, redirectLog bool) glue.Progress {
 	gs.progress.lock.Lock()
@@ -523,7 +512,7 @@ func (gs *tidbGlueSession) StartProgress(ctx context.Context, cmdName string, to
 	atomic.StoreInt64(&gs.progress.current, 0)
 	gs.progress.lock.Unlock()
 	return gs.progress
-}
+}*/
 
 // Record implements glue.Glue
 func (gs *tidbGlueSession) Record(name string, value uint64) {

@@ -26,9 +26,6 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/cznic/mathutil"
-	"github.com/pingcap/errors"
-	"github.com/pingcap/failpoint"
 	"gitee.com/zhoujin826/goInception-plus/distsql"
 	"gitee.com/zhoujin826/goInception-plus/domain"
 	"gitee.com/zhoujin826/goInception-plus/executor/aggfuncs"
@@ -61,6 +58,9 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/util/ranger"
 	"gitee.com/zhoujin826/goInception-plus/util/rowcodec"
 	"gitee.com/zhoujin826/goInception-plus/util/timeutil"
+	"github.com/cznic/mathutil"
+	"github.com/pingcap/errors"
+	"github.com/pingcap/failpoint"
 	"github.com/pingcap/tipb/go-tipb"
 	"go.uber.org/zap"
 )
@@ -759,8 +759,8 @@ func (b *executorBuilder) buildSimple(v *plannercore.Simple) Executor {
 		return b.buildGrant(s)
 	case *ast.RevokeStmt:
 		return b.buildRevoke(s)
-	case *ast.BRIEStmt:
-		return b.buildBRIE(s, v.Schema())
+		//case *ast.BRIEStmt:
+		//return b.buildBRIE(s, v.Schema())
 	}
 	base := newBaseExecutor(b.ctx, v.Schema(), v.ID())
 	base.initCap = chunk.ZeroCapacity

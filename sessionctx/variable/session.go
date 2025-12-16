@@ -960,6 +960,9 @@ type SessionVars struct {
 	// portal will save the name and its corresponding statement ID
 	// PgSQL Modified
 	Portal map[string]uint32
+
+	//连接协议类型
+	ProtocolType string
 }
 
 // InitStatementContext initializes a StatementContext, the object is reused to reduce allocation.

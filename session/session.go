@@ -361,6 +361,8 @@ type session struct {
 
 	// masking 语法树解析功能
 	maskingFields []MaskingFieldInfo
+	// PostgreSQL搜索模式
+	serach string
 }
 
 type alterTableInfo struct {

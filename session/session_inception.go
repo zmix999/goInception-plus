@@ -617,8 +617,9 @@ func (s *session) processCommand(ctx context.Context, stmtNode ast.StmtNode,
 		}
 
 	case *ast.UseStmt:
-		s.checkChangeDB(node, currentSql)
-
+		if s.sessionVars.ProtocolType == "MySQL" {
+			s.checkChangeDB(node, currentSql)
+		}
 	case *ast.CreateDatabaseStmt:
 		s.checkCreateDB(node, currentSql)
 	case *ast.AlterDatabaseStmt:
@@ -782,12 +783,14 @@ func (s *session) executeCommit(ctx context.Context) {
 	// 如果有错误时,把错误输出放在第一行
 	s.myRecord = s.recordSets.All()[0]
 
-	if s.isReadOnly() {
-		s.appendErrorMsg("当前数据库为只读模式,无法执行!")
-		return
-	}
+	if s.sessionVars.ProtocolType == "MySQL" {
+		if s.isReadOnly() {
+			s.appendErrorMsg("当前数据库为只读模式,无法执行!")
+			return
+		}
 
-	s.modifyWaitTimeout()
+		s.modifyWaitTimeout()
+	}
 
 	if s.opt.Backup {
 		if !s.checkBinlogIsOn() {
@@ -1764,8 +1767,11 @@ func (s *session) executeRemoteStatementAndBackup(record *Record) {
 		record.AffectedRows = 0
 		return
 	}
-
-	s.executeRemoteStatement(record, false)
+	if s.sessionVars.ProtocolType == "MySQL" {
+		s.executeRemoteStatement(record, false)
+	} else {
+		s.PgExecuteRemoteStatement(record, false)
+	}
 
 	if !s.hasError() || record.ExecComplete {
 		if s.opt.Backup {
@@ -2345,6 +2351,7 @@ func (s *session) parseOptions(sql string) {
 		Port:           viper.GetInt("port"),
 		User:           viper.GetString("user"),
 		Password:       viper.GetString("password"),
+		SearchPath:     viper.GetString("search"),
 		Check:          viper.GetBool("check"),
 		Execute:        viper.GetBool("execute"),
 		Backup:         viper.GetBool("backup"),
@@ -2391,7 +2398,14 @@ func (s *session) parseOptions(sql string) {
 		return
 	}
 
-	if err := s.checkOptions(); err != nil {
+	if s.sessionVars.ProtocolType == "MySQL" {
+		err = s.checkOptions()
+
+	} else {
+		err = s.pgCheckOptions()
+	}
+
+	if err != nil {
 		log.Errorf("con:%d, config: %s, parsed: %#v (err: %v)", s.sessionVars.ConnectionID, opt, viper.AllSettings(), err)
 		s.appendErrorMsg(err.Error())
 	}
@@ -6823,7 +6837,13 @@ func (s *session) checkInsert(node *ast.InsertStmt, sql string) {
 		}
 	}
 
-	table := s.getTableFromCache(t.Schema.O, t.Name.O, true)
+	var table *TableInfo
+	if s.sessionVars.ProtocolType == "MySQL" {
+		table = s.getTableFromCache(t.Schema.O, t.Name.O, true)
+	} else {
+		table = s.PgGetTableFromCache(t.Schema.O, t.Name.O, "", true)
+	}
+
 	if table == nil {
 		return
 	}

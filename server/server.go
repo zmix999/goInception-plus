@@ -685,8 +685,12 @@ func (s *Server) onConn(conn *clientConn) {
 
 	connectedTime := time.Now()
 	if strings.Contains(conn.bufReadConn.Conn.LocalAddr().String(), fmt.Sprintf("%d", s.cfg.SecondPort)) {
+		sessionVars := conn.ctx.GetSessionVars()
+		sessionVars.ProtocolType = "PostgreSQL"
 		conn.Run(ctx)
 	} else {
+		sessionVars := conn.ctx.GetSessionVars()
+		sessionVars.ProtocolType = "MySQL"
 		conn.MysqlRun(ctx)
 	}
 

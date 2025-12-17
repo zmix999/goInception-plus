@@ -192,21 +192,21 @@ func TestUserSpec(t *testing.T) {
 			HashString:   hashString,
 		},
 	}
-	pwd, ok := u.EncodedPassword()
+	pwd, ok := u.EncodedPassword("")
 	require.True(t, ok)
 	require.Equal(t, u.AuthOpt.HashString, pwd)
 
 	u.AuthOpt.HashString = "not-good-password-format"
-	_, ok = u.EncodedPassword()
+	_, ok = u.EncodedPassword("")
 	require.False(t, ok)
 
 	u.AuthOpt.ByAuthString = true
-	pwd, ok = u.EncodedPassword()
+	pwd, ok = u.EncodedPassword("")
 	require.True(t, ok)
 	require.Equal(t, hashString, pwd)
 
 	u.AuthOpt.AuthString = ""
-	pwd, ok = u.EncodedPassword()
+	pwd, ok = u.EncodedPassword("")
 	require.True(t, ok)
 	require.Equal(t, "", pwd)
 }

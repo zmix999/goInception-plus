@@ -25,7 +25,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/pingcap/errors"
 	"gitee.com/zhoujin826/goInception-plus/parser/ast"
 	"gitee.com/zhoujin826/goInception-plus/parser/auth"
 	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
@@ -39,6 +38,7 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/util/sem"
 	"gitee.com/zhoujin826/goInception-plus/util/sqlexec"
 	"gitee.com/zhoujin826/goInception-plus/util/stringutil"
+	"github.com/pingcap/errors"
 	"go.uber.org/zap"
 )
 
@@ -58,7 +58,7 @@ const (
 	sqlLoadColumnsPrivTable = "SELECT HIGH_PRIORITY Host,DB,User,Table_name,Column_name,Timestamp,Column_priv FROM mysql.columns_priv"
 	sqlLoadDefaultRoles     = "SELECT HIGH_PRIORITY HOST, USER, DEFAULT_ROLE_HOST, DEFAULT_ROLE_USER FROM mysql.default_roles"
 	// list of privileges from mysql.Priv2UserCol
-	sqlLoadUserTable = `SELECT HIGH_PRIORITY Host,User,authentication_string,
+	sqlLoadUserTable = `SELECT HIGH_PRIORITY Host,User,authentication_string,Password,
 	Create_priv, Select_priv, Insert_priv, Update_priv, Delete_priv, Show_db_priv, Super_priv,
 	Create_user_priv,Create_tablespace_priv,Trigger_priv,Drop_priv,Process_priv,Grant_priv,
 	References_priv,Alter_priv,Execute_priv,Index_priv,Create_view_priv,Show_view_priv,
@@ -95,6 +95,7 @@ type UserRecord struct {
 	baseRecord
 
 	AuthenticationString string
+	Password             string
 	Privileges           mysql.PrivilegeType
 	AccountLocked        bool // A role record when this field is true
 	AuthPlugin           string
@@ -630,6 +631,8 @@ func (p *MySQLPrivilege) decodeUserTableRow(row chunk.Row, fs []*ast.ResultField
 		switch {
 		case f.ColumnAsName.L == "authentication_string":
 			value.AuthenticationString = row.GetString(i)
+		case f.ColumnAsName.L == "password":
+			value.Password = row.GetString(i)
 		case f.ColumnAsName.L == "account_locked":
 			if row.GetEnum(i).String() == "Y" {
 				value.AccountLocked = true

@@ -830,7 +830,7 @@ func (cc *clientConn) openSessionAndDoAuth(authData []byte, authPlugin string) e
 		return errAccessDeniedNoPassword.FastGenByArgs(cc.user, host)
 	}
 
-	if !cc.ctx.Auth(&auth.UserIdentity{Username: cc.user, Hostname: host}, authData, cc.salt) {
+	if !cc.ctx.MysqlAuth(&auth.UserIdentity{Username: cc.user, Hostname: host}, authData, cc.salt) {
 		return errAccessDenied.FastGenByArgs(cc.user, host, hasPassword)
 	}
 	cc.ctx.SetPort(port)

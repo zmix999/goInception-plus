@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/pingcap/errors"
 	"gitee.com/zhoujin826/goInception-plus/domain"
 	"gitee.com/zhoujin826/goInception-plus/infoschema"
 	"gitee.com/zhoujin826/goInception-plus/parser/ast"
@@ -34,6 +33,7 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/util/chunk"
 	"gitee.com/zhoujin826/goInception-plus/util/logutil"
 	"gitee.com/zhoujin826/goInception-plus/util/sqlexec"
+	"github.com/pingcap/errors"
 	"go.uber.org/zap"
 )
 
@@ -131,7 +131,7 @@ func (e *GrantExec) Next(ctx context.Context, req *chunk.Chunk) error {
 	if err != nil {
 		return err
 	}
-
+	protocolType := e.ctx.GetSessionVars().ProtocolType
 	// Check which user is not exist.
 	for _, user := range e.Users {
 		exists, err := userExists(ctx, e.ctx, user.User.Username, user.User.Hostname)
@@ -145,7 +145,7 @@ func (e *GrantExec) Next(ctx context.Context, req *chunk.Chunk) error {
 			// It is required for compatibility with 5.7 but removed from 8.0
 			// since it results in a massive security issue:
 			// spelling errors will create users with no passwords.
-			pwd, ok := user.EncodedPassword()
+			pwd, ok := user.EncodedPassword(protocolType)
 			if !ok {
 				return errors.Trace(ErrPasswordFormat)
 			}

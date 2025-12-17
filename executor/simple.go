@@ -22,8 +22,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ngaut/pools"
-	"github.com/pingcap/errors"
 	"gitee.com/zhoujin826/goInception-plus/config"
 	"gitee.com/zhoujin826/goInception-plus/distsql"
 	"gitee.com/zhoujin826/goInception-plus/domain"
@@ -50,6 +48,8 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/util/sem"
 	"gitee.com/zhoujin826/goInception-plus/util/sqlexec"
 	"gitee.com/zhoujin826/goInception-plus/util/timeutil"
+	"github.com/ngaut/pools"
+	"github.com/pingcap/errors"
 	"github.com/pingcap/tipb/go-tipb"
 	tikvutil "github.com/tikv/client-go/v2/util"
 	"go.uber.org/zap"
@@ -751,12 +751,21 @@ func (e *SimpleExec) executeCreateUser(ctx context.Context, s *ast.CreateUserStm
 	if err != nil {
 		return err
 	}
-
+	protocolType := e.ctx.GetSessionVars().ProtocolType
 	sql := new(strings.Builder)
 	if s.IsCreateRole {
-		sqlexec.MustFormatSQL(sql, `INSERT INTO %n.%n (Host, User, authentication_string, plugin, Account_locked) VALUES `, mysql.SystemDB, mysql.UserTable)
+		if protocolType == "PostgreSQL" {
+			sqlexec.MustFormatSQL(sql, `INSERT INTO %n.%n (Host, User, authentication_string, plugin, Account_locked) VALUES `, mysql.SystemDB, mysql.UserTable)
+		} else {
+			sqlexec.MustFormatSQL(sql, `INSERT INTO %n.%n (Host, User, Password, plugin, Account_locked) VALUES `, mysql.SystemDB, mysql.UserTable)
+		}
+
 	} else {
-		sqlexec.MustFormatSQL(sql, `INSERT INTO %n.%n (Host, User, authentication_string, plugin) VALUES `, mysql.SystemDB, mysql.UserTable)
+		if protocolType == "PostgreSQL" {
+			sqlexec.MustFormatSQL(sql, `INSERT INTO %n.%n (Host, User, authentication_string, plugin) VALUES `, mysql.SystemDB, mysql.UserTable)
+		} else {
+			sqlexec.MustFormatSQL(sql, `INSERT INTO %n.%n (Host, User, Password, plugin) VALUES `, mysql.SystemDB, mysql.UserTable)
+		}
 	}
 
 	users := make([]*auth.UserIdentity, 0, len(s.Specs))
@@ -780,7 +789,8 @@ func (e *SimpleExec) executeCreateUser(ctx context.Context, s *ast.CreateUserStm
 			e.ctx.GetSessionVars().StmtCtx.AppendNote(err)
 			continue
 		}
-		pwd, ok := spec.EncodedPassword()
+
+		pwd, ok := spec.EncodedPassword(protocolType)
 
 		if !ok {
 			return errors.Trace(ErrPasswordFormat)
@@ -868,6 +878,7 @@ func (e *SimpleExec) executeAlterUser(ctx context.Context, s *ast.AlterUserStmt)
 		return errors.New("could not load privilege checker")
 	}
 	activeRoles := e.ctx.GetSessionVars().ActiveRoles
+	protocolType := e.ctx.GetSessionVars().ProtocolType
 	hasCreateUserPriv := checker.RequestVerification(activeRoles, "", "", "", mysql.CreateUserPriv)
 	hasSystemUserPriv := checker.RequestDynamicVerification(activeRoles, "SYSTEM_USER", false)
 	hasRestrictedUserPriv := checker.RequestDynamicVerification(activeRoles, "RESTRICTED_USER_ADMIN", false)
@@ -926,11 +937,17 @@ func (e *SimpleExec) executeAlterUser(ctx context.Context, s *ast.AlterUserStmt)
 		}
 		exec := e.ctx.(sqlexec.RestrictedSQLExecutor)
 		if spec.AuthOpt != nil {
-			pwd, ok := spec.EncodedPassword()
+			pwd, ok := spec.EncodedPassword(protocolType)
 			if !ok {
 				return errors.Trace(ErrPasswordFormat)
 			}
-			stmt, err := exec.ParseWithParams(ctx, `UPDATE %n.%n SET authentication_string=%? WHERE Host=%? and User=%?;`, mysql.SystemDB, mysql.UserTable, pwd, spec.User.Hostname, spec.User.Username)
+			var stmt ast.StmtNode
+			if protocolType == "PostgreSQL" {
+				stmt, err = exec.ParseWithParams(ctx, `UPDATE %n.%n SET authentication_string=%? WHERE Host=%? and User=%?;`, mysql.SystemDB, mysql.UserTable, pwd, spec.User.Hostname, spec.User.Username)
+			} else {
+				stmt, err = exec.ParseWithParams(ctx, `UPDATE %n.%n SET Password=%? WHERE Host=%? and User=%?;`, mysql.SystemDB, mysql.UserTable, pwd, spec.User.Hostname, spec.User.Username)
+			}
+
 			if err != nil {
 				return err
 			}

@@ -18,12 +18,6 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/jackc/pgio"
-	"github.com/jackc/pgproto3/v2"
-	"github.com/jackc/pgtype"
-	"github.com/opentracing/opentracing-go"
-	"github.com/pingcap/errors"
-	"github.com/pingcap/failpoint"
 	"gitee.com/zhoujin826/goInception-plus/executor"
 	"gitee.com/zhoujin826/goInception-plus/metrics"
 	"gitee.com/zhoujin826/goInception-plus/parser/ast"
@@ -39,6 +33,12 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/util/hack"
 	"gitee.com/zhoujin826/goInception-plus/util/logutil"
 	"gitee.com/zhoujin826/goInception-plus/util/memory"
+	"github.com/jackc/pgio"
+	"github.com/jackc/pgproto3/v2"
+	"github.com/jackc/pgtype"
+	"github.com/opentracing/opentracing-go"
+	"github.com/pingcap/errors"
+	"github.com/pingcap/failpoint"
 	"github.com/tikv/client-go/v2/util"
 	"go.uber.org/zap"
 )
@@ -611,7 +611,6 @@ func (cc *clientConn) DoAuth(ctx context.Context, user *auth.UserIdentity, auth 
 
 	// 去掉第一个 'p' 和最后一个结束符，中间的为认证信息
 	auth = auth[1 : len(auth)-1]
-
 	if !cc.ctx.Auth(user, auth, cc.salt) {
 		return errAccessDenied.FastGenByArgs(cc.user, user.Hostname, hasPassword)
 	}

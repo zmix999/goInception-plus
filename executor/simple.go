@@ -751,17 +751,17 @@ func (e *SimpleExec) executeCreateUser(ctx context.Context, s *ast.CreateUserStm
 	if err != nil {
 		return err
 	}
-	protocolType := e.ctx.GetSessionVars().ProtocolType
+	isMySQLProtocol := e.ctx.GetSessionVars().IsMySQLProtocol()
 	sql := new(strings.Builder)
 	if s.IsCreateRole {
-		if protocolType == "PostgreSQL" {
+		if !isMySQLProtocol {
 			sqlexec.MustFormatSQL(sql, `INSERT INTO %n.%n (Host, User, authentication_string, plugin, Account_locked) VALUES `, mysql.SystemDB, mysql.UserTable)
 		} else {
 			sqlexec.MustFormatSQL(sql, `INSERT INTO %n.%n (Host, User, Password, plugin, Account_locked) VALUES `, mysql.SystemDB, mysql.UserTable)
 		}
 
 	} else {
-		if protocolType == "PostgreSQL" {
+		if !isMySQLProtocol {
 			sqlexec.MustFormatSQL(sql, `INSERT INTO %n.%n (Host, User, authentication_string, plugin) VALUES `, mysql.SystemDB, mysql.UserTable)
 		} else {
 			sqlexec.MustFormatSQL(sql, `INSERT INTO %n.%n (Host, User, Password, plugin) VALUES `, mysql.SystemDB, mysql.UserTable)
@@ -790,7 +790,7 @@ func (e *SimpleExec) executeCreateUser(ctx context.Context, s *ast.CreateUserStm
 			continue
 		}
 
-		pwd, ok := spec.EncodedPassword(protocolType)
+		pwd, ok := spec.EncodedPassword(isMySQLProtocol)
 
 		if !ok {
 			return errors.Trace(ErrPasswordFormat)
@@ -878,7 +878,7 @@ func (e *SimpleExec) executeAlterUser(ctx context.Context, s *ast.AlterUserStmt)
 		return errors.New("could not load privilege checker")
 	}
 	activeRoles := e.ctx.GetSessionVars().ActiveRoles
-	protocolType := e.ctx.GetSessionVars().ProtocolType
+	isMySQLProtocol := e.ctx.GetSessionVars().IsMySQLProtocol()
 	hasCreateUserPriv := checker.RequestVerification(activeRoles, "", "", "", mysql.CreateUserPriv)
 	hasSystemUserPriv := checker.RequestDynamicVerification(activeRoles, "SYSTEM_USER", false)
 	hasRestrictedUserPriv := checker.RequestDynamicVerification(activeRoles, "RESTRICTED_USER_ADMIN", false)
@@ -937,12 +937,12 @@ func (e *SimpleExec) executeAlterUser(ctx context.Context, s *ast.AlterUserStmt)
 		}
 		exec := e.ctx.(sqlexec.RestrictedSQLExecutor)
 		if spec.AuthOpt != nil {
-			pwd, ok := spec.EncodedPassword(protocolType)
+			pwd, ok := spec.EncodedPassword(isMySQLProtocol)
 			if !ok {
 				return errors.Trace(ErrPasswordFormat)
 			}
 			var stmt ast.StmtNode
-			if protocolType == "PostgreSQL" {
+			if !isMySQLProtocol {
 				stmt, err = exec.ParseWithParams(ctx, `UPDATE %n.%n SET authentication_string=%? WHERE Host=%? and User=%?;`, mysql.SystemDB, mysql.UserTable, pwd, spec.User.Hostname, spec.User.Username)
 			} else {
 				stmt, err = exec.ParseWithParams(ctx, `UPDATE %n.%n SET Password=%? WHERE Host=%? and User=%?;`, mysql.SystemDB, mysql.UserTable, pwd, spec.User.Hostname, spec.User.Username)

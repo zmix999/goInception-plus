@@ -1198,7 +1198,7 @@ func (n *UserSpec) SecurityString() string {
 
 // EncodedPassword returns the encoded password (which is the real data mysql.user).
 // The boolean value indicates input's password format is legal or not.
-func (n *UserSpec) EncodedPassword(protocolType string) (string, bool) {
+func (n *UserSpec) EncodedPassword(IsMySQLProtocol bool) (string, bool) {
 	if n.AuthOpt == nil {
 		return "", true
 	}
@@ -1209,7 +1209,7 @@ func (n *UserSpec) EncodedPassword(protocolType string) (string, bool) {
 		case mysql.AuthCachingSha2Password:
 			return auth.NewSha2Password(opt.AuthString), true
 		default:
-			if protocolType == "MySQL" {
+			if IsMySQLProtocol {
 				return auth.EncodePassword(opt.AuthString), true
 			} else {
 				// return auth.EncodePassword(opt.AuthString), true

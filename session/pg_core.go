@@ -11,7 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (s *session) pgCheckOptions() error {
+func (s *session) PostgreSQLCheckOptions() error {
 
 	if s.opt == nil {
 		return errors.New("未配置数据源信息!")

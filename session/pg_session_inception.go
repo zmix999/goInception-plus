@@ -22,7 +22,7 @@ func (s *session) PostgreSqlServerVersion() {
 
 	sql := "SELECT current_setting('server_version');"
 
-	rows, err := s.raw(sql)
+	rows, err := s.PostgreSQLRaw(sql)
 	if rows != nil {
 		defer rows.Close()
 	}
@@ -188,9 +188,9 @@ func (s *session) PgExecuteRemoteStatement(record *Record, isTran bool) {
 	var res sql.Result
 	var err error
 	if isTran {
-		res, err = s.pgExecDDL(sqlStmt, false)
+		res, err = s.PostgreSQLExecDDL(sqlStmt, false)
 	} else {
-		res, err = s.pgExecSQL(sqlStmt, false)
+		res, err = s.PostgreSQLExecSQL(sqlStmt, false)
 	}
 
 	record.ExecTime = fmt.Sprintf("%.3f", time.Since(start).Seconds())

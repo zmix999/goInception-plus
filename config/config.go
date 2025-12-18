@@ -1208,6 +1208,7 @@ var defaultConf = Config{
 		EnableSEM:                   false,
 		AutoTLS:                     false,
 		RSAKeySize:                  4096,
+		SkipGrantTable:              true,
 	},
 	DeprecateIntegerDisplayWidth: false,
 	EnableEnumLengthLimit:        true,

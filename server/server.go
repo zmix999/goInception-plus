@@ -615,44 +615,12 @@ func (s *Server) onConn(conn *clientConn) {
 	ctx := logutil.WithConnID(context.Background(), conn.connectionID)
 	if strings.Contains(conn.bufReadConn.Conn.LocalAddr().String(), fmt.Sprintf("%d", s.cfg.SecondPort)) {
 		if err := conn.handshake(ctx); err != nil {
-			if plugin.IsEnable(plugin.Audit) && conn.ctx != nil {
-				conn.ctx.GetSessionVars().ConnectionInfo = conn.connectInfo()
-				err = plugin.ForeachPlugin(plugin.Audit, func(p *plugin.Plugin) error {
-					authPlugin := plugin.DeclareAuditManifest(p.Manifest)
-					if authPlugin.OnConnectionEvent != nil {
-						pluginCtx := context.WithValue(context.Background(), plugin.RejectReasonCtxValue{}, err.Error())
-						return authPlugin.OnConnectionEvent(pluginCtx, plugin.Reject, conn.ctx.GetSessionVars().ConnectionInfo)
-					}
-					return nil
-				})
-				terror.Log(err)
-			}
-			// Some keep alive services will send request to TiDB and disconnect immediately.
-			// So we only record metrics.
-			metrics.HandShakeErrorCounter.Inc()
-			terror.Log(errors.Trace(err))
-			terror.Log(errors.Trace(conn.Close()))
+			s.handleHandshakeError(conn, err)
 			return
 		}
 	} else {
 		if err := conn.mysqlhandshake(ctx); err != nil {
-			if plugin.IsEnable(plugin.Audit) && conn.ctx != nil {
-				conn.ctx.GetSessionVars().ConnectionInfo = conn.connectInfo()
-				err = plugin.ForeachPlugin(plugin.Audit, func(p *plugin.Plugin) error {
-					authPlugin := plugin.DeclareAuditManifest(p.Manifest)
-					if authPlugin.OnConnectionEvent != nil {
-						pluginCtx := context.WithValue(context.Background(), plugin.RejectReasonCtxValue{}, err.Error())
-						return authPlugin.OnConnectionEvent(pluginCtx, plugin.Reject, conn.ctx.GetSessionVars().ConnectionInfo)
-					}
-					return nil
-				})
-				terror.Log(err)
-			}
-			// Some keep alive services will send request to TiDB and disconnect immediately.
-			// So we only record metrics.
-			metrics.HandShakeErrorCounter.Inc()
-			terror.Log(errors.Trace(err))
-			terror.Log(errors.Trace(conn.Close()))
+			s.handleHandshakeError(conn, err)
 			return
 		}
 	}
@@ -684,15 +652,17 @@ func (s *Server) onConn(conn *clientConn) {
 	}
 
 	connectedTime := time.Now()
+	var runFunc func(context.Context)
+
 	if strings.Contains(conn.bufReadConn.Conn.LocalAddr().String(), fmt.Sprintf("%d", s.cfg.SecondPort)) {
-		sessionVars := conn.ctx.GetSessionVars()
-		sessionVars.ProtocolType = "PostgreSQL"
-		conn.Run(ctx)
+		sessionVars.SetPostgreSQLProtocol(true)
+		runFunc = conn.Run
 	} else {
-		sessionVars := conn.ctx.GetSessionVars()
-		sessionVars.ProtocolType = "MySQL"
-		conn.MysqlRun(ctx)
+		sessionVars.SetMySQLProtocol(true)
+		runFunc = conn.MysqlRun
 	}
+
+	runFunc(ctx)
 
 	err = plugin.ForeachPlugin(plugin.Audit, func(p *plugin.Plugin) error {
 		// Audit plugin may be disabled before a conn is created, leading no connectionInfo in sessionVars.
@@ -712,6 +682,26 @@ func (s *Server) onConn(conn *clientConn) {
 	if err != nil {
 		return
 	}
+}
+
+func (s *Server) handleHandshakeError(conn *clientConn, err error) {
+	if plugin.IsEnable(plugin.Audit) && conn.ctx != nil {
+		conn.ctx.GetSessionVars().ConnectionInfo = conn.connectInfo()
+		err = plugin.ForeachPlugin(plugin.Audit, func(p *plugin.Plugin) error {
+			authPlugin := plugin.DeclareAuditManifest(p.Manifest)
+			if authPlugin.OnConnectionEvent != nil {
+				pluginCtx := context.WithValue(context.Background(), plugin.RejectReasonCtxValue{}, err.Error())
+				return authPlugin.OnConnectionEvent(pluginCtx, plugin.Reject, conn.ctx.GetSessionVars().ConnectionInfo)
+			}
+			return nil
+		})
+		terror.Log(err)
+	}
+	// Some keep alive services will send request to TiDB and disconnect immediately.
+	// So we only record metrics.
+	metrics.HandShakeErrorCounter.Inc()
+	terror.Log(errors.Trace(err))
+	terror.Log(errors.Trace(conn.Close()))
 }
 
 func (cc *clientConn) connectInfo() *variable.ConnectionInfo {

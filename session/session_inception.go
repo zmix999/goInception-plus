@@ -617,7 +617,7 @@ func (s *session) processCommand(ctx context.Context, stmtNode ast.StmtNode,
 		}
 
 	case *ast.UseStmt:
-		if s.sessionVars.ProtocolType == "MySQL" {
+		if s.dbType != DBPostgreSQL {
 			s.checkChangeDB(node, currentSql)
 		}
 	case *ast.CreateDatabaseStmt:
@@ -783,7 +783,7 @@ func (s *session) executeCommit(ctx context.Context) {
 	// 如果有错误时,把错误输出放在第一行
 	s.myRecord = s.recordSets.All()[0]
 
-	if s.sessionVars.ProtocolType == "MySQL" {
+	if s.dbType != DBPostgreSQL {
 		if s.isReadOnly() {
 			s.appendErrorMsg("当前数据库为只读模式,无法执行!")
 			return
@@ -1767,7 +1767,7 @@ func (s *session) executeRemoteStatementAndBackup(record *Record) {
 		record.AffectedRows = 0
 		return
 	}
-	if s.sessionVars.ProtocolType == "MySQL" {
+	if s.dbType != DBPostgreSQL {
 		s.executeRemoteStatement(record, false)
 	} else {
 		s.PgExecuteRemoteStatement(record, false)
@@ -2398,11 +2398,11 @@ func (s *session) parseOptions(sql string) {
 		return
 	}
 
-	if s.sessionVars.ProtocolType == "MySQL" {
+	if s.sessionVars.IsMySQLProtocol() {
 		err = s.checkOptions()
 
 	} else {
-		err = s.pgCheckOptions()
+		err = s.PostgreSQLCheckOptions()
 	}
 
 	if err != nil {
@@ -6838,7 +6838,7 @@ func (s *session) checkInsert(node *ast.InsertStmt, sql string) {
 	}
 
 	var table *TableInfo
-	if s.sessionVars.ProtocolType == "MySQL" {
+	if s.dbType != DBPostgreSQL {
 		table = s.getTableFromCache(t.Schema.O, t.Name.O, true)
 	} else {
 		table = s.PgGetTableFromCache(t.Schema.O, t.Name.O, "", true)

@@ -2,6 +2,7 @@ package privileges
 
 import (
 	"crypto/tls"
+
 	"gitee.com/zhoujin826/goInception-plus/parser/auth"
 	"gitee.com/zhoujin826/goInception-plus/util/logutil"
 	"go.uber.org/zap"
@@ -86,6 +87,11 @@ func (p *UserPrivileges) ConnectionVerification(user, host string, authenticatio
 
 // NeedPassword returns true if password is required for the given user
 func (p *UserPrivileges) NeedPassword(user, host string) bool {
+	if SkipWithGrant {
+		p.user = user
+		p.host = host
+		return false
+	}
 	mysqlPriv := p.Handle.Get()
 	record := mysqlPriv.connectionVerification(user, host)
 	if record == nil {

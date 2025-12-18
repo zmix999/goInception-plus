@@ -962,7 +962,8 @@ type SessionVars struct {
 	Portal map[string]uint32
 
 	//连接协议类型
-	ProtocolType string
+	MySQLProtocolType      bool
+	PostgreSQLProtocolType bool
 }
 
 // InitStatementContext initializes a StatementContext, the object is reused to reduce allocation.
@@ -2342,4 +2343,24 @@ func (s *SessionVars) GetSeekFactor(tbl *model.TableInfo) float64 {
 		}
 	}
 	return s.seekFactor
+}
+
+// IsMySQLProtocol gets the protocol type of current connection.
+func (s *SessionVars) IsMySQLProtocol() bool {
+	return s.MySQLProtocolType
+}
+
+// IsPostgreSQLProtocol gets the protocol type of current connection.
+func (s *SessionVars) IsPostgreSQLProtocol() bool {
+	return s.PostgreSQLProtocolType
+}
+
+// SetMySQLProtocol sets the protocol type to MySQL.
+func (s *SessionVars) SetMySQLProtocol(Type bool) {
+	s.MySQLProtocolType = Type
+}
+
+// SetPostgreSQLProtocol sets the protocol type to MySQL.
+func (s *SessionVars) SetPostgreSQLProtocol(Type bool) {
+	s.PostgreSQLProtocolType = Type
 }

@@ -26,10 +26,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/opentracing/opentracing-go"
-	"github.com/pingcap/errors"
-	"github.com/pingcap/log"
-	pumpcli "github.com/pingcap/tidb-tools/tidb-binlog/pump_client"
 	"gitee.com/zhoujin826/goInception-plus/bindinfo"
 	"gitee.com/zhoujin826/goInception-plus/config"
 	"gitee.com/zhoujin826/goInception-plus/ddl"
@@ -66,6 +62,10 @@ import (
 	storageSys "gitee.com/zhoujin826/goInception-plus/util/sys/storage"
 	"gitee.com/zhoujin826/goInception-plus/util/systimemon"
 	"gitee.com/zhoujin826/goInception-plus/util/topsql"
+	"github.com/opentracing/opentracing-go"
+	"github.com/pingcap/errors"
+	"github.com/pingcap/log"
+	pumpcli "github.com/pingcap/tidb-tools/tidb-binlog/pump_client"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
 	plog "github.com/sirupsen/logrus"
@@ -182,23 +182,10 @@ func main() {
 	}
 	registerStores()
 	loadConfig()
-	//registerMetrics()
-	config.InitializeConfig(*configPath, *configCheck, *configStrict, overrideConfig)
-	/*if config.GetGlobalConfig().OOMUseTmpStorage {
-		config.GetGlobalConfig().UpdateTempStoragePath()
-		err := disk.InitializeTempDir()
-		terror.MustNil(err)
-		checkTempStorageQuota()
-	}*/
 	setGlobalVars()
-	//setCPUAffinity()
 	setupLog()
-	//setHeapProfileTracker()
-	//setupTracing() // Should before createServer and after setup config.
 	printInfo()
 	setupBinlogClient()
-	//setupMetrics()
-
 	storage, dom := createStoreAndDomain()
 	svr := createServer(storage, dom)
 
@@ -206,7 +193,6 @@ func main() {
 	// To prevent misuse, set a flag to indicate that register new error will panic immediately.
 	// For regression of issue like https://gitee.com/zhoujin826/goInception-plus/issues/28190
 	terror.RegisterFinish()
-
 	exited := make(chan struct{})
 	signal.SetupSignalHandler(func(graceful bool) {
 		svr.Close()
@@ -231,10 +217,8 @@ func main() {
 		fmt.Println("https://github.com/hanchuanchuan/goInception/pull/418")
 		fmt.Println("################################################")
 	}
-	//topsql.SetupTopSQL()
 	terror.MustNil(svr.Run())
 	<-exited
-	//syncLog()
 }
 
 func exit() {

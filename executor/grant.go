@@ -131,7 +131,7 @@ func (e *GrantExec) Next(ctx context.Context, req *chunk.Chunk) error {
 	if err != nil {
 		return err
 	}
-	protocolType := e.ctx.GetSessionVars().ProtocolType
+	isMySQLProtocol := e.ctx.GetSessionVars().IsMySQLProtocol()
 	// Check which user is not exist.
 	for _, user := range e.Users {
 		exists, err := userExists(ctx, e.ctx, user.User.Username, user.User.Hostname)
@@ -145,7 +145,7 @@ func (e *GrantExec) Next(ctx context.Context, req *chunk.Chunk) error {
 			// It is required for compatibility with 5.7 but removed from 8.0
 			// since it results in a massive security issue:
 			// spelling errors will create users with no passwords.
-			pwd, ok := user.EncodedPassword(protocolType)
+			pwd, ok := user.EncodedPassword(isMySQLProtocol)
 			if !ok {
 				return errors.Trace(ErrPasswordFormat)
 			}

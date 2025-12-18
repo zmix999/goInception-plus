@@ -433,6 +433,9 @@ func (cc *clientConn) handleStartupMessage(ctx context.Context, startupMessage *
 	cc.dbname = resp.DBName
 	cc.collation = resp.Collation
 	cc.attrs = resp.Attrs
+	if cc.user == cc.dbname {
+		cc.dbname = "postgres"
+	}
 
 	// 初始化Session并进行用户验证
 	if err := cc.PgOpenSessionAndDoAuth(ctx); err != nil {

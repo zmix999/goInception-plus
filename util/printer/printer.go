@@ -23,7 +23,6 @@ import (
 
 	"gitee.com/zhoujin826/goInception-plus/config"
 	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/util/israce"
 	"gitee.com/zhoujin826/goInception-plus/util/logutil"
 	"gitee.com/zhoujin826/goInception-plus/util/versioninfo"
 	"go.uber.org/zap"
@@ -33,14 +32,14 @@ import (
 func PrintTiDBInfo() {
 	logutil.BgLogger().Info("Welcome to TiDB.",
 		zap.String("Release Version", mysql.TiDBReleaseVersion),
-		zap.String("Edition", versioninfo.TiDBEdition),
+		//zap.String("Edition", versioninfo.TiDBEdition),
 		zap.String("Git Commit Hash", versioninfo.TiDBGitHash),
 		zap.String("Git Branch", versioninfo.TiDBGitBranch),
 		zap.String("UTC Build Time", versioninfo.TiDBBuildTS),
-		zap.String("GoVersion", buildVersion),
-		zap.Bool("Race Enabled", israce.RaceEnabled),
-		zap.Bool("Check Table Before Drop", config.CheckTableBeforeDrop),
-		zap.String("TiKV Min Version", versioninfo.TiKVMinVersion))
+		zap.String("GoVersion", buildVersion))
+	//zap.Bool("Race Enabled", israce.RaceEnabled),
+	//zap.Bool("Check Table Before Drop", config.CheckTableBeforeDrop),
+	//zap.String("TiKV Min Version", versioninfo.TiKVMinVersion))
 	configJSON, err := json.Marshal(config.GetGlobalConfig())
 	if err != nil {
 		panic(err)
@@ -55,19 +54,13 @@ func GetTiDBInfo() string {
 		"Git Commit Hash: %s\n"+
 		"Git Branch: %s\n"+
 		"UTC Build Time: %s\n"+
-		"GoVersion: %s\n"+
-		"Race Enabled: %v\n"+
-		"TiKV Min Version: %s\n"+
-		"Check Table Before Drop: %v",
+		"GoVersion: %s\n",
 		mysql.TiDBReleaseVersion,
 		versioninfo.TiDBEdition,
 		versioninfo.TiDBGitHash,
 		versioninfo.TiDBGitBranch,
 		versioninfo.TiDBBuildTS,
-		buildVersion,
-		israce.RaceEnabled,
-		versioninfo.TiKVMinVersion,
-		config.CheckTableBeforeDrop)
+		buildVersion)
 }
 
 // checkValidity checks whether cols and every data have the same length.

@@ -33,8 +33,8 @@ import (
 	drivers "gitee.com/zhoujin826/goInception-plus/types/parser_driver"
 	"gitee.com/zhoujin826/goInception-plus/util"
 	"gitee.com/zhoujin826/goInception-plus/util/sqlexec"
+	"gitee.com/zhoujin826/goInception-plus/util/stringutil"
 	mysqlDriver "github.com/go-sql-driver/mysql"
-	"github.com/hanchuanchuan/goInception/util/stringutil"
 	"github.com/jinzhu/gorm"
 	"github.com/percona/go-mysql/query"
 	"github.com/pingcap/errors"
@@ -7667,7 +7667,7 @@ func (s *session) showVariables(node *ast.ShowStmt, obj interface{}, res *Variab
 
 	var (
 		like     string
-		patChars []byte
+		patChars []rune
 		patTypes []byte
 	)
 	if node.Pattern != nil {

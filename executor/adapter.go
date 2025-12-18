@@ -24,11 +24,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/cznic/mathutil"
-	"github.com/opentracing/opentracing-go"
-	"github.com/pingcap/errors"
-	"github.com/pingcap/failpoint"
-	"github.com/pingcap/log"
 	"gitee.com/zhoujin826/goInception-plus/config"
 	"gitee.com/zhoujin826/goInception-plus/ddl/placement"
 	"gitee.com/zhoujin826/goInception-plus/domain"
@@ -57,6 +52,11 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/util/stmtsummary"
 	"gitee.com/zhoujin826/goInception-plus/util/stringutil"
 	"gitee.com/zhoujin826/goInception-plus/util/topsql"
+	"github.com/cznic/mathutil"
+	"github.com/opentracing/opentracing-go"
+	"github.com/pingcap/errors"
+	"github.com/pingcap/failpoint"
+	"github.com/pingcap/log"
 	tikverr "github.com/tikv/client-go/v2/error"
 	"github.com/tikv/client-go/v2/oracle"
 	"github.com/tikv/client-go/v2/util"
@@ -884,7 +884,7 @@ func (a *ExecStmt) FinishExecuteStmt(txnTS uint64, err error, hasMoreResults boo
 	}
 	succ := err == nil
 	// `LowSlowQuery` and `SummaryStmt` must be called before recording `PrevStmt`.
-	a.LogSlowQuery(txnTS, succ, hasMoreResults)
+	//a.LogSlowQuery(txnTS, succ, hasMoreResults)
 	a.SummaryStmt(succ)
 	if sessVars.StmtCtx.IsTiFlash.Load() {
 		if succ {

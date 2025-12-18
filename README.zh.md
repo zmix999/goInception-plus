@@ -1,6 +1,6 @@
 # goInception-plus
 
-goInception-plus是一个集审核、执行、备份及生成回滚语句于一身的PostgreSQL运维工具， 通过对执行SQL的语法解析，返回基于自定义规则的审核结果，并提供执行和备份及生成回滚语句的功能
+goInception-plus是一个集审核、执行、备份及生成回滚语句于一身的MySQL,PostgreSQL运维工具， 通过对执行SQL的语法解析，返回基于自定义规则的审核结果，并提供执行和备份及生成回滚语句的功能
 
 
 ----

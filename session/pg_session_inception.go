@@ -13,8 +13,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (s *session) PostgreSqlServerVersion() {
-	log.Debug("PostgreSqlServerVersion")
+func (s *session) PostgreSQLServerVersion() {
+	log.Debug("PostgreSQLServerVersion")
 
 	if s.dbVersion > 0 {
 		return
@@ -22,7 +22,7 @@ func (s *session) PostgreSqlServerVersion() {
 
 	sql := "SELECT current_setting('server_version');"
 
-	rows, err := s.PostgreSQLRaw(sql)
+	rows, err := s.PostgreSQLraw(sql)
 	if rows != nil {
 		defer rows.Close()
 	}
@@ -31,7 +31,7 @@ func (s *session) PostgreSqlServerVersion() {
 	}
 }
 
-func (s *session) PgGetTableFromCache(db string, tableName string, indexName string, reportNotExists bool) *TableInfo {
+func (s *session) PostgreSQLgetTableFromCache(db string, tableName string, indexName string, reportNotExists bool) *TableInfo {
 	if db == "" {
 		db = s.serach
 	}
@@ -58,20 +58,20 @@ func (s *session) PgGetTableFromCache(db string, tableName string, indexName str
 		return t
 	}
 
-	rows := s.PgQueryTableFromDB(db, tableName, reportNotExists)
+	rows := s.PostgreSQLqueryTableFromDB(db, tableName, reportNotExists)
 	if rows != nil {
 		newT := &TableInfo{
 			Schema: db,
 			Name:   tableName,
 			Fields: rows,
 		}
-		if rows := s.PgQueryIndexFromDB(db, indexName, reportNotExists); rows != nil {
+		if rows := s.PostgreSQLqueryIndexFromDB(db, indexName, reportNotExists); rows != nil {
 			newT.Indexes = rows
 		}
 		s.tableCacheList[key] = newT
 		return newT
 	}
-	index := s.PgQueryIndexFromDB(db, indexName, reportNotExists)
+	index := s.PostgreSQLqueryIndexFromDB(db, indexName, reportNotExists)
 	if index != nil {
 		newT := &TableInfo{
 			Schema: db,
@@ -86,7 +86,7 @@ func (s *session) PgGetTableFromCache(db string, tableName string, indexName str
 	return nil
 }
 
-func (s *session) PgQueryTableFromDB(db string, tableName string, reportNotExists bool) []FieldInfo {
+func (s *session) PostgreSQLqueryTableFromDB(db string, tableName string, reportNotExists bool) []FieldInfo {
 	if db == "" {
 		db = s.serach
 	}
@@ -107,7 +107,7 @@ func (s *session) PgQueryTableFromDB(db string, tableName string, reportNotExist
 	return rows
 }
 
-func (s *session) PgQueryIndexFromDB(db string, tableName string, reportNotExists bool) []*IndexInfo {
+func (s *session) PostgreSQLqueryIndexFromDB(db string, tableName string, reportNotExists bool) []*IndexInfo {
 	if db == "" {
 		db = s.serach
 	}
@@ -122,7 +122,7 @@ func (s *session) PgQueryIndexFromDB(db string, tableName string, reportNotExist
 	return rows
 }
 
-func (s *session) pgCheckDBExists(db string, reportNotExists bool) bool {
+func (s *session) PostgreSQLCheckDBExists(db string, reportNotExists bool) bool {
 
 	if db == "" {
 		db = s.dbName
@@ -145,7 +145,7 @@ func (s *session) pgCheckDBExists(db string, reportNotExists bool) bool {
 
 	var name string
 
-	rows, err := s.raw(fmt.Sprintf(sql, db))
+	rows, err := s.PostgreSQLraw(fmt.Sprintf(sql, db))
 	if rows != nil {
 		defer rows.Close()
 	}
@@ -178,8 +178,8 @@ func (s *session) pgCheckDBExists(db string, reportNotExists bool) bool {
 	return true
 }
 
-func (s *session) PgExecuteRemoteStatement(record *Record, isTran bool) {
-	log.Debug("executeRemoteStatement")
+func (s *session) PostgreSQLexecuteRemoteStatement(record *Record, isTran bool) {
+	log.Debug("PostgreSQLexecuteRemoteStatement")
 
 	sqlStmt := record.Sql
 
@@ -188,9 +188,9 @@ func (s *session) PgExecuteRemoteStatement(record *Record, isTran bool) {
 	var res sql.Result
 	var err error
 	if isTran {
-		res, err = s.PostgreSQLExecDDL(sqlStmt, false)
+		res, err = s.PostgreSQLexecDDL(sqlStmt, false)
 	} else {
-		res, err = s.PostgreSQLExecSQL(sqlStmt, false)
+		res, err = s.PostgreSQLexecSQL(sqlStmt, false)
 	}
 
 	record.ExecTime = fmt.Sprintf("%.3f", time.Since(start).Seconds())
@@ -218,7 +218,7 @@ func (s *session) PgExecuteRemoteStatement(record *Record, isTran bool) {
 					s.appendErrorMsg("The execution result is unknown! Please confirm manually.")
 				}
 
-				record.ThreadId = s.PgFetchThreadID()
+				record.ThreadId = s.PostgreSQLfetchThreadID()
 				record.ExecComplete = true
 			} else {
 				s.appendErrorMsg("The execution result is unknown! Please confirm manually.")
@@ -235,7 +235,7 @@ func (s *session) PgExecuteRemoteStatement(record *Record, isTran bool) {
 		s.appendErrorMsg(err.Error())
 	}
 	record.AffectedRows = affectedRows
-	record.ThreadId = s.PgFetchThreadID()
+	record.ThreadId = s.PostgreSQLfetchThreadID()
 	if record.ThreadId == 0 {
 		s.appendErrorMsg("无法获取线程号")
 	} else {
@@ -256,14 +256,14 @@ func (s *session) PgExecuteRemoteStatement(record *Record, isTran bool) {
 
 	if _, ok := record.Type.(*ast.CreateTableStmt); ok &&
 		record.TableInfo == nil && record.DBName != "" && record.TableName != "" {
-		record.TableInfo = s.getTableFromCache(record.DBName, record.TableName, true)
+		record.TableInfo = s.PostgreSQLgetTableFromCache(record.DBName, record.TableName, "", true)
 	} else if _, ok := record.Type.(*ast.CreateSequenceStmt); ok &&
 		record.SequencesInfo == nil && record.DBName != "" && record.TableName != "" {
 		record.SequencesInfo = s.getSequencesFromCache(record.DBName, record.TableName, true)
 	}
 }
 
-func (s *session) PgFetchThreadID() uint32 {
+func (s *session) PostgreSQLfetchThreadID() uint32 {
 
 	if s.threadID > 0 {
 		return s.threadID
@@ -275,7 +275,7 @@ func (s *session) PgFetchThreadID() uint32 {
 		sql = s.opt.middlewareExtend + sql
 	}
 
-	rows, err := s.raw(sql)
+	rows, err := s.PostgreSQLraw(sql)
 	if rows != nil {
 		for rows.Next() {
 			rows.Scan(&threadId)

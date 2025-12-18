@@ -37,7 +37,7 @@ func isInvalidConnError(err error) bool {
 }
 
 // raw 执行sql语句,连接失败时自动重连,自动重置当前数据库
-func (s *session) PostgreSQLRaw(sqlStr string) (rows *sql.Rows, err error) {
+func (s *session) PostgreSQLraw(sqlStr string) (rows *sql.Rows, err error) {
 	// 连接断开无效时,自动重试
 	for i := 0; i < maxBadConnRetries; i++ {
 		rows, err = s.db.DB().Query(sqlStr)
@@ -65,7 +65,7 @@ func (s *session) PostgreSQLRaw(sqlStr string) (rows *sql.Rows, err error) {
 }
 
 // exec 执行sql语句,连接失败时自动重连,自动重置当前数据库
-func (s *session) PostgreSQLExecSQL(sqlStr string, retry bool) (res sql.Result, err error) {
+func (s *session) PostgreSQLexecSQL(sqlStr string, retry bool) (res sql.Result, err error) {
 	log.Debug("exec")
 	// 连接断开无效时,自动重试
 	for i := 0; i < maxBadConnRetries; i++ {
@@ -93,7 +93,7 @@ func (s *session) PostgreSQLExecSQL(sqlStr string, retry bool) (res sql.Result, 
 }
 
 // execDDL 执行sql语句,连接失败时自动重连,自动重置当前数据库
-func (s *session) PostgreSQLExecDDL(sqlStr string, retry bool) (res sql.Result, err error) {
+func (s *session) PostgreSQLexecDDL(sqlStr string, retry bool) (res sql.Result, err error) {
 	log.Debug("execDDL")
 	// 连接断开无效时,自动重试
 	for i := 0; i < maxBadConnRetries; i++ {
@@ -119,7 +119,7 @@ func (s *session) PostgreSQLExecDDL(sqlStr string, retry bool) (res sql.Result, 
 }
 
 // Raw 执行sql语句,连接失败时自动重连,自动重置当前数据库
-func (s *session) PostgreSQLRawScan(sqlStr string, dest interface{}) (err error) {
+func (s *session) PostgreSQLrawScan(sqlStr string, dest interface{}) (err error) {
 	// 连接断开无效时,自动重试
 	for i := 0; i < maxBadConnRetries; i++ {
 		err = s.db.Raw(sqlStr).Scan(dest).Error
@@ -141,7 +141,7 @@ func (s *session) PostgreSQLRawScan(sqlStr string, dest interface{}) (err error)
 }
 
 // Raw 执行sql语句,连接失败时自动重连,自动重置当前数据库
-func (s *session) PostgreSQLRawDB(dest interface{}, sqlStr string, values ...interface{}) (err error) {
+func (s *session) PostgreSQLrawDB(dest interface{}, sqlStr string, values ...interface{}) (err error) {
 	// 连接断开无效时,自动重试
 	for i := 0; i < maxBadConnRetries; i++ {
 		err = s.db.Raw(sqlStr, values...).Scan(dest).Error
@@ -163,8 +163,8 @@ func (s *session) PostgreSQLRawDB(dest interface{}, sqlStr string, values ...int
 }
 
 // initConnection 连接失败时自动重连,重连后重置当前数据库
-func (s *session) PostgreSQLInitConnection() (err error) {
-	log.Debug("initConnection")
+func (s *session) PostgreSQLinitConnection() (err error) {
+	log.Debug("PostgreSQLinitConnection")
 	name := s.dbName
 	if name == "" {
 		name = s.opt.db

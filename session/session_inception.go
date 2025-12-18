@@ -1770,7 +1770,7 @@ func (s *session) executeRemoteStatementAndBackup(record *Record) {
 	if s.dbType != DBPostgreSQL {
 		s.executeRemoteStatement(record, false)
 	} else {
-		s.PgExecuteRemoteStatement(record, false)
+		s.PostgreSQLexecuteRemoteStatement(record, false)
 	}
 
 	if !s.hasError() || record.ExecComplete {
@@ -6841,7 +6841,7 @@ func (s *session) checkInsert(node *ast.InsertStmt, sql string) {
 	if s.dbType != DBPostgreSQL {
 		table = s.getTableFromCache(t.Schema.O, t.Name.O, true)
 	} else {
-		table = s.PgGetTableFromCache(t.Schema.O, t.Name.O, "", true)
+		table = s.PostgreSQLgetTableFromCache(t.Schema.O, t.Name.O, "", true)
 	}
 
 	if table == nil {

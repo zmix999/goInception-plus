@@ -95,7 +95,7 @@ func (s *session) PostgreSQLCheckOptions() error {
 		s.processInfo.Store(pi)
 	}
 
-	s.PostgreSqlServerVersion()
+	s.PostgreSQLServerVersion()
 
 	if s.opt.tranBatch > 1 {
 		s.ddlDB, _ = gorm.Open("postgres", addr)

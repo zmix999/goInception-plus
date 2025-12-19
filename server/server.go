@@ -129,11 +129,13 @@ type Server struct {
 	dom               *domain.Domain
 	globalConnID      util.GlobalConnID
 
-	statusAddr     string
-	statusListener net.Listener
-	statusServer   *http.Server
-	grpcServer     *grpc.Server
-	inShutdownMode bool
+	statusAddr       string
+	statusListener   net.Listener
+	statusServer     *http.Server
+	grpcServer       *grpc.Server
+	inShutdownMode   bool
+	isPostgreSQLMode bool
+	isMySQLMode      bool
 	// osc进程列表
 	oscProcessList map[string]*util.OscProcessInfo
 }
@@ -261,10 +263,21 @@ func (s *Server) InitGlobalConnID(serverIDGetter func() uint64) {
 	}
 }
 
+// ConnectionMode sets the connection mode (MySQL or PostgreSQL) based on the local address of the connection.
+// It checks the port number from the connection's local address and compares it against configured ports.
+func (s *Server) ConnectionMode(conn net.Conn) {
+	if strings.Contains(conn.LocalAddr().String(), fmt.Sprintf("%d", s.cfg.SecondPort)) {
+		s.isPostgreSQLMode = true
+	} else if strings.Contains(conn.LocalAddr().String(), fmt.Sprintf("%d", s.cfg.Port)) {
+		s.isMySQLMode = true
+	}
+}
+
 // newConn creates a new *clientConn from a net.Conn.
 // It allocates a connection ID and random salt data for authentication.
 func (s *Server) newConn(conn net.Conn) *clientConn {
 	cc := newClientConn(s)
+	s.ConnectionMode(conn)
 	if tcpConn, ok := conn.(*net.TCPConn); ok {
 		if err := tcpConn.SetKeepAlive(s.cfg.Performance.TCPKeepAlive); err != nil {
 			logutil.BgLogger().Error("failed to set tcp keep alive option", zap.Error(err))
@@ -613,12 +626,12 @@ func (s *Server) Close() {
 // onConn runs in its own goroutine, handles queries from this connection.
 func (s *Server) onConn(conn *clientConn) {
 	ctx := logutil.WithConnID(context.Background(), conn.connectionID)
-	if strings.Contains(conn.bufReadConn.Conn.LocalAddr().String(), fmt.Sprintf("%d", s.cfg.SecondPort)) {
+	if s.isPostgreSQLMode {
 		if err := conn.handshake(ctx); err != nil {
 			s.handleHandshakeError(conn, err)
 			return
 		}
-	} else {
+	} else if s.isMySQLMode {
 		if err := conn.mysqlhandshake(ctx); err != nil {
 			s.handleHandshakeError(conn, err)
 			return
@@ -654,10 +667,10 @@ func (s *Server) onConn(conn *clientConn) {
 	connectedTime := time.Now()
 	var runFunc func(context.Context)
 
-	if strings.Contains(conn.bufReadConn.Conn.LocalAddr().String(), fmt.Sprintf("%d", s.cfg.SecondPort)) {
+	if s.isPostgreSQLMode {
 		sessionVars.SetPostgreSQLProtocol(true)
 		runFunc = conn.Run
-	} else {
+	} else if s.isMySQLMode {
 		sessionVars.SetMySQLProtocol(true)
 		runFunc = conn.MysqlRun
 	}

@@ -613,12 +613,12 @@ func (s *Server) Close() {
 // onConn runs in its own goroutine, handles queries from this connection.
 func (s *Server) onConn(conn *clientConn) {
 	ctx := logutil.WithConnID(context.Background(), conn.connectionID)
-	if strings.Contains(conn.bufReadConn.Conn.LocalAddr().String(), fmt.Sprintf("%d", s.cfg.SecondPort)) {
+	if s.isPostgreSQLMode(conn) {
 		if err := conn.handshake(ctx); err != nil {
 			s.handleHandshakeError(conn, err)
 			return
 		}
-	} else {
+	} else if s.isMySQLMode(conn) {
 		if err := conn.mysqlhandshake(ctx); err != nil {
 			s.handleHandshakeError(conn, err)
 			return
@@ -653,10 +653,10 @@ func (s *Server) onConn(conn *clientConn) {
 
 	connectedTime := time.Now()
 
-	if strings.Contains(conn.bufReadConn.Conn.LocalAddr().String(), fmt.Sprintf("%d", s.cfg.SecondPort)) {
+	if s.isPostgreSQLMode(conn) {
 		sessionVars.SetPostgreSQLProtocol(true)
 		conn.Run(ctx)
-	} else {
+	} else if s.isMySQLMode(conn) {
 		sessionVars.SetMySQLProtocol(true)
 		conn.MysqlRun(ctx)
 	}
@@ -679,6 +679,14 @@ func (s *Server) onConn(conn *clientConn) {
 	if err != nil {
 		return
 	}
+}
+
+func (s *Server) isPostgreSQLMode(conn *clientConn) bool {
+	return strings.Contains(conn.bufReadConn.LocalAddr().String(), fmt.Sprintf(":%d", s.cfg.SecondPort))
+}
+
+func (s *Server) isMySQLMode(conn *clientConn) bool {
+	return strings.Contains(conn.bufReadConn.LocalAddr().String(), fmt.Sprintf(":%d", s.cfg.Port))
 }
 
 func (s *Server) handleHandshakeError(conn *clientConn, err error) {

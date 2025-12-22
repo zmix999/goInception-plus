@@ -40,18 +40,20 @@ func TestKeywordConsistent(t *testing.T) {
 	unreservedKeywordStartMarker := "\t/* The following tokens belong to UnReservedKeyword. Notice: make sure these tokens are contained in UnReservedKeyword. */"
 	notKeywordTokenStartMarker := "\t/* The following tokens belong to NotKeywordToken. Notice: make sure these tokens are contained in NotKeywordToken. */"
 	tidbKeywordStartMarker := "\t/* The following tokens belong to TiDBKeyword. Notice: make sure these tokens are contained in TiDBKeyword. */"
+	tipgKeywordStartMarker := "\t/* The following tokens are added for TiDB for Postgres. */"
 	identTokenEndMarker := "%token\t<item>"
 
 	reservedKeywords := extractKeywords(content, reservedKeywordStartMarker, unreservedKeywordStartMarker)
 	unreservedKeywords := extractKeywords(content, unreservedKeywordStartMarker, notKeywordTokenStartMarker)
 	notKeywordTokens := extractKeywords(content, notKeywordTokenStartMarker, tidbKeywordStartMarker)
-	tidbKeywords := extractKeywords(content, tidbKeywordStartMarker, identTokenEndMarker)
+	tidbKeywords := extractKeywords(content, tidbKeywordStartMarker, tipgKeywordStartMarker)
+	tipgKeywords := extractKeywords(content, tipgKeywordStartMarker, identTokenEndMarker)
 
 	for k, v := range aliases {
 		requires.NotEqual(t, k, v)
 		requires.Equal(t, tokenMap[v], tokenMap[k])
 	}
-	keywordCount := len(reservedKeywords) + len(unreservedKeywords) + len(notKeywordTokens) + len(tidbKeywords)
+	keywordCount := len(reservedKeywords) + len(unreservedKeywords) + len(notKeywordTokens) + len(tidbKeywords) + len(tipgKeywords)
 	requires.Equal(t, keywordCount-len(windowFuncTokenMap), len(tokenMap)-len(aliases))
 
 	unreservedCollectionDef := extractKeywordsFromCollectionDef(content, "\nUnReservedKeyword:")
@@ -62,6 +64,9 @@ func TestKeywordConsistent(t *testing.T) {
 
 	tidbKeywordsCollectionDef := extractKeywordsFromCollectionDef(content, "\nTiDBKeyword:")
 	requires.Equal(t, tidbKeywordsCollectionDef, tidbKeywords)
+
+	tipgKeywordsCollectionDef := extractKeywordsFromCollectionDef(content, "\nTiDB4PGKeyword:")
+	requires.Equal(t, tipgKeywordsCollectionDef, tipgKeywords)
 }
 
 func extractMiddle(str, startMarker, endMarker string) string {

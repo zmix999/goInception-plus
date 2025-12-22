@@ -346,6 +346,8 @@ spilled-file-encryption-method = "aes128-ctr"
 
 	// Make sure the example config is the same as default config except `auto_tls`.
 	conf.Security.AutoTLS = false
+	conf.Log.EnableSlowLog = false
+	conf.Log.RecordPlanInSlowLog = 0
 	require.Equal(t, GetGlobalConfig(), conf)
 
 	// Test for log config.

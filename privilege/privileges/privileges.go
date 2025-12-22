@@ -228,7 +228,7 @@ func (p *UserPrivileges) GetEncodedPassword(user, host string) string {
 		return ""
 	}
 	if p.isValidHash(record) {
-		return record.AuthenticationString
+		return record.Password
 	}
 	return ""
 }

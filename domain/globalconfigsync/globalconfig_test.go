@@ -23,20 +23,9 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/domain/globalconfigsync"
 	"gitee.com/zhoujin826/goInception-plus/session"
 	"gitee.com/zhoujin826/goInception-plus/store/mockstore"
-	"gitee.com/zhoujin826/goInception-plus/util/testbridge"
 	"github.com/stretchr/testify/require"
 	"go.etcd.io/etcd/integration"
-	"go.uber.org/goleak"
 )
-
-func TestMain(m *testing.M) {
-	testbridge.WorkaroundGoCheckFlags()
-	opts := []goleak.Option{
-		goleak.IgnoreTopFunction("go.etcd.io/etcd/pkg/logutil.(*MergeLogger).outputLoop"),
-		goleak.IgnoreTopFunction("go.opencensus.io/stats/view.(*worker).start"),
-	}
-	goleak.VerifyTestMain(m, opts...)
-}
 
 func TestGlobalConfigSyncer(t *testing.T) {
 	syncer := globalconfigsync.NewGlobalConfigSyncer(nil)

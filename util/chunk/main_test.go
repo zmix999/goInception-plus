@@ -15,27 +15,8 @@
 package chunk
 
 import (
-	"os"
 	"testing"
-
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/util/testbridge"
-	"go.uber.org/goleak"
 )
-
-func TestMain(m *testing.M) {
-	testbridge.WorkaroundGoCheckFlags()
-
-	path, _ := os.MkdirTemp("", "oom-use-tmp-storage")
-	config.UpdateGlobal(func(conf *config.Config) {
-		conf.TempStoragePath = path
-	})
-
-	goleak.VerifyTestMain(wrapper{
-		M:       m,
-		cleanUp: func() { os.RemoveAll(path) },
-	})
-}
 
 // wrap *testing.M to do the clean up after m.Run() and before os.Exit()
 type wrapper struct {

@@ -29,11 +29,15 @@ import (
 )
 
 func TestDMLCapturePlanBaseline(t *testing.T) {
+	save := config.GetGlobalConfig()
+	config.UpdateGlobal(func(c *config.Config) { c.Security.SkipGrantTable = false })
+	defer config.StoreGlobalConfig(save)
 	store, dom, clean := testkit.CreateMockStoreAndDomain(t)
 	defer clean()
 
 	tk := testkit.NewTestKit(t, store)
-
+	sessionVars := tk.Session().GetSessionVars()
+	sessionVars.SetMySQLProtocol(true)
 	stmtsummary.StmtSummaryByDigestMap.Clear()
 	tk.MustExec(" set @@tidb_capture_plan_baselines = on")
 	defer func() {
@@ -61,7 +65,7 @@ func TestDMLCapturePlanBaseline(t *testing.T) {
 	rows := tk.MustQuery("show global bindings").Rows()
 	require.Len(t, rows, 0)
 
-	require.True(t, tk.Session().Auth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
+	require.True(t, tk.Session().MysqlAuth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
 	tk.MustExec("delete from t where b = 1 and c > 1")
 	tk.MustExec("delete from t where b = 1 and c > 1")
 	tk.MustExec("update t set a = 1 where b = 1 and c > 1")
@@ -88,11 +92,15 @@ func TestDMLCapturePlanBaseline(t *testing.T) {
 }
 
 func TestCapturePlanBaseline(t *testing.T) {
+	save := config.GetGlobalConfig()
+	config.UpdateGlobal(func(c *config.Config) { c.Security.SkipGrantTable = false })
+	defer config.StoreGlobalConfig(save)
 	store, dom, clean := testkit.CreateMockStoreAndDomain(t)
 	defer clean()
 
 	tk := testkit.NewTestKit(t, store)
-
+	sessionVars := tk.Session().GetSessionVars()
+	sessionVars.SetMySQLProtocol(true)
 	stmtsummary.StmtSummaryByDigestMap.Clear()
 	tk.MustExec(" set @@tidb_capture_plan_baselines = on")
 	defer func() {
@@ -109,7 +117,7 @@ func TestCapturePlanBaseline(t *testing.T) {
 	rows := tk.MustQuery("show global bindings").Rows()
 	require.Len(t, rows, 0)
 
-	require.True(t, tk.Session().Auth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
+	require.True(t, tk.Session().MysqlAuth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
 	tk.MustExec("select * from t where a > 10")
 	tk.MustExec("select * from t where a > 10")
 	tk.MustExec("admin capture bindings")
@@ -120,18 +128,22 @@ func TestCapturePlanBaseline(t *testing.T) {
 }
 
 func TestCaptureDBCaseSensitivity(t *testing.T) {
+	save := config.GetGlobalConfig()
+	config.UpdateGlobal(func(c *config.Config) { c.Security.SkipGrantTable = false })
+	defer config.StoreGlobalConfig(save)
 	store, clean := testkit.CreateMockStore(t)
 	defer clean()
 
 	tk := testkit.NewTestKit(t, store)
-
+	sessionVars := tk.Session().GetSessionVars()
+	sessionVars.SetMySQLProtocol(true)
 	stmtsummary.StmtSummaryByDigestMap.Clear()
 	tk.MustExec("drop database if exists SPM")
 	tk.MustExec("create database SPM")
 	tk.MustExec("use SPM")
 	tk.MustExec("create table t(a int, b int, key(b))")
 	tk.MustExec("create global binding for select * from t using select /*+ use_index(t) */ * from t")
-	require.True(t, tk.Session().Auth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
+	require.True(t, tk.Session().MysqlAuth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
 	tk.MustExec("select /*+ use_index(t,b) */ * from t")
 	tk.MustExec("select /*+ use_index(t,b) */ * from t")
 	tk.MustExec("admin capture bindings")
@@ -144,11 +156,15 @@ func TestCaptureDBCaseSensitivity(t *testing.T) {
 }
 
 func TestCaptureBaselinesDefaultDB(t *testing.T) {
+	save := config.GetGlobalConfig()
+	config.UpdateGlobal(func(c *config.Config) { c.Security.SkipGrantTable = false })
+	defer config.StoreGlobalConfig(save)
 	store, clean := testkit.CreateMockStore(t)
 	defer clean()
 
 	tk := testkit.NewTestKit(t, store)
-
+	sessionVars := tk.Session().GetSessionVars()
+	sessionVars.SetMySQLProtocol(true)
 	stmtsummary.StmtSummaryByDigestMap.Clear()
 	tk.MustExec(" set @@tidb_capture_plan_baselines = on")
 	defer func() {
@@ -158,7 +174,7 @@ func TestCaptureBaselinesDefaultDB(t *testing.T) {
 	tk.MustExec("drop database if exists spm")
 	tk.MustExec("create database spm")
 	tk.MustExec("create table spm.t(a int, index idx_a(a))")
-	require.True(t, tk.Session().Auth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
+	require.True(t, tk.Session().MysqlAuth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
 	tk.MustExec("select * from spm.t ignore index(idx_a) where a > 10")
 	tk.MustExec("select * from spm.t ignore index(idx_a) where a > 10")
 	tk.MustExec("admin capture bindings")
@@ -174,6 +190,9 @@ func TestCaptureBaselinesDefaultDB(t *testing.T) {
 }
 
 func TestCapturePreparedStmt(t *testing.T) {
+	save := config.GetGlobalConfig()
+	config.UpdateGlobal(func(c *config.Config) { c.Security.SkipGrantTable = false })
+	defer config.StoreGlobalConfig(save)
 	originalVal := config.CheckTableBeforeDrop
 	config.CheckTableBeforeDrop = true
 	defer func() {
@@ -184,9 +203,10 @@ func TestCapturePreparedStmt(t *testing.T) {
 	defer clean()
 
 	tk := testkit.NewTestKit(t, store)
-
+	sessionVars := tk.Session().GetSessionVars()
+	sessionVars.SetMySQLProtocol(true)
 	stmtsummary.StmtSummaryByDigestMap.Clear()
-	require.True(t, tk.Session().Auth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
+	require.True(t, tk.Session().MysqlAuth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
 	tk.MustExec("use test")
 	tk.MustExec("drop table if exists t")
 	tk.MustExec("create table t(a int, b int, c int, key idx_b(b), key idx_c(c))")
@@ -213,16 +233,20 @@ func TestCapturePreparedStmt(t *testing.T) {
 }
 
 func TestCapturePlanBaselineIgnoreTiFlash(t *testing.T) {
+	save := config.GetGlobalConfig()
+	config.UpdateGlobal(func(c *config.Config) { c.Security.SkipGrantTable = false })
+	defer config.StoreGlobalConfig(save)
 	store, clean := testkit.CreateMockStore(t)
 	defer clean()
 
 	tk := testkit.NewTestKit(t, store)
-
+	sessionVars := tk.Session().GetSessionVars()
+	sessionVars.SetMySQLProtocol(true)
 	stmtsummary.StmtSummaryByDigestMap.Clear()
 	tk.MustExec("use test")
 	tk.MustExec("drop table if exists t")
 	tk.MustExec("create table t(a int, b int, key(a), key(b))")
-	require.True(t, tk.Session().Auth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
+	require.True(t, tk.Session().MysqlAuth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
 	tk.MustExec("select * from t")
 	tk.MustExec("select * from t")
 	// Create virtual tiflash replica info.
@@ -252,6 +276,9 @@ func TestCapturePlanBaselineIgnoreTiFlash(t *testing.T) {
 }
 
 func TestBindingSource(t *testing.T) {
+	save := config.GetGlobalConfig()
+	config.UpdateGlobal(func(c *config.Config) { c.Security.SkipGrantTable = false })
+	defer config.StoreGlobalConfig(save)
 	originalVal := config.CheckTableBeforeDrop
 	config.CheckTableBeforeDrop = true
 	defer func() {
@@ -262,7 +289,8 @@ func TestBindingSource(t *testing.T) {
 	defer clean()
 
 	tk := testkit.NewTestKit(t, store)
-
+	sessionVars := tk.Session().GetSessionVars()
+	sessionVars.SetMySQLProtocol(true)
 	tk.MustExec("use test")
 	tk.MustExec("drop table if exists t")
 	tk.MustExec("create table t(a int, index idx_a(a))")
@@ -298,7 +326,7 @@ func TestBindingSource(t *testing.T) {
 		tk.MustExec("set @@tidb_capture_plan_baselines = off")
 	}()
 	tk.MustExec("use test")
-	require.True(t, tk.Session().Auth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
+	require.True(t, tk.Session().MysqlAuth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
 	tk.MustExec("select * from t ignore index(idx_a) where a < 10")
 	tk.MustExec("select * from t ignore index(idx_a) where a < 10")
 	tk.MustExec("admin capture bindings")
@@ -313,13 +341,17 @@ func TestBindingSource(t *testing.T) {
 }
 
 func TestCapturedBindingCharset(t *testing.T) {
+	save := config.GetGlobalConfig()
+	config.UpdateGlobal(func(c *config.Config) { c.Security.SkipGrantTable = false })
+	defer config.StoreGlobalConfig(save)
 	store, clean := testkit.CreateMockStore(t)
 	defer clean()
 
 	tk := testkit.NewTestKit(t, store)
-
+	sessionVars := tk.Session().GetSessionVars()
+	sessionVars.SetMySQLProtocol(true)
 	stmtsummary.StmtSummaryByDigestMap.Clear()
-	require.True(t, tk.Session().Auth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
+	require.True(t, tk.Session().MysqlAuth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
 	tk.MustExec("use test")
 	tk.MustExec("create table t(name varchar(25), index idx(name))")
 
@@ -338,11 +370,15 @@ func TestCapturedBindingCharset(t *testing.T) {
 }
 
 func TestConcurrentCapture(t *testing.T) {
+	save := config.GetGlobalConfig()
+	config.UpdateGlobal(func(c *config.Config) { c.Security.SkipGrantTable = false })
+	defer config.StoreGlobalConfig(save)
 	store, clean := testkit.CreateMockStore(t)
 	defer clean()
 
 	tk := testkit.NewTestKit(t, store)
-
+	sessionVars := tk.Session().GetSessionVars()
+	sessionVars.SetMySQLProtocol(true)
 	// Simulate an existing binding generated by concurrent CREATE BINDING, which has not been synchronized to current tidb-server yet.
 	// Actually, it is more common to be generated by concurrent baseline capture, I use Manual just for simpler test verification.
 	tk.MustExec("insert into mysql.bind_info values('select * from `test` . `t`', 'select * from `test` . `t`', '', 'using', '2000-01-01 09:00:00', '2000-01-01 09:00:00', '', '','" +
@@ -354,7 +390,7 @@ func TestConcurrentCapture(t *testing.T) {
 	tk.MustExec("use test")
 	tk.MustExec("drop table if exists t")
 	tk.MustExec("create table t(a int, b int)")
-	require.True(t, tk.Session().Auth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
+	require.True(t, tk.Session().MysqlAuth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
 	tk.MustExec("select * from t")
 	tk.MustExec("select * from t")
 	tk.MustExec("admin capture bindings")
@@ -365,17 +401,21 @@ func TestConcurrentCapture(t *testing.T) {
 }
 
 func TestUpdateSubqueryCapture(t *testing.T) {
+	save := config.GetGlobalConfig()
+	config.UpdateGlobal(func(c *config.Config) { c.Security.SkipGrantTable = false })
+	defer config.StoreGlobalConfig(save)
 	store, clean := testkit.CreateMockStore(t)
 	defer clean()
 
 	tk := testkit.NewTestKit(t, store)
-
+	sessionVars := tk.Session().GetSessionVars()
+	sessionVars.SetMySQLProtocol(true)
 	tk.MustExec("use test")
 	tk.MustExec("drop table if exists t1, t2")
 	tk.MustExec("create table t1(a int, b int, c int, key idx_b(b))")
 	tk.MustExec("create table t2(a int, b int)")
 	stmtsummary.StmtSummaryByDigestMap.Clear()
-	require.True(t, tk.Session().Auth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
+	require.True(t, tk.Session().MysqlAuth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
 	tk.MustExec("update t1 set b = 1 where b = 2 and (a in (select a from t2 where b = 1) or c in (select a from t2 where b = 1))")
 	tk.MustExec("update t1 set b = 1 where b = 2 and (a in (select a from t2 where b = 1) or c in (select a from t2 where b = 1))")
 	tk.MustExec("admin capture bindings")
@@ -388,6 +428,9 @@ func TestUpdateSubqueryCapture(t *testing.T) {
 }
 
 func TestIssue20417(t *testing.T) {
+	save := config.GetGlobalConfig()
+	config.UpdateGlobal(func(c *config.Config) { c.Security.SkipGrantTable = false })
+	defer config.StoreGlobalConfig(save)
 	originalVal := config.CheckTableBeforeDrop
 	config.CheckTableBeforeDrop = true
 	defer func() {
@@ -398,7 +441,8 @@ func TestIssue20417(t *testing.T) {
 	defer clean()
 
 	tk := testkit.NewTestKit(t, store)
-
+	sessionVars := tk.Session().GetSessionVars()
+	sessionVars.SetMySQLProtocol(true)
 	tk.MustExec("use test")
 	tk.MustExec("drop table if exists t")
 	tk.MustExec(`CREATE TABLE t (
@@ -429,7 +473,7 @@ func TestIssue20417(t *testing.T) {
 	stmtsummary.StmtSummaryByDigestMap.Clear()
 	tk.MustExec("set @@tidb_capture_plan_baselines = on")
 	dom.BindHandle().CaptureBaselines()
-	require.True(t, tk.Session().Auth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
+	require.True(t, tk.Session().MysqlAuth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
 	tk.MustExec("select * from t where b=2 and c=213124")
 	tk.MustExec("select * from t where b=2 and c=213124")
 	tk.MustExec("admin capture bindings")
@@ -466,16 +510,20 @@ func TestIssue20417(t *testing.T) {
 }
 
 func TestCaptureWithZeroSlowLogThreshold(t *testing.T) {
+	save := config.GetGlobalConfig()
+	config.UpdateGlobal(func(c *config.Config) { c.Security.SkipGrantTable = false })
+	defer config.StoreGlobalConfig(save)
 	store, clean := testkit.CreateMockStore(t)
 	defer clean()
 
 	tk := testkit.NewTestKit(t, store)
-
+	sessionVars := tk.Session().GetSessionVars()
+	sessionVars.SetMySQLProtocol(true)
 	tk.MustExec("use test")
 	tk.MustExec("drop table if exists t")
 	tk.MustExec("create table t(a int)")
 	stmtsummary.StmtSummaryByDigestMap.Clear()
-	require.True(t, tk.Session().Auth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
+	require.True(t, tk.Session().MysqlAuth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
 	tk.MustExec("set tidb_slow_log_threshold = 0")
 	tk.MustExec("select * from t")
 	tk.MustExec("select * from t")
@@ -487,10 +535,15 @@ func TestCaptureWithZeroSlowLogThreshold(t *testing.T) {
 }
 
 func TestIssue25505(t *testing.T) {
+	save := config.GetGlobalConfig()
+	config.UpdateGlobal(func(c *config.Config) { c.Security.SkipGrantTable = false })
+	defer config.StoreGlobalConfig(save)
 	store, clean := testkit.CreateMockStore(t)
 	defer clean()
 
 	tk := testkit.NewTestKit(t, store)
+	sessionVars := tk.Session().GetSessionVars()
+	sessionVars.SetMySQLProtocol(true)
 	stmtsummary.StmtSummaryByDigestMap.Clear()
 
 	tk.MustExec("use test")
@@ -502,7 +555,7 @@ func TestIssue25505(t *testing.T) {
 	tk.MustExec("create table t (a int(11) default null,b int(11) default null,key b (b),key ba (b))")
 	tk.MustExec("create table t1 (a int(11) default null,b int(11) default null,key idx_ab (a,b),key idx_a (a),key idx_b (b))")
 	tk.MustExec("create table t2 (a int(11) default null,b int(11) default null,key idx_ab (a,b),key idx_a (a),key idx_b (b))")
-	require.True(t, tk.Session().Auth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
+	require.True(t, tk.Session().MysqlAuth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
 
 	spmMap := map[string]string{}
 	spmMap["with recursive `cte` ( `a` ) as ( select ? union select `a` + ? from `test` . `t1` where `a` < ? ) select * from `cte`"] =
@@ -557,11 +610,15 @@ func TestIssue25505(t *testing.T) {
 }
 
 func TestCaptureFilter(t *testing.T) {
+	save := config.GetGlobalConfig()
+	config.UpdateGlobal(func(c *config.Config) { c.Security.SkipGrantTable = false })
+	defer config.StoreGlobalConfig(save)
 	store, dom, clean := testkit.CreateMockStoreAndDomain(t)
 	defer clean()
 
 	tk := testkit.NewTestKit(t, store)
-
+	sessionVars := tk.Session().GetSessionVars()
+	sessionVars.SetMySQLProtocol(true)
 	stmtsummary.StmtSummaryByDigestMap.Clear()
 	tk.MustExec(" set @@tidb_capture_plan_baselines = on")
 	defer func() {
@@ -571,7 +628,7 @@ func TestCaptureFilter(t *testing.T) {
 	tk.MustExec("drop table if exists t")
 	tk.MustExec("create table t(a int)")
 
-	require.True(t, tk.Session().Auth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
+	require.True(t, tk.Session().MysqlAuth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
 	tk.MustExec("select * from t where a > 10")
 	tk.MustExec("select * from t where a > 10")
 	tk.MustExec("admin capture bindings")

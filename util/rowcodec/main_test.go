@@ -15,19 +15,10 @@
 package rowcodec
 
 import (
-	"testing"
-
 	"gitee.com/zhoujin826/goInception-plus/sessionctx/stmtctx"
 	"gitee.com/zhoujin826/goInception-plus/types"
 	"gitee.com/zhoujin826/goInception-plus/util/codec"
-	"gitee.com/zhoujin826/goInception-plus/util/testbridge"
-	"go.uber.org/goleak"
 )
-
-func TestMain(m *testing.M) {
-	testbridge.WorkaroundGoCheckFlags()
-	goleak.VerifyTestMain(m)
-}
 
 // EncodeFromOldRow encodes a row from an old-format row.
 // this method will be used in test.

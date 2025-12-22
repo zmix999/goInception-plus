@@ -188,9 +188,9 @@ replace vitess.io/vitess => github.com/vitessio/vitess v0.19.1
 
 replace github.com/aws/aws-sdk-go => github.com/aws/aws-sdk-go v1.35.3
 
-replace gopkg.in/gcfg.v1 => github.com/hanchuanchuan/gcfg.v1 v0.0.0-20190302111942-77c0f3dcc0b3
-
 // fix potential security issue(CVE-2020-26160) introduced by indirect dependency.
 replace github.com/dgrijalva/jwt-go => github.com/form3tech-oss/jwt-go v3.2.6-0.20210809144907-32ab6a8243d7+incompatible
 
 replace gitee.com/zhoujin826/goInception-plus/parser => ./parser
+
+replace gopkg.in/gcfg.v1 => github.com/hanchuanchuan/gcfg.v1 v0.0.0-20190302111942-77c0f3dcc0b3

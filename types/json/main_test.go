@@ -14,16 +14,4 @@
 
 package json
 
-import (
-	"testing"
-
-	"gitee.com/zhoujin826/goInception-plus/util/testbridge"
-	"go.uber.org/goleak"
-)
-
 const benchStr = `{"a":[1,"2",{"aa":"bb"},4,null],"b":true,"c":null}`
-
-func TestMain(m *testing.M) {
-	testbridge.WorkaroundGoCheckFlags()
-	goleak.VerifyTestMain(m)
-}

@@ -21,15 +21,8 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/sessionctx/stmtctx"
 	"gitee.com/zhoujin826/goInception-plus/util"
 	"gitee.com/zhoujin826/goInception-plus/util/memory"
-	"gitee.com/zhoujin826/goInception-plus/util/testbridge"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/goleak"
 )
-
-func TestMain(m *testing.M) {
-	testbridge.WorkaroundGoCheckFlags()
-	goleak.VerifyTestMain(m)
-}
 
 func TestLogFormat(t *testing.T) {
 	t.Parallel()

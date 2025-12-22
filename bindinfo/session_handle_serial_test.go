@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"gitee.com/zhoujin826/goInception-plus/bindinfo"
+	"gitee.com/zhoujin826/goInception-plus/config"
 	"gitee.com/zhoujin826/goInception-plus/errno"
 	"gitee.com/zhoujin826/goInception-plus/metrics"
 	"gitee.com/zhoujin826/goInception-plus/parser/auth"
@@ -173,17 +174,21 @@ func TestSessionBinding(t *testing.T) {
 }
 
 func TestBaselineDBLowerCase(t *testing.T) {
+	save := config.GetGlobalConfig()
+	config.UpdateGlobal(func(c *config.Config) { c.Security.SkipGrantTable = false })
+	defer config.StoreGlobalConfig(save)
 	store, dom, clean := testkit.CreateMockStoreAndDomain(t)
 	defer clean()
 
 	tk := testkit.NewTestKit(t, store)
-
+	sessionVars := tk.Session().GetSessionVars()
+	sessionVars.SetMySQLProtocol(true)
 	stmtsummary.StmtSummaryByDigestMap.Clear()
 	tk.MustExec("drop database if exists SPM")
 	tk.MustExec("create database SPM")
 	tk.MustExec("use SPM")
 	tk.MustExec("create table t(a int, b int)")
-	require.True(t, tk.Session().Auth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
+	require.True(t, tk.Session().MysqlAuth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
 	tk.MustExec("update t set a = a + 1")
 	tk.MustExec("update t set a = a + 1")
 	tk.MustExec("admin capture bindings")
@@ -264,17 +269,22 @@ func TestBaselineDBLowerCase(t *testing.T) {
 }
 
 func TestShowGlobalBindings(t *testing.T) {
+	save := config.GetGlobalConfig()
+	config.UpdateGlobal(func(c *config.Config) { c.Security.SkipGrantTable = false })
+	defer config.StoreGlobalConfig(save)
 	store, clean := testkit.CreateMockStore(t)
 	defer clean()
 
 	tk := testkit.NewTestKit(t, store)
+	sessionVars := tk.Session().GetSessionVars()
+	sessionVars.SetMySQLProtocol(true)
 	stmtsummary.StmtSummaryByDigestMap.Clear()
 	tk.MustExec("drop database if exists SPM")
 	tk.MustExec("create database SPM")
 	tk.MustExec("use SPM")
 	tk.MustExec("create table t(a int, b int, key(a))")
 	tk.MustExec("create table t0(a int, b int, key(a))")
-	require.True(t, tk.Session().Auth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
+	require.True(t, tk.Session().MysqlAuth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
 	rows := tk.MustQuery("show global bindings").Rows()
 	require.Len(t, rows, 0)
 	// Simulate existing bindings in the mysql.bind_info.

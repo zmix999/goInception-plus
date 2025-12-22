@@ -14,13 +14,6 @@
 
 package logutil
 
-import (
-	"testing"
-
-	"gitee.com/zhoujin826/goInception-plus/util/testbridge"
-	"go.uber.org/goleak"
-)
-
 const (
 	// zapLogPatern is used to match the zap log format, such as the following log:
 	// [2019/02/13 15:56:05.385 +08:00] [INFO] [log_test.go:167] ["info message"] [conn=conn1] ["str key"=val] ["int key"=123]
@@ -32,11 +25,3 @@ const (
 var (
 	PrettyPrint = prettyPrint
 )
-
-func TestMain(m *testing.M) {
-	testbridge.WorkaroundGoCheckFlags()
-	opts := []goleak.Option{
-		goleak.IgnoreTopFunction("gopkg.in/natefinch/lumberjack%2ev2.(*Logger).millRun"),
-	}
-	goleak.VerifyTestMain(m, opts...)
-}

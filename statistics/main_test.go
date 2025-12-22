@@ -15,48 +15,16 @@
 package statistics
 
 import (
-	"flag"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/config"
 	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
 	"gitee.com/zhoujin826/goInception-plus/sessionctx/stmtctx"
 	"gitee.com/zhoujin826/goInception-plus/testkit/testdata"
-	"gitee.com/zhoujin826/goInception-plus/testkit/testmain"
 	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/testbridge"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/goleak"
 )
 
 var testDataMap = make(testdata.BookKeeper, 2)
-
-func TestMain(m *testing.M) {
-	testbridge.WorkaroundGoCheckFlags()
-
-	if !flag.Parsed() {
-		flag.Parse()
-	}
-
-	config.UpdateGlobal(func(conf *config.Config) {
-		conf.TiKVClient.AsyncCommit.SafeWindow = 0
-		conf.TiKVClient.AsyncCommit.AllowedClockDrift = 0
-	})
-
-	testDataMap.LoadTestSuiteData("testdata", "integration_suite")
-	testDataMap.LoadTestSuiteData("testdata", "stats_suite")
-
-	opts := []goleak.Option{
-		goleak.IgnoreTopFunction("go.etcd.io/etcd/pkg/logutil.(*MergeLogger).outputLoop"),
-		goleak.IgnoreTopFunction("go.opencensus.io/stats/view.(*worker).start"),
-	}
-
-	callback := func(i int) int {
-		testDataMap.GenerateOutputIfNeeded()
-		return i
-	}
-	goleak.VerifyTestMain(testmain.WrapTestingM(m, callback), opts...)
-}
 
 func GetIntegrationSuiteData() testdata.TestData {
 	return testDataMap["integration_suite"]

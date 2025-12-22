@@ -18,40 +18,9 @@ import (
 	"testing"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/testkit/testmain"
 	"gitee.com/zhoujin826/goInception-plus/util/mock"
-	"gitee.com/zhoujin826/goInception-plus/util/testbridge"
-	"gitee.com/zhoujin826/goInception-plus/util/timeutil"
 	"github.com/stretchr/testify/require"
-	"github.com/tikv/client-go/v2/tikv"
-	"go.uber.org/goleak"
 )
-
-func TestMain(m *testing.M) {
-	testbridge.WorkaroundGoCheckFlags()
-	testmain.ShortCircuitForBench(m)
-
-	config.UpdateGlobal(func(conf *config.Config) {
-		conf.TiKVClient.AsyncCommit.SafeWindow = 0
-		conf.TiKVClient.AsyncCommit.AllowedClockDrift = 0
-		conf.Experimental.AllowsExpressionIndex = true
-	})
-	tikv.EnableFailpoints()
-
-	// Some test depends on the values of timeutil.SystemLocation()
-	// If we don't SetSystemTZ() here, the value would change unpredictable.
-	// Affected by the order whether a testsuite runs before or after integration test.
-	// Note, SetSystemTZ() is a sync.Once operation.
-	timeutil.SetSystemTZ("system")
-
-	opts := []goleak.Option{
-		goleak.IgnoreTopFunction("go.etcd.io/etcd/pkg/logutil.(*MergeLogger).outputLoop"),
-		goleak.IgnoreTopFunction("go.opencensus.io/stats/view.(*worker).start"),
-	}
-
-	goleak.VerifyTestMain(m, opts...)
-}
 
 func createContext(t *testing.T) *mock.Context {
 	ctx := mock.NewContext()

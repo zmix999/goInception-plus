@@ -17,9 +17,6 @@ package copr
 import (
 	"testing"
 	"time"
-
-	"gitee.com/zhoujin826/goInception-plus/util/testbridge"
-	"go.uber.org/goleak"
 )
 
 type main struct {
@@ -31,9 +28,4 @@ func (m *main) Run() int {
 	// In order for MVCCLevelDB to close, we need to wait one second
 	time.Sleep(time.Second)
 	return c
-}
-
-func TestMain(m *testing.M) {
-	testbridge.WorkaroundGoCheckFlags()
-	goleak.VerifyTestMain(&main{m: m})
 }

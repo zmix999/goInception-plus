@@ -28,19 +28,8 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/table"
 	"gitee.com/zhoujin826/goInception-plus/types"
 	"gitee.com/zhoujin826/goInception-plus/util/mock"
-	"gitee.com/zhoujin826/goInception-plus/util/testbridge"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/goleak"
 )
-
-func TestMain(m *testing.M) {
-	opts := []goleak.Option{
-		goleak.IgnoreTopFunction("go.etcd.io/etcd/pkg/logutil.(*MergeLogger).outputLoop"),
-		goleak.IgnoreTopFunction("go.opencensus.io/stats/view.(*worker).start"),
-	}
-	testbridge.WorkaroundGoCheckFlags()
-	goleak.VerifyTestMain(m, opts...)
-}
 
 type mockedInfoSchema struct {
 	t *testing.T

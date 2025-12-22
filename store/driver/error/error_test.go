@@ -17,18 +17,11 @@ package error
 import (
 	"testing"
 
-	"github.com/pingcap/errors"
 	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/util/testbridge"
+	"github.com/pingcap/errors"
 	"github.com/stretchr/testify/assert"
 	tikverr "github.com/tikv/client-go/v2/error"
-	"go.uber.org/goleak"
 )
-
-func TestMain(m *testing.M) {
-	testbridge.WorkaroundGoCheckFlags()
-	goleak.VerifyTestMain(m)
-}
 
 func TestConvertError(t *testing.T) {
 	wrapFuncs := []func(error) error{

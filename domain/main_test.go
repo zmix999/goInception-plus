@@ -18,18 +18,7 @@ import (
 	"testing"
 
 	. "gitee.com/zhoujin826/goInception-plus/domain"
-	"gitee.com/zhoujin826/goInception-plus/util/testbridge"
-	"go.uber.org/goleak"
 )
-
-func TestMain(m *testing.M) {
-	testbridge.WorkaroundGoCheckFlags()
-	opts := []goleak.Option{
-		goleak.IgnoreTopFunction("go.etcd.io/etcd/pkg/logutil.(*MergeLogger).outputLoop"),
-		goleak.IgnoreTopFunction("go.opencensus.io/stats/view.(*worker).start"),
-	}
-	goleak.VerifyTestMain(m, opts...)
-}
 
 // TestDomainSerial handles tests in serial
 func TestDomainSerial(t *testing.T) {

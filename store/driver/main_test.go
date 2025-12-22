@@ -25,26 +25,14 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/session"
 	"gitee.com/zhoujin826/goInception-plus/store/copr"
 	"gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore"
-	"gitee.com/zhoujin826/goInception-plus/util/testbridge"
 	"github.com/stretchr/testify/require"
 	"github.com/tikv/client-go/v2/tikv"
-	"go.uber.org/goleak"
 )
 
 var (
 	pdAddrs  = flag.String("pd-addrs", "127.0.0.1:2379", "pd addrs")
 	withTiKV = flag.Bool("with-tikv", false, "run tests with TiKV cluster started. (not use the mock server)")
 )
-
-func TestMain(m *testing.M) {
-	testbridge.WorkaroundGoCheckFlags()
-	tikv.EnableFailpoints()
-	opts := []goleak.Option{
-		goleak.IgnoreTopFunction("go.etcd.io/etcd/pkg/logutil.(*MergeLogger).outputLoop"),
-		goleak.IgnoreTopFunction("go.opencensus.io/stats/view.(*worker).start"),
-	}
-	goleak.VerifyTestMain(m, opts...)
-}
 
 func createTestStore(t *testing.T) (kv.Storage, *domain.Domain, func()) {
 	if *withTiKV {

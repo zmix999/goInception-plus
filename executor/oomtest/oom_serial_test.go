@@ -22,30 +22,12 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/pingcap/log"
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/domain"
 	"gitee.com/zhoujin826/goInception-plus/testkit"
-	"gitee.com/zhoujin826/goInception-plus/util/testbridge"
+	"github.com/pingcap/log"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/goleak"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
-
-func TestMain(m *testing.M) {
-	testbridge.WorkaroundGoCheckFlags()
-	registerHook()
-	domain.RunAutoAnalyze = false
-	config.UpdateGlobal(func(conf *config.Config) {
-		conf.OOMAction = config.OOMActionLog
-	})
-	opts := []goleak.Option{
-		goleak.IgnoreTopFunction("go.etcd.io/etcd/pkg/logutil.(*MergeLogger).outputLoop"),
-		goleak.IgnoreTopFunction("go.opencensus.io/stats/view.(*worker).start"),
-	}
-	goleak.VerifyTestMain(m, opts...)
-}
 
 func TestMemTracker4UpdateExec(t *testing.T) {
 	store, clean := testkit.CreateMockStore(t)

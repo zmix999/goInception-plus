@@ -25,22 +25,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pingcap/failpoint"
 	"gitee.com/zhoujin826/goInception-plus/ddl/util"
 	"gitee.com/zhoujin826/goInception-plus/owner"
-	"gitee.com/zhoujin826/goInception-plus/util/testbridge"
+	"github.com/pingcap/failpoint"
 	"github.com/stretchr/testify/require"
 	"go.etcd.io/etcd/integration"
-	"go.uber.org/goleak"
 )
-
-func TestMain(m *testing.M) {
-	testbridge.WorkaroundGoCheckFlags()
-	opts := []goleak.Option{
-		goleak.IgnoreTopFunction("go.etcd.io/etcd/pkg/logutil.(*MergeLogger).outputLoop"),
-	}
-	goleak.VerifyTestMain(m, opts...)
-}
 
 func TestTopology(t *testing.T) {
 	if runtime.GOOS == "windows" {

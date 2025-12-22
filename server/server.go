@@ -652,17 +652,14 @@ func (s *Server) onConn(conn *clientConn) {
 	}
 
 	connectedTime := time.Now()
-	var runFunc func(context.Context)
 
 	if strings.Contains(conn.bufReadConn.Conn.LocalAddr().String(), fmt.Sprintf("%d", s.cfg.SecondPort)) {
 		sessionVars.SetPostgreSQLProtocol(true)
-		runFunc = conn.Run
+		conn.Run(ctx)
 	} else {
 		sessionVars.SetMySQLProtocol(true)
-		runFunc = conn.MysqlRun
+		conn.MysqlRun(ctx)
 	}
-
-	runFunc(ctx)
 
 	err = plugin.ForeachPlugin(plugin.Audit, func(p *plugin.Plugin) error {
 		// Audit plugin may be disabled before a conn is created, leading no connectionInfo in sessionVars.

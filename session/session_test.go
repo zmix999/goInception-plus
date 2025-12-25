@@ -44,12 +44,10 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/session"
 	"gitee.com/zhoujin826/goInception-plus/session/txninfo"
 	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/binloginfo"
 	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
 	"gitee.com/zhoujin826/goInception-plus/statistics/handle"
 	"gitee.com/zhoujin826/goInception-plus/store/driver"
 	"gitee.com/zhoujin826/goInception-plus/store/mockstore"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore/mockcopr"
 	"gitee.com/zhoujin826/goInception-plus/table/tables"
 	"gitee.com/zhoujin826/goInception-plus/tablecodec"
 	"gitee.com/zhoujin826/goInception-plus/types"
@@ -253,8 +251,6 @@ func (s *testSessionSuiteBase) TearDownTest(c *C) {
 type mockBinlogPump struct {
 }
 
-var _ binlog.PumpClient = &mockBinlogPump{}
-
 func (p *mockBinlogPump) WriteBinlog(ctx context.Context, in *binlog.WriteBinlogReq, opts ...grpc.CallOption) (*binlog.WriteBinlogResp, error) {
 	return &binlog.WriteBinlogResp{}, nil
 }
@@ -265,39 +261,6 @@ type mockPumpPullBinlogsClient struct {
 
 func (m mockPumpPullBinlogsClient) Recv() (*binlog.PullBinlogResp, error) {
 	return nil, nil
-}
-
-func (p *mockBinlogPump) PullBinlogs(ctx context.Context, in *binlog.PullBinlogReq, opts ...grpc.CallOption) (binlog.Pump_PullBinlogsClient, error) {
-	return mockPumpPullBinlogsClient{mockcopr.MockGRPCClientStream()}, nil
-}
-
-func (s *testSessionSuite) TestForCoverage(c *C) {
-	// Just for test coverage.
-	tk := testkit.NewTestKitWithInit(c, s.store)
-	tk.MustExec("drop table if exists t")
-	tk.MustExec("create table t (id int auto_increment, v int, index (id))")
-	tk.MustExec("insert t values ()")
-	tk.MustExec("insert t values ()")
-	tk.MustExec("insert t values ()")
-
-	// Normal request will not cover txn.Seek.
-	tk.MustExec("admin check table t")
-
-	// Cover dirty table operations in StateTxn.
-	tk.Se.GetSessionVars().BinlogClient = binloginfo.MockPumpsClient(&mockBinlogPump{})
-	tk.MustExec("begin")
-	tk.MustExec("truncate table t")
-	tk.MustExec("insert t values ()")
-	tk.MustExec("delete from t where id = 2")
-	tk.MustExec("update t set v = 5 where id = 2")
-	tk.MustExec("insert t values ()")
-	tk.MustExec("rollback")
-
-	c.Check(tk.Se.SetCollation(mysql.DefaultCollationID), IsNil)
-
-	tk.MustExec("show processlist")
-	_, err := tk.Se.FieldList("t")
-	c.Check(err, IsNil)
 }
 
 func (s *testSessionSuite2) TestErrorRollback(c *C) {

@@ -1,22 +1,18 @@
 ---
-name: "\U0001F41B Bug Report"
-about: As a User, I want to report a Bug.
-labels: type/bug
+name: "\U0001F41B Bug报告"
+about: 不符合预期的或者程序崩溃的问题报告
+
 ---
 
-## Bug Report
+**描述**
+对问题简单清晰的描述
 
-Please answer these questions before submitting your issue. Thanks!
+**重现**
+模拟重现的步骤
 
-### 1. Minimal reproduce step (Required)
+**环境**
+ - 数据库: [mysql/mariadb]
+ - 版本: [例如 5.7.21]
 
-<!-- a step by step guide for reproducing the bug. -->
-
-### 2. What did you expect to see? (Required)
-
-### 3. What did you see instead (Required)
-
-### 4. What is your TiDB version? (Required)
-
-<!-- Paste the output of SELECT tidb_version() -->
-
+**参数**
+可能与问题相关的设置参数

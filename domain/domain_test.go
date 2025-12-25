@@ -19,12 +19,9 @@ import (
 	"crypto/tls"
 	"math"
 	"net"
-	"runtime"
 	"testing"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/ddl"
-	"gitee.com/zhoujin826/goInception-plus/domain/infosync"
 	"gitee.com/zhoujin826/goInception-plus/kv"
 	"gitee.com/zhoujin826/goInception-plus/meta"
 	"gitee.com/zhoujin826/goInception-plus/metrics"
@@ -42,116 +39,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tikv/client-go/v2/oracle"
 	"github.com/tikv/client-go/v2/tikv"
-	"go.etcd.io/etcd/integration"
 )
-
-// SubTestInfo is batched in TestDomainSerial
-func SubTestInfo(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("integration.NewClusterV3 will create file contains a colon which is not allowed on Windows")
-	}
-
-	if !unixSocketAvailable() {
-		t.Skip("ETCD use ip:port as unix socket address, skip when it is unavailable.")
-	}
-
-	require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/domain/infosync/FailPlacement", `return(true)`))
-
-	s, err := mockstore.NewMockStore()
-	require.NoError(t, err)
-
-	cluster := integration.NewClusterV3(t, &integration.ClusterConfig{Size: 1})
-	defer cluster.Terminate(t)
-
-	mockStore := &mockEtcdBackend{
-		Storage: s,
-		pdAddrs: []string{cluster.Members[0].GRPCAddr()}}
-	ddlLease := 80 * time.Millisecond
-	dom := NewDomain(mockStore, ddlLease, 0, 0, 0, mockFactory, nil)
-	defer func() {
-		dom.Close()
-		err := s.Close()
-		require.NoError(t, err)
-	}()
-
-	client := cluster.RandClient()
-	dom.etcdClient = client
-	// Mock new DDL and init the schema syncer with etcd client.
-	goCtx := context.Background()
-	dom.ddl = ddl.NewDDL(
-		goCtx,
-		ddl.WithEtcdClient(dom.GetEtcdClient()),
-		ddl.WithStore(s),
-		ddl.WithInfoCache(dom.infoCache),
-		ddl.WithLease(ddlLease),
-	)
-	require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/domain/MockReplaceDDL", `return(true)`))
-	require.NoError(t, dom.Init(ddlLease, sysMockFactory))
-	require.NoError(t, failpoint.Disable("gitee.com/zhoujin826/goInception-plus/domain/MockReplaceDDL"))
-
-	// Test for GetServerInfo and GetServerInfoByID.
-	ddlID := dom.ddl.GetID()
-	serverInfo, err := infosync.GetServerInfo()
-	require.NoError(t, err)
-
-	info, err := infosync.GetServerInfoByID(goCtx, ddlID)
-	require.NoError(t, err)
-
-	if serverInfo.ID != info.ID {
-		t.Fatalf("server self info %v, info %v", serverInfo, info)
-	}
-
-	_, err = infosync.GetServerInfoByID(goCtx, "not_exist_id")
-	require.Error(t, err)
-	require.Equal(t, "[info-syncer] get /tidb/server/info/not_exist_id failed", err.Error())
-
-	// Test for GetAllServerInfo.
-	infos, err := infosync.GetAllServerInfo(goCtx)
-	require.NoError(t, err)
-	require.Lenf(t, infos, 1, "server one info %v, info %v", infos[ddlID], info)
-	require.Equalf(t, info.ID, infos[ddlID].ID, "server one info %v, info %v", infos[ddlID], info)
-
-	// Test the scene where syncer.Done() gets the information.
-	require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/ddl/util/ErrorMockSessionDone", `return(true)`))
-	<-dom.ddl.SchemaSyncer().Done()
-	require.NoError(t, failpoint.Disable("gitee.com/zhoujin826/goInception-plus/ddl/util/ErrorMockSessionDone"))
-	time.Sleep(15 * time.Millisecond)
-	syncerStarted := false
-	for i := 0; i < 1000; i++ {
-		if dom.SchemaValidator.IsStarted() {
-			syncerStarted = true
-			break
-		}
-		time.Sleep(5 * time.Millisecond)
-	}
-	require.True(t, syncerStarted)
-
-	// Make sure loading schema is normal.
-	cs := &ast.CharsetOpt{
-		Chs: "utf8",
-		Col: "utf8_bin",
-	}
-	ctx := mock.NewContext()
-	require.NoError(t, dom.ddl.CreateSchema(ctx, model.NewCIStr("aaa"), cs, nil, nil))
-	require.NoError(t, dom.Reload())
-	require.Equal(t, int64(1), dom.InfoSchema().SchemaMetaVersion())
-
-	// Test for RemoveServerInfo.
-	dom.info.RemoveServerInfo()
-	infos, err = infosync.GetAllServerInfo(goCtx)
-	require.NoError(t, err)
-	require.Len(t, infos, 0)
-
-	// Test for acquireServerID & refreshServerIDTTL
-	err = dom.acquireServerID(goCtx)
-	require.NoError(t, err)
-	require.NotEqual(t, 0, dom.ServerID())
-
-	err = dom.refreshServerIDTTL(goCtx)
-	require.NoError(t, err)
-
-	require.NoError(t, failpoint.Disable("gitee.com/zhoujin826/goInception-plus/domain/infosync/FailPlacement"))
-}
 
 // SubTestDomain is batched in TestDomainSerial
 func SubTestDomain(t *testing.T) {

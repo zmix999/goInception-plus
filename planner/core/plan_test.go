@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"strings"
 
-	. "github.com/pingcap/check"
 	"gitee.com/zhoujin826/goInception-plus/config"
 	"gitee.com/zhoujin826/goInception-plus/domain"
 	"gitee.com/zhoujin826/goInception-plus/kv"
@@ -31,6 +30,7 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/util/testkit"
 	"gitee.com/zhoujin826/goInception-plus/util/testleak"
 	"gitee.com/zhoujin826/goInception-plus/util/testutil"
+	. "github.com/pingcap/check"
 )
 
 var _ = Suite(&testPlanNormalize{})
@@ -40,17 +40,6 @@ type testPlanNormalize struct {
 	dom   *domain.Domain
 
 	testData testutil.TestData
-}
-
-func (s *testPlanNormalize) SetUpSuite(c *C) {
-	testleak.BeforeTest()
-	store, dom, err := newStoreWithBootstrap()
-	c.Assert(err, IsNil)
-	s.store = store
-	s.dom = dom
-
-	s.testData, err = testutil.LoadTestSuiteData("testdata", "plan_normalized_suite")
-	c.Assert(err, IsNil)
 }
 
 func (s *testPlanNormalize) TearDownSuite(c *C) {

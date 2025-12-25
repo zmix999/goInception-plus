@@ -18,12 +18,13 @@ import (
 	"fmt"
 	"testing"
 
-	. "github.com/pingcap/check"
+	"gitee.com/zhoujin826/goInception-plus/config"
 	"gitee.com/zhoujin826/goInception-plus/parser/auth"
 	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
 	"gitee.com/zhoujin826/goInception-plus/privilege/privileges"
 	"gitee.com/zhoujin826/goInception-plus/session"
 	"gitee.com/zhoujin826/goInception-plus/util"
+	. "github.com/pingcap/check"
 	"github.com/stretchr/testify/require"
 )
 
@@ -344,11 +345,16 @@ func TestLoadRoleGraph(t *testing.T) {
 }
 
 func TestRoleGraphBFS(t *testing.T) {
+	save := config.GetGlobalConfig()
+	config.UpdateGlobal(func(c *config.Config) { c.Security.SkipGrantTable = false })
+	defer config.StoreGlobalConfig(save)
 	t.Parallel()
 	store, clean := newStore(t)
 	defer clean()
 
 	se, err := session.CreateSession4Test(store)
+	sessionVars := se.GetSessionVars()
+	sessionVars.SetMySQLProtocol(true)
 	require.NoError(t, err)
 	defer se.Close()
 	mustExec(t, se, `CREATE ROLE r_1, r_2, r_3, r_4, r_5, r_6;`)

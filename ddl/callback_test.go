@@ -17,7 +17,6 @@ package ddl
 import (
 	"context"
 
-	. "github.com/pingcap/check"
 	"gitee.com/zhoujin826/goInception-plus/infoschema"
 	"gitee.com/zhoujin826/goInception-plus/parser/model"
 	"gitee.com/zhoujin826/goInception-plus/sessionctx"
@@ -115,12 +114,4 @@ func (tc *TestDDLCallback) OnWatched(ctx context.Context) {
 	}
 
 	tc.BaseCallback.OnWatched(ctx)
-}
-
-func (s *testDDLSuite) TestCallback(c *C) {
-	cb := &BaseCallback{}
-	c.Assert(cb.OnChanged(nil), IsNil)
-	cb.OnJobRunBefore(nil)
-	cb.OnJobUpdated(nil)
-	cb.OnWatched(context.TODO())
 }

@@ -114,6 +114,14 @@ const defaultCapability = mysql.ClientLongPassword | mysql.ClientLongFlag |
 	mysql.ClientMultiStatements | mysql.ClientMultiResults | mysql.ClientLocalFiles |
 	mysql.ClientConnectAtts | mysql.ClientPluginAuth | mysql.ClientInteractive
 
+type DatabaseMode int
+
+const (
+	DatabaseModeNone DatabaseMode = iota
+	DatabaseModeMySQL
+	DatabaseModePostgreSQL
+)
+
 // Server is the MySQL protocol server
 type Server struct {
 	cfg               *config.Config
@@ -134,6 +142,7 @@ type Server struct {
 	statusServer   *http.Server
 	grpcServer     *grpc.Server
 	inShutdownMode bool
+	DatabaseMode
 	// osc进程列表
 	oscProcessList map[string]*util.OscProcessInfo
 }
@@ -514,6 +523,7 @@ func (s *Server) startNetworkListener(listener net.Listener, isUnixSocket bool, 
 		}
 
 		clientConn := s.newConn(conn)
+		s.handledatabaseMode(clientConn)
 		if isUnixSocket {
 
 			uc, ok := conn.(*net.UnixConn)
@@ -558,7 +568,6 @@ func (s *Server) startNetworkListener(listener net.Listener, isUnixSocket bool, 
 			terror.Log(clientConn.Close())
 			continue
 		}
-
 		go s.onConn(clientConn)
 	}
 }
@@ -613,12 +622,13 @@ func (s *Server) Close() {
 // onConn runs in its own goroutine, handles queries from this connection.
 func (s *Server) onConn(conn *clientConn) {
 	ctx := logutil.WithConnID(context.Background(), conn.connectionID)
-	if s.isPostgreSQLMode(conn) {
+	switch s.DatabaseMode {
+	case DatabaseModePostgreSQL:
 		if err := conn.handshake(ctx); err != nil {
 			s.handleHandshakeError(conn, err)
 			return
 		}
-	} else if s.isMySQLMode(conn) {
+	case DatabaseModeMySQL:
 		if err := conn.mysqlhandshake(ctx); err != nil {
 			s.handleHandshakeError(conn, err)
 			return
@@ -653,10 +663,11 @@ func (s *Server) onConn(conn *clientConn) {
 
 	connectedTime := time.Now()
 
-	if s.isPostgreSQLMode(conn) {
+	switch s.DatabaseMode {
+	case DatabaseModePostgreSQL:
 		sessionVars.SetPostgreSQLProtocol(true)
 		conn.Run(ctx)
-	} else if s.isMySQLMode(conn) {
+	case DatabaseModeMySQL:
 		sessionVars.SetMySQLProtocol(true)
 		conn.MysqlRun(ctx)
 	}
@@ -681,12 +692,14 @@ func (s *Server) onConn(conn *clientConn) {
 	}
 }
 
-func (s *Server) isPostgreSQLMode(conn *clientConn) bool {
-	return strings.Contains(conn.bufReadConn.LocalAddr().String(), fmt.Sprintf(":%d", s.cfg.SecondPort))
-}
-
-func (s *Server) isMySQLMode(conn *clientConn) bool {
-	return strings.Contains(conn.bufReadConn.LocalAddr().String(), fmt.Sprintf(":%d", s.cfg.Port))
+func (s *Server) handledatabaseMode(conn *clientConn) {
+	if strings.Contains(conn.bufReadConn.LocalAddr().String(), fmt.Sprintf(":%d", s.cfg.SecondPort)) {
+		s.DatabaseMode = DatabaseModePostgreSQL
+	} else if strings.Contains(conn.bufReadConn.LocalAddr().String(), fmt.Sprintf(":%d", s.cfg.Port)) {
+		s.DatabaseMode = DatabaseModeMySQL
+	} else {
+		s.DatabaseMode = DatabaseModeMySQL
+	}
 }
 
 func (s *Server) handleHandshakeError(conn *clientConn, err error) {

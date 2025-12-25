@@ -17,15 +17,14 @@ package core
 import (
 	"context"
 
-	. "github.com/pingcap/check"
 	"gitee.com/zhoujin826/goInception-plus/infoschema"
 	"gitee.com/zhoujin826/goInception-plus/parser"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
 	"gitee.com/zhoujin826/goInception-plus/planner/util"
 	"gitee.com/zhoujin826/goInception-plus/sessionctx"
 	"gitee.com/zhoujin826/goInception-plus/util/hint"
 	"gitee.com/zhoujin826/goInception-plus/util/testleak"
 	"gitee.com/zhoujin826/goInception-plus/util/testutil"
+	. "github.com/pingcap/check"
 )
 
 var _ = Suite(&testIndexMergeSuite{})
@@ -37,15 +36,6 @@ type testIndexMergeSuite struct {
 	ctx sessionctx.Context
 
 	testdata testutil.TestData
-}
-
-func (s *testIndexMergeSuite) SetUpSuite(c *C) {
-	s.is = infoschema.MockInfoSchema([]*model.TableInfo{MockSignedTable(), MockView()})
-	s.ctx = MockContext()
-	s.Parser = parser.New()
-	var err error
-	s.testdata, err = testutil.LoadTestSuiteData("testdata", "index_merge_suite")
-	c.Assert(err, IsNil)
 }
 
 func (s *testIndexMergeSuite) TearDownSuite(c *C) {

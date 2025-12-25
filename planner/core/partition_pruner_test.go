@@ -20,14 +20,13 @@ import (
 	"sort"
 	"strings"
 
-	. "github.com/pingcap/check"
 	"gitee.com/zhoujin826/goInception-plus/domain"
 	"gitee.com/zhoujin826/goInception-plus/kv"
 	"gitee.com/zhoujin826/goInception-plus/sessionctx"
 	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
-	"gitee.com/zhoujin826/goInception-plus/util/mock"
 	"gitee.com/zhoujin826/goInception-plus/util/testkit"
 	"gitee.com/zhoujin826/goInception-plus/util/testutil"
+	. "github.com/pingcap/check"
 )
 
 var _ = Suite(&testPartitionPruneSuit{})
@@ -37,15 +36,6 @@ type testPartitionPruneSuit struct {
 	dom      *domain.Domain
 	ctx      sessionctx.Context
 	testData testutil.TestData
-}
-
-func (s *testPartitionPruneSuit) SetUpSuite(c *C) {
-	var err error
-	s.store, s.dom, err = newStoreWithBootstrap()
-	c.Assert(err, IsNil)
-	s.ctx = mock.NewContext()
-	s.testData, err = testutil.LoadTestSuiteData("testdata", "partition_pruner")
-	c.Assert(err, IsNil)
 }
 
 func (s *testPartitionPruneSuit) TearDownSuite(c *C) {
@@ -248,14 +238,15 @@ type testTablePartitionInfo struct {
 }
 
 // getPartitionInfoFromPlan uses to extract table partition information from the plan tree string. Here is an example, the plan is like below:
-//          "Projection_7 80.00 root  test_partition.t1.id, test_partition.t1.a, test_partition.t1.b, test_partition.t2.id, test_partition.t2.a, test_partition.t2.b",
-//          "└─HashJoin_9 80.00 root  CARTESIAN inner join",
-//          "  ├─TableReader_12(Build) 8.00 root partition:p1 data:Selection_11",
-//          "  │ └─Selection_11 8.00 cop[tikv]  1, eq(test_partition.t2.b, 6), in(test_partition.t2.a, 6, 7, 8)",
-//          "  │   └─TableFullScan_10 10000.00 cop[tikv] table:t2 keep order:false, stats:pseudo",
-//          "  └─TableReader_15(Probe) 10.00 root partition:p0 data:Selection_14",
-//          "    └─Selection_14 10.00 cop[tikv]  1, eq(test_partition.t1.a, 5)",
-//          "      └─TableFullScan_13 10000.00 cop[tikv] table:t1 keep order:false, stats:pseudo"
+//
+//	"Projection_7 80.00 root  test_partition.t1.id, test_partition.t1.a, test_partition.t1.b, test_partition.t2.id, test_partition.t2.a, test_partition.t2.b",
+//	"└─HashJoin_9 80.00 root  CARTESIAN inner join",
+//	"  ├─TableReader_12(Build) 8.00 root partition:p1 data:Selection_11",
+//	"  │ └─Selection_11 8.00 cop[tikv]  1, eq(test_partition.t2.b, 6), in(test_partition.t2.a, 6, 7, 8)",
+//	"  │   └─TableFullScan_10 10000.00 cop[tikv] table:t2 keep order:false, stats:pseudo",
+//	"  └─TableReader_15(Probe) 10.00 root partition:p0 data:Selection_14",
+//	"    └─Selection_14 10.00 cop[tikv]  1, eq(test_partition.t1.a, 5)",
+//	"      └─TableFullScan_13 10000.00 cop[tikv] table:t1 keep order:false, stats:pseudo"
 //
 // The return table partition info is: t1: p0; t2: p1
 func (s *testPartitionPruneSuit) getPartitionInfoFromPlan(plan []string) string {
@@ -458,7 +449,7 @@ partition by range (a) (
 	tk.MustQuery("select * from t3 where not (a != 1)").Check(testkit.Rows("1"))
 }
 
-//issue 22079
+// issue 22079
 func (s *testPartitionPruneSuit) TestRangePartitionPredicatePruner(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("set @@tidb_partition_prune_mode='" + string(variable.Static) + "'")

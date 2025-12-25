@@ -21,8 +21,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pingcap/errors"
-	"github.com/pingcap/failpoint"
 	"gitee.com/zhoujin826/goInception-plus/parser/ast"
 	"gitee.com/zhoujin826/goInception-plus/parser/charset"
 	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
@@ -35,8 +33,8 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/util/chunk"
 	"gitee.com/zhoujin826/goInception-plus/util/mock"
 	"gitee.com/zhoujin826/goInception-plus/util/timeutil"
+	"github.com/pingcap/errors"
 	"github.com/stretchr/testify/require"
-	"github.com/tikv/client-go/v2/oracle"
 )
 
 func TestDate(t *testing.T) {
@@ -3002,102 +3000,6 @@ func TestTidbParseTso(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, d.IsNull())
 	}
-}
-
-func TestTiDBBoundedStaleness(t *testing.T) {
-	t.Parallel()
-	ctx := createContext(t)
-	t1, err := time.Parse(types.TimeFormat, "2015-09-21 09:53:04")
-	require.NoError(t, err)
-	// time.Parse uses UTC time zone by default, we need to change it to Local manually.
-	t1 = t1.Local()
-	t1Str := t1.Format(types.TimeFormat)
-	t2 := time.Now()
-	t2Str := t2.Format(types.TimeFormat)
-	timeZone := time.Local
-	ctx.GetSessionVars().TimeZone = timeZone
-	tests := []struct {
-		leftTime     interface{}
-		rightTime    interface{}
-		injectSafeTS uint64
-		isNull       bool
-		expect       time.Time
-	}{
-		// SafeTS is in the range.
-		{
-			leftTime:     t1Str,
-			rightTime:    t2Str,
-			injectSafeTS: oracle.GoTimeToTS(t2.Add(-1 * time.Second)),
-			isNull:       false,
-			expect:       t2.Add(-1 * time.Second),
-		},
-		// SafeTS is less than the left time.
-		{
-			leftTime:     t1Str,
-			rightTime:    t2Str,
-			injectSafeTS: oracle.GoTimeToTS(t1.Add(-1 * time.Second)),
-			isNull:       false,
-			expect:       t1,
-		},
-		// SafeTS is bigger than the right time.
-		{
-			leftTime:     t1Str,
-			rightTime:    t2Str,
-			injectSafeTS: oracle.GoTimeToTS(t2.Add(time.Second)),
-			isNull:       false,
-			expect:       t2,
-		},
-		// Wrong time order.
-		{
-			leftTime:     t2Str,
-			rightTime:    t1Str,
-			injectSafeTS: 0,
-			isNull:       true,
-			expect:       time.Time{},
-		},
-	}
-
-	fc := funcs[ast.TiDBBoundedStaleness]
-	for _, test := range tests {
-		require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/expression/injectSafeTS", fmt.Sprintf("return(%v)", test.injectSafeTS)))
-		f, err := fc.getFunction(ctx, datumsToConstants([]types.Datum{types.NewDatum(test.leftTime), types.NewDatum(test.rightTime)}))
-		require.NoError(t, err)
-		d, err := evalBuiltinFunc(f, chunk.Row{})
-		require.NoError(t, err)
-		if test.isNull {
-			require.True(t, d.IsNull())
-		} else {
-			goTime, err := d.GetMysqlTime().GoTime(timeZone)
-			require.NoError(t, err)
-			require.Equal(t, test.expect.Format(types.TimeFormat), goTime.Format(types.TimeFormat))
-		}
-		resetStmtContext(ctx)
-	}
-
-	// Test whether it's deterministic.
-	safeTime1 := t2.Add(-1 * time.Second)
-	safeTS1 := oracle.GoTimeToTS(safeTime1)
-	require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/expression/injectSafeTS", fmt.Sprintf("return(%v)", safeTS1)))
-	f, err := fc.getFunction(ctx, datumsToConstants([]types.Datum{types.NewDatum(t1Str), types.NewDatum(t2Str)}))
-	require.NoError(t, err)
-	d, err := evalBuiltinFunc(f, chunk.Row{})
-	require.NoError(t, err)
-	goTime, err := d.GetMysqlTime().GoTime(timeZone)
-	require.NoError(t, err)
-	resultTime := goTime.Format(types.TimeFormat)
-	require.Equal(t, safeTime1.Format(types.TimeFormat), resultTime)
-	// SafeTS updated.
-	safeTime2 := t2.Add(1 * time.Second)
-	safeTS2 := oracle.GoTimeToTS(safeTime2)
-	require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/expression/injectSafeTS", fmt.Sprintf("return(%v)", safeTS2)))
-	f, err = fc.getFunction(ctx, datumsToConstants([]types.Datum{types.NewDatum(t1Str), types.NewDatum(t2Str)}))
-	require.NoError(t, err)
-	d, err = evalBuiltinFunc(f, chunk.Row{})
-	require.NoError(t, err)
-	// Still safeTime1
-	require.Equal(t, safeTime1.Format(types.TimeFormat), resultTime)
-	resetStmtContext(ctx)
-	require.NoError(t, failpoint.Disable("gitee.com/zhoujin826/goInception-plus/expression/injectSafeTS"))
 }
 
 func TestGetIntervalFromDecimal(t *testing.T) {

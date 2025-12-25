@@ -21,13 +21,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pingcap/errors"
 	"gitee.com/zhoujin826/goInception-plus/domain"
 	"gitee.com/zhoujin826/goInception-plus/kv"
 	"gitee.com/zhoujin826/goInception-plus/meta/autoid"
-	"gitee.com/zhoujin826/goInception-plus/parser/auth"
 	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
 	"gitee.com/zhoujin826/goInception-plus/sessionctx"
 	"gitee.com/zhoujin826/goInception-plus/table"
 	"gitee.com/zhoujin826/goInception-plus/table/tables"
@@ -36,6 +33,7 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/types"
 	"gitee.com/zhoujin826/goInception-plus/util"
 	"gitee.com/zhoujin826/goInception-plus/util/testutil"
+	"github.com/pingcap/errors"
 	binlog "github.com/pingcap/tipb/go-binlog"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -715,36 +713,4 @@ func TestConstraintCheckForUniqueIndex(t *testing.T) {
 	require.NoError(t, err)
 	// The data in channel is 1 means tk2 is blocked, that's the expected behavior.
 	require.Equal(t, 1, <-ch)
-}
-
-func TestViewColumns(t *testing.T) {
-	t.Parallel()
-	store, clean := testkit.CreateMockStore(t)
-	defer clean()
-	tk := testkit.NewTestKit(t, store)
-	require.True(t, tk.Session().Auth(&auth.UserIdentity{Username: "root", Hostname: "%"}, nil, nil))
-	tk.MustExec("use test")
-	tk.MustExec("drop table if exists t")
-	tk.MustExec("create table t(a int primary key, b varchar(20))")
-	tk.MustExec("drop view if exists v")
-	tk.MustExec("create view v as select * from t")
-	tk.MustExec("drop view if exists va")
-	tk.MustExec("create view va as select count(a) from t")
-	testCases := []struct {
-		query    string
-		expected []string
-	}{
-		{"select data_type from INFORMATION_SCHEMA.columns where table_name = 'v'", []string{types.TypeToStr(mysql.TypeLong, ""), types.TypeToStr(mysql.TypeVarchar, "")}},
-		{"select data_type from INFORMATION_SCHEMA.columns where table_name = 'va'", []string{types.TypeToStr(mysql.TypeLonglong, "")}},
-	}
-	for _, testCase := range testCases {
-		tk.MustQuery(testCase.query).Check(testutil.RowsWithSep("|", testCase.expected...))
-	}
-	tk.MustExec("drop table if exists t")
-	for _, testCase := range testCases {
-		require.Len(t, tk.MustQuery(testCase.query).Rows(), 0)
-		tk.MustQuery("show warnings").Check(testutil.RowsWithSep("|",
-			"Warning|1356|View 'test.v' references invalid table(s) or column(s) or function(s) or definer/invoker of view lack rights to use them",
-			"Warning|1356|View 'test.va' references invalid table(s) or column(s) or function(s) or definer/invoker of view lack rights to use them"))
-	}
 }

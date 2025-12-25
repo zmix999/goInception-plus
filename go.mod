@@ -6,7 +6,6 @@ toolchain go1.22.2
 
 require (
 	github.com/BurntSushi/toml v1.3.2
-	github.com/Jeffail/gabs/v2 v2.5.1
 	github.com/blacktear23/go-proxyprotocol v0.0.0-20180807104634-af7a81e8dd0d
 	github.com/coocood/freecache v1.1.1
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548
@@ -57,7 +56,6 @@ require (
 	go.etcd.io/etcd v0.5.0-alpha.5.0.20210512015243-d19fbe541bf9
 	go.uber.org/atomic v1.11.0
 	go.uber.org/automaxprocs v1.5.1
-	go.uber.org/goleak v1.3.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/net v0.23.0
 	golang.org/x/sync v0.6.0

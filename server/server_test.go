@@ -32,11 +32,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-sql-driver/mysql"
-	. "github.com/pingcap/check"
-	"github.com/pingcap/errors"
-	"github.com/pingcap/failpoint"
-	"github.com/pingcap/log"
 	"gitee.com/zhoujin826/goInception-plus/config"
 	"gitee.com/zhoujin826/goInception-plus/errno"
 	"gitee.com/zhoujin826/goInception-plus/kv"
@@ -44,6 +39,11 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/session"
 	"gitee.com/zhoujin826/goInception-plus/util/logutil"
 	"gitee.com/zhoujin826/goInception-plus/util/versioninfo"
+	"github.com/go-sql-driver/mysql"
+	. "github.com/pingcap/check"
+	"github.com/pingcap/errors"
+	"github.com/pingcap/failpoint"
+	"github.com/pingcap/log"
 	"github.com/tikv/client-go/v2/tikv"
 	"go.uber.org/zap"
 )
@@ -55,6 +55,8 @@ var (
 func TestT(t *testing.T) {
 	defaultConfig := config.NewConfig()
 	globalConfig := config.GetGlobalConfig()
+	config.UpdateGlobal(func(c *config.Config) { c.Security.SkipGrantTable = false })
+	defer config.StoreGlobalConfig(globalConfig)
 	// Test for issue 22162. the global config shouldn't be changed by other pkg init function.
 	if !reflect.DeepEqual(defaultConfig, globalConfig) {
 		t.Fatalf("%#v != %#v\n", defaultConfig, globalConfig)

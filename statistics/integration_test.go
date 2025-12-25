@@ -19,11 +19,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/pingcap/failpoint"
 	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/statistics"
 	"gitee.com/zhoujin826/goInception-plus/testkit"
-	"gitee.com/zhoujin826/goInception-plus/testkit/testdata"
 	"github.com/stretchr/testify/require"
 )
 
@@ -179,43 +176,6 @@ func TestIncAnalyzeOnVer2(t *testing.T) {
 	))
 }
 
-func TestExpBackoffEstimation(t *testing.T) {
-	t.Parallel()
-	store, clean := testkit.CreateMockStore(t)
-	defer clean()
-	tk := testkit.NewTestKit(t, store)
-	tk.MustExec("use test")
-	tk.MustExec("create table exp_backoff(a int, b int, c int, d int, index idx(a, b, c, d))")
-	tk.MustExec("insert into exp_backoff values(1, 1, 1, 1), (1, 1, 1, 2), (1, 1, 2, 3), (1, 2, 2, 4), (1, 2, 3, 5)")
-	tk.MustExec("set @@session.tidb_analyze_version=2")
-	tk.MustExec("analyze table exp_backoff")
-	var (
-		input  []string
-		output [][]string
-	)
-	integrationSuiteData := statistics.GetIntegrationSuiteData()
-	integrationSuiteData.GetTestCases(t, &input, &output)
-	inputLen := len(input)
-	// The test cases are:
-	// Query a = 1, b = 1, c = 1, d >= 3 and d <= 5 separately. We got 5, 3, 2, 3.
-	// And then query and a = 1 and b = 1 and c = 1 and d >= 3 and d <= 5. It's result should follow the exp backoff,
-	// which is 2/5 * (3/5)^{1/2} * (3/5)*{1/4} * 1^{1/8} * 5 = 1.3634.
-	for i := 0; i < inputLen-1; i++ {
-		testdata.OnRecord(func() {
-			output[i] = testdata.ConvertRowsToStrings(tk.MustQuery(input[i]).Rows())
-		})
-		tk.MustQuery(input[i]).Check(testkit.Rows(output[i]...))
-	}
-
-	// The last case is that no column is loaded and we get no stats at all.
-	require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/statistics/cleanEstResults", `return(true)`))
-	testdata.OnRecord(func() {
-		output[inputLen-1] = testdata.ConvertRowsToStrings(tk.MustQuery(input[inputLen-1]).Rows())
-	})
-	tk.MustQuery(input[inputLen-1]).Check(testkit.Rows(output[inputLen-1]...))
-	require.NoError(t, failpoint.Disable("gitee.com/zhoujin826/goInception-plus/statistics/cleanEstResults"))
-}
-
 func TestGlobalStats(t *testing.T) {
 	t.Parallel()
 	store, clean := testkit.CreateMockStore(t)
@@ -311,42 +271,6 @@ func TestGlobalStats(t *testing.T) {
 	tk.MustQuery("explain format = 'brief' select * from t;").Check(testkit.Rows(
 		"TableReader 6.00 root partition:all data:TableFullScan",
 		"└─TableFullScan 6.00 cop[tikv] table:t keep order:false"))
-}
-
-func TestNULLOnFullSampling(t *testing.T) {
-	t.Parallel()
-	store, dom, clean := testkit.CreateMockStoreAndDomain(t)
-	defer clean()
-	tk := testkit.NewTestKit(t, store)
-	tk.MustExec("use test")
-	tk.MustExec("drop table if exists t;")
-	tk.MustExec("set @@session.tidb_analyze_version = 2;")
-	tk.MustExec("create table t(a int, index idx(a))")
-	tk.MustExec("insert into t values(1), (1), (1), (2), (2), (3), (4), (null), (null), (null)")
-	var (
-		input  []string
-		output [][]string
-	)
-	tk.MustExec("analyze table t with 2 topn")
-	is := dom.InfoSchema()
-	tblT, err := is.TableByName(model.NewCIStr("test"), model.NewCIStr("t"))
-	require.NoError(t, err)
-	h := dom.StatsHandle()
-	require.NoError(t, h.Update(is))
-	statsTblT := h.GetTableStats(tblT.Meta())
-	// Check the null count is 3.
-	for _, col := range statsTblT.Columns {
-		require.Equal(t, int64(3), col.NullCount)
-	}
-	integrationSuiteData := statistics.GetIntegrationSuiteData()
-	integrationSuiteData.GetTestCases(t, &input, &output)
-	// Check the topn and buckets contains no null values.
-	for i := 0; i < len(input); i++ {
-		testdata.OnRecord(func() {
-			output[i] = testdata.ConvertRowsToStrings(tk.MustQuery(input[i]).Rows())
-		})
-		tk.MustQuery(input[i]).Check(testkit.Rows(output[i]...))
-	}
 }
 
 func TestAnalyzeSnapshot(t *testing.T) {

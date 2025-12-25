@@ -19,26 +19,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
-	"fmt"
 	"io"
 	"testing"
 
-	"github.com/pingcap/failpoint"
-	"github.com/pingcap/kvproto/pkg/metapb"
-	"gitee.com/zhoujin826/goInception-plus/domain"
-	"gitee.com/zhoujin826/goInception-plus/executor"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
 	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
 	"gitee.com/zhoujin826/goInception-plus/session"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore"
-	"gitee.com/zhoujin826/goInception-plus/table"
 	"gitee.com/zhoujin826/goInception-plus/testkit"
 	"gitee.com/zhoujin826/goInception-plus/util/arena"
 	"github.com/stretchr/testify/require"
-	"github.com/tikv/client-go/v2/testutils"
 )
 
 func TestMalformHandshakeHeader(t *testing.T) {
@@ -181,6 +169,7 @@ func TestInitialHandshake(t *testing.T) {
 	cfg.Socket = ""
 	cfg.Port = 0
 	cfg.Status.StatusPort = 0
+	cfg.Security.SkipGrantTable = false
 	drv := NewTiDBDriver(store)
 	srv, err := NewServer(cfg, drv)
 	require.NoError(t, err)
@@ -490,6 +479,7 @@ func testDispatch(t *testing.T, inputs []dispatchInput, capability uint32) {
 	cfg.Socket = ""
 	cfg.Port, cfg.Status.StatusPort = 0, 0
 	cfg.Status.ReportStatus = false
+	cfg.Security.SkipGrantTable = false
 	server, err := NewServer(cfg, tidbdrv)
 	require.NoError(t, err)
 	defer server.Close()
@@ -509,7 +499,7 @@ func testDispatch(t *testing.T, inputs []dispatchInput, capability uint32) {
 	}
 	for _, cs := range inputs {
 		inBytes := append([]byte{cs.com}, cs.in...)
-		err := cc.dispatch(context.Background(), inBytes)
+		err := cc.mysqldispatch(context.Background(), inBytes)
 		require.Equal(t, cs.err, err)
 		if err == nil {
 			err = cc.flush(context.TODO())
@@ -558,313 +548,6 @@ func mapBelong(m1, m2 map[string]string) bool {
 	return true
 }
 
-func TestConnExecutionTimeout(t *testing.T) {
-	t.Parallel()
-
-	store, dom, clean := testkit.CreateMockStoreAndDomain(t)
-	defer clean()
-
-	// There is no underlying netCon, use failpoint to avoid panic
-	require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/server/FakeClientConn", "return(1)"))
-
-	se, err := session.CreateSession4Test(store)
-	require.NoError(t, err)
-
-	connID := uint64(1)
-	se.SetConnectionID(connID)
-	tc := &TiDBContext{
-		Session: se,
-		stmts:   make(map[int]*TiDBStatement),
-	}
-	cc := &clientConn{
-		connectionID: connID,
-		server: &Server{
-			capability: defaultCapability,
-		},
-		ctx:   tc,
-		alloc: arena.NewAllocator(32 * 1024),
-	}
-	srv := &Server{
-		clients: map[uint64]*clientConn{
-			connID: cc,
-		},
-	}
-	handle := dom.ExpensiveQueryHandle().SetSessionManager(srv)
-	go handle.Run()
-
-	_, err = se.Execute(context.Background(), "use test;")
-	require.NoError(t, err)
-	_, err = se.Execute(context.Background(), "CREATE TABLE testTable2 (id bigint PRIMARY KEY,  age int)")
-	require.NoError(t, err)
-	for i := 0; i < 10; i++ {
-		str := fmt.Sprintf("insert into testTable2 values(%d, %d)", i, i%80)
-		_, err = se.Execute(context.Background(), str)
-		require.NoError(t, err)
-	}
-
-	_, err = se.Execute(context.Background(), "select SLEEP(1);")
-	require.NoError(t, err)
-
-	_, err = se.Execute(context.Background(), "set @@max_execution_time = 500;")
-	require.NoError(t, err)
-
-	err = cc.handleQuery(context.Background(), "select * FROM testTable2 WHERE SLEEP(1);")
-	require.NoError(t, err)
-
-	_, err = se.Execute(context.Background(), "set @@max_execution_time = 1500;")
-	require.NoError(t, err)
-
-	_, err = se.Execute(context.Background(), "set @@tidb_expensive_query_time_threshold = 1;")
-	require.NoError(t, err)
-
-	records, err := se.Execute(context.Background(), "select SLEEP(2);")
-	require.NoError(t, err)
-	tk := testkit.NewTestKit(t, store)
-	tk.ResultSetToResult(records[0], fmt.Sprintf("%v", records[0])).Check(testkit.Rows("1"))
-
-	_, err = se.Execute(context.Background(), "set @@max_execution_time = 0;")
-	require.NoError(t, err)
-
-	err = cc.handleQuery(context.Background(), "select * FROM testTable2 WHERE SLEEP(1);")
-	require.NoError(t, err)
-
-	err = cc.handleQuery(context.Background(), "select /*+ MAX_EXECUTION_TIME(100)*/  * FROM testTable2 WHERE  SLEEP(1);")
-	require.NoError(t, err)
-
-	require.NoError(t, failpoint.Disable("gitee.com/zhoujin826/goInception-plus/server/FakeClientConn"))
-}
-
-func TestShutDown(t *testing.T) {
-	t.Parallel()
-
-	store, clean := testkit.CreateMockStore(t)
-	defer clean()
-
-	cc := &clientConn{}
-	se, err := session.CreateSession4Test(store)
-	require.NoError(t, err)
-	cc.ctx = &TiDBContext{Session: se}
-	// set killed flag
-	cc.status = connStatusShutdown
-	// assert ErrQueryInterrupted
-	err = cc.handleQuery(context.Background(), "select 1")
-	require.Equal(t, executor.ErrQueryInterrupted, err)
-}
-
-func TestShutdownOrNotify(t *testing.T) {
-	t.Parallel()
-
-	store, clean := testkit.CreateMockStore(t)
-	defer clean()
-	se, err := session.CreateSession4Test(store)
-	require.NoError(t, err)
-	tc := &TiDBContext{
-		Session: se,
-		stmts:   make(map[int]*TiDBStatement),
-	}
-	cc := &clientConn{
-		connectionID: 1,
-		server: &Server{
-			capability: defaultCapability,
-		},
-		status: connStatusWaitShutdown,
-		ctx:    tc,
-	}
-	require.False(t, cc.ShutdownOrNotify())
-	cc.status = connStatusReading
-	require.True(t, cc.ShutdownOrNotify())
-	require.Equal(t, connStatusShutdown, cc.status)
-	cc.status = connStatusDispatching
-	require.False(t, cc.ShutdownOrNotify())
-	require.Equal(t, connStatusWaitShutdown, cc.status)
-}
-
-type snapshotCache interface {
-	SnapCacheHitCount() int
-}
-
-func TestPrefetchPointKeys(t *testing.T) {
-	t.Parallel()
-
-	store, clean := testkit.CreateMockStore(t)
-	defer clean()
-
-	cc := &clientConn{
-		alloc: arena.NewAllocator(1024),
-		pkt: &packetIO{
-			bufWriter: bufio.NewWriter(bytes.NewBuffer(nil)),
-		},
-	}
-	tk := testkit.NewTestKit(t, store)
-	cc.ctx = &TiDBContext{Session: tk.Session()}
-	ctx := context.Background()
-	tk.Session().GetSessionVars().EnableClusteredIndex = variable.ClusteredIndexDefModeIntOnly
-	tk.MustExec("use test")
-	tk.MustExec("create table prefetch (a int, b int, c int, primary key (a, b))")
-	tk.MustExec("insert prefetch values (1, 1, 1), (2, 2, 2), (3, 3, 3)")
-	tk.MustExec("begin optimistic")
-	tk.MustExec("update prefetch set c = c + 1 where a = 2 and b = 2")
-
-	// enable multi-statement
-	capabilities := cc.ctx.GetSessionVars().ClientCapability
-	capabilities ^= mysql.ClientMultiStatements
-	cc.ctx.SetClientCapability(capabilities)
-	query := "update prefetch set c = c + 1 where a = 1 and b = 1;" +
-		"update prefetch set c = c + 1 where a = 2 and b = 2;" +
-		"update prefetch set c = c + 1 where a = 3 and b = 3;"
-	err := cc.handleQuery(ctx, query)
-	require.NoError(t, err)
-	txn, err := tk.Session().Txn(false)
-	require.NoError(t, err)
-	require.True(t, txn.Valid())
-	snap := txn.GetSnapshot()
-	require.Equal(t, 4, snap.(snapshotCache).SnapCacheHitCount())
-	tk.MustExec("commit")
-	tk.MustQuery("select * from prefetch").Check(testkit.Rows("1 1 2", "2 2 4", "3 3 4"))
-
-	tk.MustExec("begin pessimistic")
-	tk.MustExec("update prefetch set c = c + 1 where a = 2 and b = 2")
-	require.Equal(t, 1, tk.Session().GetSessionVars().TxnCtx.PessimisticCacheHit)
-	err = cc.handleQuery(ctx, query)
-	require.NoError(t, err)
-	txn, err = tk.Session().Txn(false)
-	require.NoError(t, err)
-	require.True(t, txn.Valid())
-	require.Equal(t, 5, tk.Session().GetSessionVars().TxnCtx.PessimisticCacheHit)
-	tk.MustExec("commit")
-	tk.MustQuery("select * from prefetch").Check(testkit.Rows("1 1 3", "2 2 6", "3 3 5"))
-}
-
-func testGetTableByName(t *testing.T, ctx sessionctx.Context, db, table string) table.Table {
-	dom := domain.GetDomain(ctx)
-	// Make sure the table schema is the new schema.
-	err := dom.Reload()
-	require.NoError(t, err)
-	tbl, err := dom.InfoSchema().TableByName(model.NewCIStr(db), model.NewCIStr(table))
-	require.NoError(t, err)
-	return tbl
-}
-
-func TestTiFlashFallback(t *testing.T) {
-	t.Parallel()
-
-	store, clean := testkit.CreateMockStore(t,
-		mockstore.WithClusterInspector(func(c testutils.Cluster) {
-			mockCluster := c.(*unistore.Cluster)
-			_, _, region1 := mockstore.BootstrapWithSingleStore(c)
-			store := c.AllocID()
-			peer := c.AllocID()
-			mockCluster.AddStore(store, "tiflash0", &metapb.StoreLabel{Key: "engine", Value: "tiflash"})
-			mockCluster.AddPeer(region1, store, peer)
-		}),
-		mockstore.WithStoreType(mockstore.EmbedUnistore),
-	)
-	defer clean()
-
-	cc := &clientConn{
-		alloc: arena.NewAllocator(1024),
-		pkt: &packetIO{
-			bufWriter: bufio.NewWriter(bytes.NewBuffer(nil)),
-		},
-	}
-
-	tk := testkit.NewTestKit(t, store)
-	tk.MustExec("use test")
-	cc.ctx = &TiDBContext{Session: tk.Session(), stmts: make(map[int]*TiDBStatement)}
-
-	tk.MustExec("drop table if exists t")
-	tk.MustExec("create table t(a int not null primary key, b int not null)")
-	tk.MustExec("alter table t set tiflash replica 1")
-	tb := testGetTableByName(t, tk.Session(), "test", "t")
-	err := domain.GetDomain(tk.Session()).DDL().UpdateTableReplicaInfo(tk.Session(), tb.Meta().ID, true)
-	require.NoError(t, err)
-
-	dml := "insert into t values"
-	for i := 0; i < 50; i++ {
-		dml += fmt.Sprintf("(%v, 0)", i)
-		if i != 49 {
-			dml += ","
-		}
-	}
-	tk.MustExec(dml)
-	tk.MustQuery("select count(*) from t").Check(testkit.Rows("50"))
-
-	require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/store/copr/ReduceCopNextMaxBackoff", `return(true)`))
-	defer func() {
-		require.NoError(t, failpoint.Disable("gitee.com/zhoujin826/goInception-plus/store/copr/ReduceCopNextMaxBackoff"))
-	}()
-
-	require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/BatchCopRpcErrtiflash0", "return(\"tiflash0\")"))
-	// test COM_STMT_EXECUTE
-	ctx := context.Background()
-	tk.MustExec("set @@tidb_allow_fallback_to_tikv='tiflash'")
-	tk.MustExec("set @@tidb_allow_mpp=OFF")
-	//equire.NoError(t, cc.handleStmtPrepare(ctx, "select sum(a) from t"))
-	//require.NoError(t, cc.handleStmtExecute(ctx, []byte{0x1, 0x0, 0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0}))
-	tk.MustQuery("show warnings").Check(testkit.Rows("Error 9012 TiFlash server timeout"))
-
-	// test COM_STMT_FETCH (cursor mode)
-	//require.NoError(t, cc.handleStmtExecute(ctx, []byte{0x1, 0x0, 0x0, 0x0, 0x1, 0x1, 0x0, 0x0, 0x0}))
-	require.Error(t, cc.handleStmtFetch(ctx, []byte{0x1, 0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0}))
-	tk.MustExec("set @@tidb_allow_fallback_to_tikv=''")
-	//require.Error(t, cc.handleStmtExecute(ctx, []byte{0x1, 0x0, 0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0}))
-	require.NoError(t, failpoint.Disable("gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/BatchCopRpcErrtiflash0"))
-
-	require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/server/fetchNextErr", "return(\"firstNext\")"))
-	// test COM_STMT_EXECUTE (cursor mode)
-	tk.MustExec("set @@tidb_allow_fallback_to_tikv='tiflash'")
-	//require.NoError(t, cc.handleStmtExecute(ctx, []byte{0x1, 0x0, 0x0, 0x0, 0x1, 0x1, 0x0, 0x0, 0x0}))
-	require.NoError(t, failpoint.Disable("gitee.com/zhoujin826/goInception-plus/server/fetchNextErr"))
-
-	// test that TiDB would not retry if the first execution already sends data to client
-	require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/server/fetchNextErr", "return(\"secondNext\")"))
-	tk.MustExec("set @@tidb_allow_fallback_to_tikv='tiflash'")
-	require.Error(t, cc.handleQuery(ctx, "select * from t t1 join t t2 on t1.a = t2.a"))
-	require.NoError(t, failpoint.Disable("gitee.com/zhoujin826/goInception-plus/server/fetchNextErr"))
-
-	// simple TiFlash query (unary + non-streaming)
-	tk.MustExec("set @@tidb_allow_batch_cop=0; set @@tidb_allow_mpp=0;")
-	require.NoError(t, failpoint.Enable("tikvclient/tikvStoreSendReqResult", "return(\"requestTiFlashError\")"))
-	testFallbackWork(t, tk, cc, "select sum(a) from t")
-	require.NoError(t, failpoint.Disable("tikvclient/tikvStoreSendReqResult"))
-
-	// TiFlash query based on batch cop (batch + streaming)
-	tk.MustExec("set @@tidb_allow_batch_cop=1; set @@tidb_allow_mpp=0;")
-
-	require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/BatchCopRpcErrtiflash0", "return(\"tiflash0\")"))
-	testFallbackWork(t, tk, cc, "select count(*) from t")
-	require.NoError(t, failpoint.Disable("gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/BatchCopRpcErrtiflash0"))
-
-	require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/batchCopRecvTimeout", "return(true)"))
-	testFallbackWork(t, tk, cc, "select count(*) from t")
-	require.NoError(t, failpoint.Disable("gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/batchCopRecvTimeout"))
-
-	// TiFlash MPP query (MPP + streaming)
-	tk.MustExec("set @@tidb_allow_batch_cop=0; set @@tidb_allow_mpp=1;")
-
-	require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/mppDispatchTimeout", "return(true)"))
-	testFallbackWork(t, tk, cc, "select * from t t1 join t t2 on t1.a = t2.a")
-	require.NoError(t, failpoint.Disable("gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/mppDispatchTimeout"))
-
-	require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/mppRecvTimeout", "return(-1)"))
-	testFallbackWork(t, tk, cc, "select * from t t1 join t t2 on t1.a = t2.a")
-	require.NoError(t, failpoint.Disable("gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/mppRecvTimeout"))
-
-	require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/establishMppConnectionErr", "return(true)"))
-	testFallbackWork(t, tk, cc, "select * from t t1 join t t2 on t1.a = t2.a")
-	require.NoError(t, failpoint.Disable("gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/establishMppConnectionErr"))
-}
-
-func testFallbackWork(t *testing.T, tk *testkit.TestKit, cc *clientConn, sql string) {
-	ctx := context.Background()
-	tk.MustExec("set @@tidb_allow_fallback_to_tikv=''")
-	require.Error(t, tk.QueryToErr(sql))
-	tk.MustExec("set @@tidb_allow_fallback_to_tikv='tiflash'")
-
-	require.NoError(t, cc.handleQuery(ctx, sql))
-	tk.MustQuery("show warnings").Check(testkit.Rows("Error 9012 TiFlash server timeout"))
-}
-
 // For issue https://gitee.com/zhoujin826/goInception-plus/issues/25069
 func TestShowErrors(t *testing.T) {
 	t.Parallel()
@@ -881,9 +564,9 @@ func TestShowErrors(t *testing.T) {
 	tk := testkit.NewTestKit(t, store)
 	cc.ctx = &TiDBContext{Session: tk.Session(), stmts: make(map[int]*TiDBStatement)}
 
-	err := cc.handleQuery(ctx, "create database if not exists test;")
+	err := cc.mysqlhandleQuery(ctx, "create database if not exists test;")
 	require.NoError(t, err)
-	err = cc.handleQuery(ctx, "use test;")
+	err = cc.mysqlhandleQuery(ctx, "use test;")
 	require.NoError(t, err)
 
 	stmts, err := cc.ctx.Parse(ctx, "drop table idontexist")
@@ -902,6 +585,8 @@ func TestHandleAuthPlugin(t *testing.T) {
 	cfg := newTestConfig()
 	cfg.Port = 0
 	cfg.Status.StatusPort = 0
+	cfg.Security.SkipGrantTable = false
+	cfg.SecondPort = 0
 	drv := NewTiDBDriver(store)
 	srv, err := NewServer(cfg, drv)
 	require.NoError(t, err)

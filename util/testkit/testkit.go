@@ -229,6 +229,45 @@ func (tk *TestKit) Exec(sql string, args ...interface{}) (sqlexec.RecordSet, err
 	return rs, nil
 }
 
+// ExecInc executes a sql statement using the prepared stmt API
+func (tk *TestKit) ExecInc(sql string, args ...interface{}) (sqlexec.RecordSet, error) {
+	var err error
+	if tk.Se == nil {
+		tk.Se, err = session.CreateSession4Test(tk.store)
+
+		tk.c.Assert(err, check.IsNil)
+		tk.GetConnectionID()
+	}
+	sessionVars := tk.Se.GetSessionVars()
+	sessionVars.SetMySQLProtocol(true)
+	ctx := context.Background()
+	if len(args) == 0 {
+		var rss []sqlexec.RecordSet
+		rss, err := tk.Se.ExecuteInc(ctx, sql)
+		if err == nil && len(rss) > 0 {
+			return rss[0], nil
+		}
+		return nil, errors.Trace(err)
+	}
+	stmtID, _, _, err := tk.Se.PrepareStmt(sql, "")
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	params := make([]types.Datum, len(args))
+	for i := 0; i < len(params); i++ {
+		params[i] = types.NewDatum(args[i])
+	}
+	rs, err := tk.Se.ExecutePreparedStmt(ctx, stmtID, params)
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	err = tk.Se.DropPreparedStmt(stmtID)
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	return rs, nil
+}
+
 // CheckExecResult checks the affected rows and the insert id after executing MustExec.
 func (tk *TestKit) CheckExecResult(affectedRows, insertID int64) {
 	tk.c.Assert(affectedRows, check.Equals, int64(tk.Se.AffectedRows()))
@@ -243,6 +282,15 @@ func (tk *TestKit) CheckLastMessage(msg string) {
 // MustExec executes a sql statement and asserts nil error.
 func (tk *TestKit) MustExec(sql string, args ...interface{}) {
 	res, err := tk.Exec(sql, args...)
+	tk.c.Assert(err, check.IsNil, check.Commentf("sql:%s, %v, error stack %v", sql, args, errors.ErrorStack(err)))
+	if res != nil {
+		tk.c.Assert(res.Close(), check.IsNil)
+	}
+}
+
+// MustExecInc executes a sql statement and asserts nil error.
+func (tk *TestKit) MustExecInc(sql string, args ...interface{}) {
+	res, err := tk.ExecInc(sql, args...)
 	tk.c.Assert(err, check.IsNil, check.Commentf("sql:%s, %v, error stack %v", sql, args, errors.ErrorStack(err)))
 	if res != nil {
 		tk.c.Assert(res.Close(), check.IsNil)
@@ -351,6 +399,16 @@ func (tk *TestKit) MustPointGet(sql string, args ...interface{}) *Result {
 func (tk *TestKit) MustQuery(sql string, args ...interface{}) *Result {
 	comment := check.Commentf("sql:%s, args:%v", sql, args)
 	rs, err := tk.Exec(sql, args...)
+	tk.c.Assert(err, check.IsNil, comment)
+	tk.c.Assert(rs, check.NotNil, comment)
+	return tk.ResultSetToResult(rs, comment)
+}
+
+// MustQueryInc query the statements and returns result rows.
+// If expected result is set it asserts the query result equals expected result.
+func (tk *TestKit) MustQueryInc(sql string, args ...interface{}) *Result {
+	comment := check.Commentf("sql:%s, args:%v", sql, args)
+	rs, err := tk.ExecInc(sql, args...)
 	tk.c.Assert(err, check.IsNil, comment)
 	tk.c.Assert(rs, check.NotNil, comment)
 	return tk.ResultSetToResult(rs, comment)

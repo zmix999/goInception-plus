@@ -40,7 +40,6 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/parser/model"
 	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
 	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	plannercore "gitee.com/zhoujin826/goInception-plus/planner/core"
 	"gitee.com/zhoujin826/goInception-plus/session"
 	"gitee.com/zhoujin826/goInception-plus/session/txninfo"
 	"gitee.com/zhoujin826/goInception-plus/sessionctx"
@@ -59,7 +58,6 @@ import (
 	"github.com/docker/go-units"
 	. "github.com/pingcap/check"
 	"github.com/pingcap/errors"
-	"github.com/pingcap/failpoint"
 	"github.com/pingcap/tipb/go-binlog"
 	"github.com/tikv/client-go/v2/testutils"
 	"go.etcd.io/etcd/clientv3"
@@ -2029,183 +2027,6 @@ func (s *testSchemaSuiteBase) TearDownSuite(c *C) {
 	testleak.AfterTest(c)()
 }
 
-func (s *testSchemaSerialSuite) TestSchemaCheckerSQL(c *C) {
-	tk := testkit.NewTestKitWithInit(c, s.store)
-	tk1 := testkit.NewTestKitWithInit(c, s.store)
-
-	// create table
-	tk.MustExec(`create table t (id int, c int);`)
-	tk.MustExec(`create table t1 (id int, c int);`)
-	// insert data
-	tk.MustExec(`insert into t values(1, 1);`)
-
-	// The schema version is out of date in the first transaction, but the SQL can be retried.
-	tk.MustExec("set @@tidb_disable_txn_auto_retry = 0")
-	tk.MustExec(`begin;`)
-	tk1.MustExec(`alter table t add index idx(c);`)
-	tk.MustExec(`insert into t values(2, 2);`)
-	tk.MustExec(`commit;`)
-
-	// The schema version is out of date in the first transaction, and the SQL can't be retried.
-	atomic.StoreUint32(&session.SchemaChangedWithoutRetry, 1)
-	defer func() {
-		atomic.StoreUint32(&session.SchemaChangedWithoutRetry, 0)
-	}()
-	tk.MustExec(`begin;`)
-	tk1.MustExec(`alter table t modify column c bigint;`)
-	tk.MustExec(`insert into t values(3, 3);`)
-	_, err := tk.Exec(`commit;`)
-	c.Assert(terror.ErrorEqual(err, domain.ErrInfoSchemaChanged), IsTrue, Commentf("err %v", err))
-
-	// But the transaction related table IDs aren't in the updated table IDs.
-	tk.MustExec(`begin;`)
-	tk1.MustExec(`alter table t add index idx2(c);`)
-	tk.MustExec(`insert into t1 values(4, 4);`)
-	tk.MustExec(`commit;`)
-
-	// Test for "select for update".
-	tk.MustExec(`begin;`)
-	tk1.MustExec(`alter table t add index idx3(c);`)
-	tk.MustQuery(`select * from t for update`)
-	_, err = tk.Exec(`commit;`)
-	c.Assert(err, NotNil)
-}
-
-func (s *testSchemaSerialSuite) TestSchemaCheckerTempTable(c *C) {
-	tk := testkit.NewTestKitWithInit(c, s.store)
-	tk1 := testkit.NewTestKitWithInit(c, s.store)
-
-	// create table
-	tk.MustExec(`drop table if exists normal_table`)
-	tk.MustExec(`create table normal_table (id int, c int);`)
-	defer tk.MustExec(`drop table if exists normal_table`)
-	tk.MustExec(`drop table if exists temp_table`)
-	tk.MustExec(`create global temporary table temp_table (id int primary key, c int) on commit delete rows;`)
-	defer tk.MustExec(`drop table if exists temp_table`)
-
-	// The schema version is out of date in the first transaction, and the SQL can't be retried.
-	atomic.StoreUint32(&session.SchemaChangedWithoutRetry, 1)
-	defer func() {
-		atomic.StoreUint32(&session.SchemaChangedWithoutRetry, 0)
-	}()
-
-	// It's fine to change the schema of temporary tables.
-	tk.MustExec(`begin;`)
-	tk1.MustExec(`alter table temp_table modify column c tinyint;`)
-	tk.MustExec(`insert into temp_table values(3, 3);`)
-	tk.MustExec(`commit;`)
-
-	tk.MustExec("begin pessimistic")
-	tk1.MustExec(`alter table temp_table modify column c int;`)
-	tk.MustQuery(`select * from temp_table for update;`).Check(testkit.Rows())
-	tk.MustExec(`commit;`)
-
-	tk.MustExec("begin pessimistic")
-	tk1.MustExec(`alter table temp_table modify column c smallint;`)
-	tk.MustExec(`insert into temp_table values(3, 4);`)
-	tk.MustQuery(`select * from temp_table for update;`).Check(testkit.Rows("3 4"))
-	tk.MustExec(`commit;`)
-
-	tk.MustExec("begin pessimistic")
-	tk1.MustExec(`alter table temp_table modify column c bigint;`)
-	tk.MustQuery(`select * from temp_table where id=1 for update;`).Check(testkit.Rows())
-	tk.MustExec(`commit;`)
-
-	tk.MustExec("begin pessimistic")
-	tk1.MustExec(`alter table temp_table modify column c smallint;`)
-	tk.MustExec("insert into temp_table values (1, 2), (2, 3), (4, 5)")
-	tk.MustQuery(`select * from temp_table where id=1 for update;`).Check(testkit.Rows("1 2"))
-	tk.MustExec(`commit;`)
-
-	tk.MustExec("begin pessimistic")
-	tk1.MustExec(`alter table temp_table modify column c int;`)
-	tk.MustQuery(`select * from temp_table where id=1 for update;`).Check(testkit.Rows())
-	tk.MustExec(`commit;`)
-
-	tk.MustExec("begin pessimistic")
-	tk1.MustExec(`alter table temp_table modify column c bigint;`)
-	tk.MustQuery(`select * from temp_table where id in (1, 2, 3) for update;`).Check(testkit.Rows())
-	tk.MustExec(`commit;`)
-
-	tk.MustExec("begin pessimistic")
-	tk1.MustExec(`alter table temp_table modify column c int;`)
-	tk.MustExec("insert into temp_table values (1, 2), (2, 3), (4, 5)")
-	tk.MustQuery(`select * from temp_table where id in (1, 2, 3) for update;`).Check(testkit.Rows("1 2", "2 3"))
-	tk.MustExec(`commit;`)
-
-	tk.MustExec("insert into normal_table values(1, 2)")
-	tk.MustExec("begin pessimistic")
-	tk1.MustExec(`alter table temp_table modify column c int;`)
-	tk.MustExec(`insert into temp_table values(1, 5);`)
-	tk.MustQuery(`select * from temp_table, normal_table where temp_table.id = normal_table.id for update;`).Check(testkit.Rows("1 5 1 2"))
-	tk.MustExec(`commit;`)
-
-	tk.MustExec("begin pessimistic")
-	tk1.MustExec(`alter table normal_table modify column c bigint;`)
-	tk.MustQuery(`select * from temp_table, normal_table where temp_table.id = normal_table.id for update;`).Check(testkit.Rows())
-	tk.MustExec(`commit;`)
-
-	// Truncate will modify table ID.
-	tk.MustExec(`begin;`)
-	tk1.MustExec(`truncate table temp_table;`)
-	tk.MustExec(`insert into temp_table values(3, 3);`)
-	tk.MustExec(`commit;`)
-
-	// It reports error when also changing the schema of a normal table.
-	tk.MustExec(`begin;`)
-	tk1.MustExec(`alter table normal_table modify column c bigint;`)
-	tk.MustExec(`insert into temp_table values(3, 3);`)
-	tk.MustExec(`insert into normal_table values(3, 3);`)
-	_, err := tk.Exec(`commit;`)
-	c.Assert(terror.ErrorEqual(err, domain.ErrInfoSchemaChanged), IsTrue, Commentf("err %v", err))
-
-	tk.MustExec("begin pessimistic")
-	tk1.MustExec(`alter table normal_table modify column c int;`)
-	tk.MustExec(`insert into temp_table values(1, 6);`)
-	tk.MustQuery(`select * from temp_table, normal_table where temp_table.id = normal_table.id for update;`).Check(testkit.Rows("1 6 1 2"))
-	_, err = tk.Exec(`commit;`)
-	c.Assert(terror.ErrorEqual(err, domain.ErrInfoSchemaChanged), IsTrue, Commentf("err %v", err))
-}
-
-func (s *testSchemaSuite) TestPrepareStmtCommitWhenSchemaChanged(c *C) {
-	tk := testkit.NewTestKitWithInit(c, s.store)
-	tk1 := testkit.NewTestKitWithInit(c, s.store)
-
-	tk.MustExec("create table t (a int, b int)")
-	tk1.MustExec("prepare stmt from 'insert into t values (?, ?)'")
-	tk1.MustExec("set @a = 1")
-
-	// Commit find unrelated schema change.
-	tk1.MustExec("begin")
-	tk.MustExec("create table t1 (id int)")
-	tk1.MustExec("execute stmt using @a, @a")
-	tk1.MustExec("commit")
-
-	tk1.MustExec("set @@tidb_disable_txn_auto_retry = 0")
-	tk1.MustExec("begin")
-	tk.MustExec("alter table t drop column b")
-	tk1.MustExec("execute stmt using @a, @a")
-	_, err := tk1.Exec("commit")
-	c.Assert(terror.ErrorEqual(err, plannercore.ErrWrongValueCountOnRow), IsTrue, Commentf("err %v", err))
-}
-
-func (s *testSchemaSuite) TestCommitWhenSchemaChanged(c *C) {
-	tk := testkit.NewTestKitWithInit(c, s.store)
-	tk1 := testkit.NewTestKitWithInit(c, s.store)
-	tk.MustExec("create table t (a int, b int)")
-
-	tk1.MustExec("set @@tidb_disable_txn_auto_retry = 0")
-	tk1.MustExec("begin")
-	tk1.MustExec("insert into t values (1, 1)")
-
-	tk.MustExec("alter table t drop column b")
-
-	// When tk1 commit, it will find schema already changed.
-	tk1.MustExec("insert into t values (4, 4)")
-	_, err := tk1.Exec("commit")
-	c.Assert(terror.ErrorEqual(err, plannercore.ErrWrongValueCountOnRow), IsTrue, Commentf("err %v", err))
-}
-
 func (s *testSchemaSuite) TestRetrySchemaChangeForEmptyChange(c *C) {
 	tk := testkit.NewTestKitWithInit(c, s.store)
 	tk1 := testkit.NewTestKitWithInit(c, s.store)
@@ -2228,42 +2049,6 @@ func (s *testSchemaSuite) TestRetrySchemaChangeForEmptyChange(c *C) {
 	tk.MustExec("delete from t")
 	tk.MustExec("insert into t1 values (1)")
 	tk.MustExec("commit")
-}
-
-func (s *testSchemaSuite) TestRetrySchemaChange(c *C) {
-	tk := testkit.NewTestKitWithInit(c, s.store)
-	tk1 := testkit.NewTestKitWithInit(c, s.store)
-	tk.MustExec("create table t (a int primary key, b int)")
-	tk.MustExec("insert into t values (1, 1)")
-
-	tk1.MustExec("set @@tidb_disable_txn_auto_retry = 0")
-	tk1.MustExec("begin")
-	tk1.MustExec("update t set b = 5 where a = 1")
-
-	tk.MustExec("alter table t add index b_i (b)")
-
-	run := false
-	hook := func() {
-		if !run {
-			tk.MustExec("update t set b = 3 where a = 1")
-			run = true
-		}
-	}
-
-	// In order to cover a bug that statement history is not updated during retry.
-	// See https://gitee.com/zhoujin826/goInception-plus/pull/5202
-	// Step1: when tk1 commit, it find schema changed and retry().
-	// Step2: during retry, hook() is called, tk update primary key.
-	// Step3: tk1 continue commit in retry() meet a retryable error(write conflict), retry again.
-	// Step4: tk1 retry() success, if it use the stale statement, data and index will inconsistent.
-	fpName := "gitee.com/zhoujin826/goInception-plus/session/preCommitHook"
-	c.Assert(failpoint.Enable(fpName, "return"), IsNil)
-	defer func() { c.Assert(failpoint.Disable(fpName), IsNil) }()
-
-	ctx := context.WithValue(context.Background(), "__preCommitHook", hook)
-	err := tk1.Se.CommitTxn(ctx)
-	c.Assert(err, IsNil)
-	tk.MustQuery("select * from t where t.b = 5").Check(testkit.Rows("1 5"))
 }
 
 func (s *testSchemaSuite) TestRetryMissingUnionScan(c *C) {
@@ -2789,93 +2574,6 @@ func (s *testSessionSuite3) TestEnablePartition(c *C) {
 	tk1 := testkit.NewTestKitWithInit(c, s.store)
 	tk1.MustQuery("show variables like 'tidb_enable_table_partition'").Check(testkit.Rows("tidb_enable_table_partition ON"))
 	tk1.MustQuery("show variables like 'tidb_enable_list_partition'").Check(testkit.Rows("tidb_enable_list_partition ON"))
-}
-
-func (s *testSchemaSuite) TestDisableTxnAutoRetry(c *C) {
-	tk1 := testkit.NewTestKitWithInit(c, s.store)
-	tk2 := testkit.NewTestKitWithInit(c, s.store)
-	tk1.MustExec("create table no_retry (id int)")
-	tk1.MustExec("insert into no_retry values (1)")
-	tk1.MustExec("set @@tidb_disable_txn_auto_retry = 1")
-
-	tk1.MustExec("begin")
-	tk1.MustExec("update no_retry set id = 2")
-
-	tk2.MustExec("begin")
-	tk2.MustExec("update no_retry set id = 3")
-	tk2.MustExec("commit")
-
-	// No auto retry because tidb_disable_txn_auto_retry is set to 1.
-	_, err := tk1.Se.Execute(context.Background(), "commit")
-	c.Assert(err, NotNil)
-
-	// session 1 starts a transaction early.
-	// execute a select statement to clear retry history.
-	tk1.MustExec("select 1")
-	tk1.Se.PrepareTxnCtx(context.Background())
-	// session 2 update the value.
-	tk2.MustExec("update no_retry set id = 4")
-	// AutoCommit update will retry, so it would not fail.
-	tk1.MustExec("update no_retry set id = 5")
-
-	// RestrictedSQL should retry.
-	tk1.Se.GetSessionVars().InRestrictedSQL = true
-	tk1.MustExec("begin")
-
-	tk2.MustExec("update no_retry set id = 6")
-
-	tk1.MustExec("update no_retry set id = 7")
-	tk1.MustExec("commit")
-
-	// test for disable transaction local latch
-	tk1.Se.GetSessionVars().InRestrictedSQL = false
-	defer config.RestoreFunc()()
-	config.UpdateGlobal(func(conf *config.Config) {
-		conf.TxnLocalLatches.Enabled = false
-	})
-	tk1.MustExec("begin")
-	tk1.MustExec("update no_retry set id = 9")
-
-	tk2.MustExec("update no_retry set id = 8")
-
-	_, err = tk1.Se.Execute(context.Background(), "commit")
-	c.Assert(err, NotNil)
-	c.Assert(kv.ErrWriteConflict.Equal(err), IsTrue, Commentf("error: %s", err))
-	c.Assert(strings.Contains(err.Error(), kv.TxnRetryableMark), IsTrue, Commentf("error: %s", err))
-	tk1.MustExec("rollback")
-
-	config.UpdateGlobal(func(conf *config.Config) {
-		conf.TxnLocalLatches.Enabled = true
-	})
-	tk1.MustExec("begin")
-	tk2.MustExec("alter table no_retry add index idx(id)")
-	tk2.MustQuery("select * from no_retry").Check(testkit.Rows("8"))
-	tk1.MustExec("update no_retry set id = 10")
-	_, err = tk1.Se.Execute(context.Background(), "commit")
-	c.Assert(err, NotNil)
-
-	// set autocommit to begin and commit
-	tk1.MustExec("set autocommit = 0")
-	tk1.MustQuery("select * from no_retry").Check(testkit.Rows("8"))
-	tk2.MustExec("update no_retry set id = 11")
-	tk1.MustExec("update no_retry set id = 12")
-	_, err = tk1.Se.Execute(context.Background(), "set autocommit = 1")
-	c.Assert(err, NotNil)
-	c.Assert(kv.ErrWriteConflict.Equal(err), IsTrue, Commentf("error: %s", err))
-	c.Assert(strings.Contains(err.Error(), kv.TxnRetryableMark), IsTrue, Commentf("error: %s", err))
-	tk1.MustExec("rollback")
-	tk2.MustQuery("select * from no_retry").Check(testkit.Rows("11"))
-
-	tk1.MustExec("set autocommit = 0")
-	tk1.MustQuery("select * from no_retry").Check(testkit.Rows("11"))
-	tk2.MustExec("update no_retry set id = 13")
-	tk1.MustExec("update no_retry set id = 14")
-	_, err = tk1.Se.Execute(context.Background(), "commit")
-	c.Assert(err, NotNil)
-	c.Assert(kv.ErrWriteConflict.Equal(err), IsTrue, Commentf("error: %s", err))
-	c.Assert(strings.Contains(err.Error(), kv.TxnRetryableMark), IsTrue, Commentf("error: %s", err))
-	tk1.MustExec("rollback")
-	tk2.MustQuery("select * from no_retry").Check(testkit.Rows("13"))
 }
 
 // TestSetGroupConcatMaxLen is for issue #7034

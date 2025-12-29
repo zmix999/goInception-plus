@@ -232,6 +232,7 @@ type IndexPartSpecification struct {
 	Column *ColumnName
 	Length int
 	Expr   ExprNode
+	Desc   bool
 }
 
 // Restore implements Node interface.
@@ -249,6 +250,9 @@ func (n *IndexPartSpecification) Restore(ctx *format.RestoreCtx) error {
 	}
 	if n.Length > 0 {
 		ctx.WritePlainf("(%d)", n.Length)
+	}
+	if n.Desc {
+		ctx.WritePlain(" DESC")
 	}
 	return nil
 }
@@ -483,6 +487,7 @@ const (
 	ColumnOptionColumnFormat
 	ColumnOptionStorage
 	ColumnOptionAutoRandom
+	ColumnOptionInvisible
 )
 
 var (
@@ -491,6 +496,16 @@ var (
 		ColumnOptionOnUpdate:      {},
 		ColumnOptionDefaultValue:  {},
 	}
+)
+
+// ColumnVisibility is the option for index visibility.
+type ColumnVisibility int
+
+// IndexVisibility options.
+const (
+	ColumnVisibilityDefault ColumnVisibility = iota
+	ColumnVisibilityVisible
+	ColumnVisibilityInvisible
 )
 
 // ColumnOption is used for parsing column constraint info from SQL.
@@ -513,6 +528,7 @@ type ColumnOption struct {
 	// Name is only used for Check Constraint name.
 	ConstraintName string
 	PrimaryKeyTp   model.PrimaryKeyType
+	Visibility     ColumnVisibility
 }
 
 // Restore implements Node interface.
@@ -606,6 +622,15 @@ func (n *ColumnOption) Restore(ctx *format.RestoreCtx) error {
 				ctx.WritePlainf("(%d)", n.AutoRandomBitLength)
 			}
 		})
+	case ColumnOptionInvisible:
+		if n.Visibility != ColumnVisibilityDefault {
+			switch n.Visibility {
+			case ColumnVisibilityVisible:
+				ctx.WriteKeyWord("VISIBLE")
+			case ColumnVisibilityInvisible:
+				ctx.WriteKeyWord("INVISIBLE")
+			}
+		}
 	default:
 		return errors.New("An error occurred while splicing ColumnOption")
 	}
@@ -656,6 +681,8 @@ type IndexOption struct {
 	ParserName   model.CIStr
 	Visibility   IndexVisibility
 	PrimaryKeyTp model.PrimaryKeyType
+	// PartitionIndexType OceanBase:[GLOBAL|LOCAL]
+	PartitionIndexType model.PartitionIndexType
 }
 
 // Restore implements Node interface.
@@ -665,6 +692,10 @@ func (n *IndexOption) Restore(ctx *format.RestoreCtx) error {
 		ctx.WriteWithSpecialComments(tidb.FeatureIDClusteredIndex, func() {
 			ctx.WriteKeyWord(n.PrimaryKeyTp.String())
 		})
+		hasPrevOption = true
+	}
+	if n.PartitionIndexType != model.PartitionIndexTypeInvalid {
+		ctx.WritePlain(n.PartitionIndexType.String())
 		hasPrevOption = true
 	}
 	if n.KeyBlockSize > 0 {
@@ -742,6 +773,7 @@ const (
 	ConstraintForeignKey
 	ConstraintFulltext
 	ConstraintCheck
+	ConstraintSpatial
 )
 
 // Constraint is constraint for table definition.
@@ -2482,6 +2514,7 @@ const (
 	AlterTableRenameColumn
 	AlterTableRenameTable
 	AlterTableAlterColumn
+	AlterTableAlterColumnInvisible
 	AlterTableLock
 	AlterTableWriteable
 	AlterTableAlgorithm
@@ -2620,6 +2653,7 @@ type AlterTableSpec struct {
 	PartDefinitions  []*PartitionDefinition
 	WithValidation   bool
 	Num              uint64
+	ColumnVisibility ColumnVisibility
 	Visibility       IndexVisibility
 	TiFlashReplica   *TiFlashReplicaSpec
 	PlacementSpecs   []*PlacementSpec
@@ -2857,6 +2891,18 @@ func (n *AlterTableSpec) Restore(ctx *format.RestoreCtx) error {
 			}
 		} else {
 			ctx.WriteKeyWord(" DROP DEFAULT")
+		}
+	case AlterTableAlterColumnInvisible:
+		ctx.WriteKeyWord("ALTER COLUMN ")
+		if err := n.NewColumns[0].Restore(ctx); err != nil {
+			return errors.Annotate(err, "An error occurred while restore AlterTableSpec.NewColumns[0]")
+		}
+		ctx.WriteKeyWord("SET ")
+		switch n.ColumnVisibility {
+		case ColumnVisibilityVisible:
+			ctx.WriteKeyWord(" VISIBLE")
+		case ColumnVisibilityInvisible:
+			ctx.WriteKeyWord(" INVISIBLE")
 		}
 	case AlterTableLock:
 		ctx.WriteKeyWord("LOCK ")

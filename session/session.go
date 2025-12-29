@@ -170,6 +170,14 @@ type Session interface {
 	SetDiskFullOpt(level kvrpcpb.DiskFullOpt)
 	GetDiskFullOpt() kvrpcpb.DiskFullOpt
 	ClearDiskFullOpt()
+
+	// 用以测试
+	GetAlterTablePostPart(sql string, isPtOSC bool) string
+	InitDisableTypes()
+
+	LoadOptions(opt SourceOptions) error
+	Audit(ctx context.Context, sql string) ([]Record, error)
+	RunExecute(ctx context.Context, sql string) ([]Record, error)
 }
 
 var (
@@ -519,6 +527,10 @@ func (s *session) SetCollation(coID int) error {
 		terror.Log(s.sessionVars.SetSystemVar(v, cs))
 	}
 	return s.sessionVars.SetSystemVar(variable.CollationConnection, co)
+}
+
+func (s *session) GetAlterTablePostPart(sql string, isPtOSC bool) string {
+	return s.getAlterTablePostPart(sql, isPtOSC)
 }
 
 func (s *session) PreparedPlanCache() *kvcache.SimpleLRUCache {

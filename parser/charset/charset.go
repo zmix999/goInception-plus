@@ -54,6 +54,7 @@ var descs = make([]*Desc, 0, len(charsetInfos))
 // All the supported charsets should be in the following table.
 var charsetInfos = map[string]*Charset{
 	CharsetUTF8:    {CharsetUTF8, CollationUTF8, make(map[string]*Collation), "UTF-8 Unicode", 3},
+	CharsetUTF8MB3: {CharsetUTF8MB3, CollationUTF8MB3, make(map[string]*Collation), "UTF-8 Unicode", 3},
 	CharsetUTF8MB4: {CharsetUTF8MB4, CollationUTF8MB4, make(map[string]*Collation), "UTF-8 Unicode", 4},
 	CharsetASCII:   {CharsetASCII, CollationASCII, make(map[string]*Collation), "US ASCII", 1},
 	CharsetLatin1:  {CharsetLatin1, CollationLatin1, make(map[string]*Collation), "Latin1", 1},
@@ -63,6 +64,7 @@ var charsetInfos = map[string]*Charset{
 // All the names supported collations should be in the following table.
 var supportedCollationNames = map[string]struct{}{
 	CollationUTF8:    {},
+	CollationUTF8MB3: {},
 	CollationUTF8MB4: {},
 	CollationASCII:   {},
 	CollationLatin1:  {},
@@ -119,7 +121,7 @@ func ValidCharsetAndCollation(cs string, co string) bool {
 // GetDefaultCollationLegacy is compatible with the charset support in old version parser.
 func GetDefaultCollationLegacy(charset string) (string, error) {
 	switch strings.ToLower(charset) {
-	case CharsetUTF8, CharsetUTF8MB4, CharsetASCII, CharsetLatin1, CharsetBin:
+	case CharsetUTF8, CharsetUTF8MB3, CharsetUTF8MB4, CharsetASCII, CharsetLatin1, CharsetBin:
 		return GetDefaultCollation(charset)
 	default:
 		return "", errors.Errorf("Unknown charset %s", charset)
@@ -214,6 +216,8 @@ const (
 	CollationUTF8 = "utf8_bin"
 	// CharsetUTF8MB4 represents 4 bytes utf8, which works the same way as utf8 in Go.
 	CharsetUTF8MB4 = "utf8mb4"
+	// CollationUTF8MB3 is the default collation for CollationUTF8MB3.
+	CollationUTF8MB3 = "utf8mb3_bin"
 	// CollationUTF8MB4 is the default collation for CharsetUTF8MB4.
 	CollationUTF8MB4 = "utf8mb4_bin"
 	// CharsetASCII is a subset of UTF8.
@@ -486,6 +490,7 @@ var collations = []*Collation{
 	{245, "utf8mb4", "utf8mb4_croatian_ci", false},
 	{246, "utf8mb4", "utf8mb4_unicode_520_ci", false},
 	{247, "utf8mb4", "utf8mb4_vietnamese_ci", false},
+	{248, "utf8mb4", "utf8mb4_zh_0900_as_cs", false},
 	{255, "utf8mb4", "utf8mb4_0900_ai_ci", false},
 	{2048, "utf8mb4", "utf8mb4_zh_pinyin_tidb_as_cs", false},
 }

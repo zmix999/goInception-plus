@@ -287,6 +287,12 @@ func (s *Server) newConn(conn net.Conn) *clientConn {
 	return cc
 }
 
+func (s *Server) InitOscProcessList() {
+	if s.oscProcessList == nil {
+		s.oscProcessList = make(map[string]*util.OscProcessInfo)
+	}
+}
+
 // NewServer creates a new Server.
 func NewServer(cfg *config.Config, driver IDriver) (*Server, error) {
 	s := &Server{

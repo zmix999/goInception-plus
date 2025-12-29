@@ -261,25 +261,29 @@ func isDefaultValNowSymFunc(expr ast.ExprNode) bool {
 
 func (s *session) isInvalidDefaultValue(colDef *ast.ColumnDef) bool {
 	tp := colDef.Tp
+
+	// utc := &stmtctx.StatementContext{TimeZone: time.UTC}
 	// Check the last default value.
 	for i := len(colDef.Options) - 1; i >= 0; i-- {
 		columnOpt := colDef.Options[i]
 		if columnOpt.Tp == ast.ColumnOptionDefaultValue {
+
 			if !(tp.Tp == mysql.TypeTimestamp || tp.Tp == mysql.TypeDatetime) && isDefaultValNowSymFunc(columnOpt.Expr) {
 				return true
 			}
+
+			if !types.IsTypeTime(tp.Tp) || isDefaultValNowSymFunc(columnOpt.Expr) {
+				return false
+			}
+
 			d, err := GetTimeValue(s, columnOpt.Expr, tp.Tp, int8(tp.Decimal))
 			if err != nil {
 				// log.Warning(err)
 				return true
 			}
-
 			vars := s.sessionVars
-
 			// 根据服务器sql_mode设置处理零值日期
 			t := d.GetMysqlTime()
-			// log.Info(vars.StrictSQLMode, vars.SQLMode.HasNoZeroDateMode(), t.IsZero())
-			// log.Info(vars.StrictSQLMode, vars.SQLMode.HasNoZeroInDateMode(), t.InvalidZero())
 			if t.IsZero() {
 				if s.inc.EnableZeroDate {
 					return vars.StrictSQLMode && vars.SQLMode.HasNoZeroDateMode()
@@ -704,14 +708,17 @@ func (s *session) checkPartitionNameUnique(defs []*ast.PartitionDefinition) {
 			partValues := make([]string, 0)
 			for _, v := range clause.Exprs {
 				var key string
-				if v.(ast.ValueExpr).GetValue() == nil {
+				if value, ok := v.(ast.ValueExpr); ok {
 					var buf bytes.Buffer
-					v.Format(&buf)
+					value.Format(&buf)
 					key = buf.String()
 					partValues = append(partValues, key)
-				} else {
-					key = fmt.Sprintf("'%v'", v.(ast.ValueExpr).GetValue())
-					partValues = append(partValues, key)
+				}
+				if value, ok := v.(*ast.FuncCallExpr); ok {
+					val := value.Args[0]
+					if tmp, ok := val.(*driver.ValueExpr); ok {
+						partValues = append(partValues, tmp.GetString())
+					}
 				}
 			}
 			partDescription = strings.Join(partValues, ",")

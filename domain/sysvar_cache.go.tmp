@@ -1,0 +1,119 @@
+// Copyright 2021 PingCAP, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package domain
+
+import (
+	"context"
+	"fmt"
+	"strconv"
+	"sync"
+	"time"
+
+	"gitee.com/zhoujin826/goInception-plus/sessionctx"
+	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
+	"gitee.com/zhoujin826/goInception-plus/util/logutil"
+	"gitee.com/zhoujin826/goInception-plus/util/sqlexec"
+	"gitee.com/zhoujin826/goInception-plus/util/stmtsummary"
+	storekv "github.com/tikv/client-go/v2/kv"
+	pd "github.com/tikv/pd/client"
+	"go.uber.org/zap"
+)
+
+// The sysvar cache replaces the GlobalVariableCache.
+// It is an improvement because it operates similar to privilege cache:
+// - it caches for 30s instead of 2s
+// - the cache is invalidated on update
+// - an etcd notification is sent to other tidb servers.
+
+// sysVarCache represents the cache of system variables broken up into session and global scope.
+type sysVarCache struct {
+	sync.RWMutex // protects global and session maps
+	global       map[string]string
+	session      map[string]string
+	rebuildLock  sync.Mutex // protects concurrent rebuild
+}
+
+func (do *Domain) rebuildSysVarCacheIfNeeded() (err error) {
+	do.sysVarCache.RLock()
+	cacheNeedsRebuild := len(do.sysVarCache.session) == 0 || len(do.sysVarCache.global) == 0
+	do.sysVarCache.RUnlock()
+	if cacheNeedsRebuild {
+		logutil.BgLogger().Warn("sysvar cache is empty, triggering rebuild")
+		if err = do.rebuildSysVarCache(nil); err != nil {
+			logutil.BgLogger().Error("rebuilding sysvar cache failed", zap.Error(err))
+		}
+	}
+	return err
+}
+
+// GetSessionCache gets a copy of the session sysvar cache.
+// The intention is to copy it directly to the systems[] map
+// on creating a new session.
+func (do *Domain) GetSessionCache() (map[string]string, error) {
+	if err := do.rebuildSysVarCacheIfNeeded(); err != nil {
+		return nil, err
+	}
+	do.sysVarCache.RLock()
+	defer do.sysVarCache.RUnlock()
+	// Perform a deep copy since this will be assigned directly to the session
+	newMap := make(map[string]string, len(do.sysVarCache.session))
+	for k, v := range do.sysVarCache.session {
+		newMap[k] = v
+	}
+	return newMap, nil
+}
+
+// GetGlobalVar gets an individual global var from the sysvar cache.
+func (do *Domain) GetGlobalVar(name string) (string, error) {
+	if err := do.rebuildSysVarCacheIfNeeded(); err != nil {
+		return "", err
+	}
+	do.sysVarCache.RLock()
+	defer do.sysVarCache.RUnlock()
+
+	if val, ok := do.sysVarCache.global[name]; ok {
+		return val, nil
+	}
+	logutil.BgLogger().Warn("could not find key in global cache", zap.String("name", name))
+	return "", variable.ErrUnknownSystemVar.GenWithStackByArgs(name)
+}
+
+func (do *Domain) fetchTableValues(ctx sessionctx.Context) (map[string]string, error) {
+	tableContents := make(map[string]string)
+	// Copy all variables from the table to tableContents
+	exec := ctx.(sqlexec.RestrictedSQLExecutor)
+	stmt, err := exec.ParseWithParams(context.Background(), `SELECT variable_name, variable_value FROM mysql.global_variables`)
+	if err != nil {
+		return tableContents, err
+	}
+	rows, _, err := exec.ExecRestrictedStmt(context.TODO(), stmt)
+	if err != nil {
+		return nil, err
+	}
+	for _, row := range rows {
+		name := row.GetString(0)
+		val := row.GetString(1)
+		tableContents[name] = val
+	}
+	return tableContents, nil
+}
+
+// rebuildSysVarCache rebuilds the sysvar cache both globally and for session vars.
+// It needs to be called when sysvars are added or removed.
+func (do *Domain) rebuildSysVarCache(ctx sessionctx.Context) error {
+	newSessionCache := make(map[string]string)
+	newGlobalCache := make(map[string]string)
+	if ctx == nil {
+		sysSessionPool := d

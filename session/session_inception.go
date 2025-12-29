@@ -6,7 +6,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"database/sql"
-	"database/sql/driver"
+	sqlDriver "database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -30,7 +30,7 @@ import (
 	"gitee.com/zhoujin826/goInception-plus/parser/opcode"
 	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
 	"gitee.com/zhoujin826/goInception-plus/types"
-	drivers "gitee.com/zhoujin826/goInception-plus/types/parser_driver"
+	driver "gitee.com/zhoujin826/goInception-plus/types/parser_driver"
 	"gitee.com/zhoujin826/goInception-plus/util"
 	"gitee.com/zhoujin826/goInception-plus/util/sqlexec"
 	"gitee.com/zhoujin826/goInception-plus/util/stringutil"
@@ -4064,10 +4064,22 @@ func (s *session) buildPartitionInfo(def *ast.PartitionOptions,
 			p.PartDescription = strings.Join(partValues, ",")
 
 		case *ast.PartitionDefinitionClauseLessThan:
+			partValues := make([]string, 0)
 			for _, v := range clause.Exprs {
-				p.PartDescription = fmt.Sprintf("%v", v.(ast.ValueExpr).GetValue())
-				break
+				if value, ok := v.(ast.ValueExpr); ok {
+					var buf bytes.Buffer
+					value.Format(&buf)
+					key := buf.String()
+					partValues = append(partValues, key)
+				}
+				if value, ok := v.(*ast.FuncCallExpr); ok {
+					val := value.Args[0]
+					if tmp, ok := val.(*driver.ValueExpr); ok {
+						partValues = append(partValues, tmp.GetString())
+					}
+				}
 			}
+			p.PartDescription = strings.Join(partValues, ",")
 		}
 		parts[index] = p
 	}
@@ -4333,9 +4345,9 @@ func (s *session) checkAlterTable(node *ast.AlterTableStmt, sql string, mergeOnl
 
 		case ast.AlterTableAlterColumn:
 			s.checkAlterTableAlterColumn(table, alter)
-		/* postgresql
+
 		case ast.AlterTableAlterColumnInvisible:
-			s.checkAlterTableAlterColumn(table, alter)*/
+			s.checkAlterTableAlterColumn(table, alter)
 		case ast.AlterTableRenameIndex:
 			if s.dbVersion < 50700 {
 				s.appendErrorNo(ER_NOT_SUPPORTED_YET)
@@ -4709,13 +4721,13 @@ func (s *session) checkMultiPartitionParts(specs []*ast.AlterTableSpec) {
 
 func (s *session) checkAlterTableAlterColumn(t *TableInfo, c *ast.AlterTableSpec) {
 	// log.Info("checkAlterTableAlterColumn")
-	/* postgresql
-	if c.Visibility != ast.VisibilityDefault {
+
+	if c.ColumnVisibility != ast.ColumnVisibilityDefault {
 		if s.dbType == DBTypeMariaDB ||
 			s.dbVersion < 80000 {
 			s.appendErrorNo(ErrUseIndexVisibility)
 		}
-	}*/
+	}
 	for _, nc := range c.NewColumns {
 		found := false
 		var foundField *FieldInfo
@@ -5457,7 +5469,7 @@ func (s *session) mysqlCheckField(t *TableInfo, field *ast.ColumnDef, alterTable
 	hasGeometry := false
 	hasDefaultValue := false
 	hasGenerated := false
-	var defaultValue *types.Datum
+	var defaultValue types.Datum
 	var defaultExpr ast.ExprNode
 
 	isPrimary := false
@@ -5481,17 +5493,24 @@ func (s *session) mysqlCheckField(t *TableInfo, field *ast.ColumnDef, alterTable
 				hasGeometry = true*/
 			case ast.ColumnOptionDefaultValue:
 				defaultExpr = op.Expr
-				if tmp, ok := op.Expr.(*drivers.ValueExpr); ok {
-					defaultValue = &tmp.Datum
-
+				if tmp, ok := defaultExpr.(*driver.ValueExpr); ok {
+					defaultValue = tmp.Datum
+					hasDefaultValue = true
 				}
-				hasDefaultValue = true
+				if funcCall, ok := defaultExpr.(*ast.FuncCallExpr); ok {
+					if len(funcCall.Args) == 1 {
+						v := funcCall.Args[0]
+						if tmp, ok := v.(*driver.ValueExpr); ok {
+							defaultValue = tmp.Datum
+						}
+					}
+				}
 			case ast.ColumnOptionOnUpdate:
 				if funcCall, ok := op.Expr.(*ast.FuncCallExpr); ok {
 					var num int64
 					if len(funcCall.Args) == 1 {
 						v := funcCall.Args[0]
-						if tmp, ok := v.(*drivers.ValueExpr); ok {
+						if tmp, ok := v.(*driver.ValueExpr); ok {
 							num = tmp.GetInt64()
 						}
 					}
@@ -5538,7 +5557,7 @@ func (s *session) mysqlCheckField(t *TableInfo, field *ast.ColumnDef, alterTable
 			var num int64
 			if len(funcCall.Args) == 1 {
 				v := funcCall.Args[0]
-				if tmp, ok := v.(*drivers.ValueExpr); ok {
+				if tmp, ok := v.(*driver.ValueExpr); ok {
 					num = tmp.GetInt64()
 				}
 			}
@@ -5772,11 +5791,10 @@ func (s *session) checkIndexAttr(tp ast.ConstraintType, name string,
 		}
 
 		s.checkDupColumnIndex(table, name, keys)
-	/* postgresql
 	case ast.ConstraintSpatial:
 		if len(keys) > 1 {
 			s.appendErrorNo(ER_TOO_MANY_KEY_PARTS, name, table.Name, 1)
-		}*/
+		}
 
 	default:
 		if s.inc.IndexPrefix != "" {
@@ -5910,13 +5928,12 @@ func (s *session) checkIndexExists(t *TableInfo, alter *ast.AlterTableSpec) bool
 	log.Debug("checkIndexExists")
 
 	indexName := alter.IndexName.O
-	/* postgresql
-	if alter.Visibility != ast.VisibilityDefault {
+	if alter.Visibility != ast.IndexVisibilityDefault {
 		if s.dbType == DBTypeMariaDB ||
 			s.dbVersion < 80000 {
 			s.appendErrorNo(ErrUseIndexVisibility)
 		}
-	}*/
+	}
 
 	if len(t.Indexes) == 0 {
 		s.appendErrorNo(ErrIndexNotExisted, fmt.Sprintf("%s.%s", t.Name, indexName))
@@ -6421,16 +6438,17 @@ func (s *session) checkCreateIndex(table *ast.TableName, IndexName string,
 					if foundField.Null == "YES" {
 						s.appendErrorNo(ER_PRIMARY_CANT_HAVE_NULL)
 					}
-				} else if tp == ast.ConstraintFulltext && s.dbType == DBTypeOceanBase && s.dbVersion < 43100 {
-					s.appendErrorMsg("OceanBase version less than 4.3.1.0 does not support fulltext index")
-				} /* postgresql else if tp == ast.ConstraintSpatial {
+				} else if tp == ast.ConstraintSpatial {
 					if foundField.Null == "YES" {
 						s.appendErrorMsg("All parts of a SPATIAL index must be NOT NULL")
 					}
+				} else if tp == ast.ConstraintFulltext && s.dbType == DBTypeOceanBase && s.dbVersion < 43100 {
+					s.appendErrorMsg("OceanBase version less than 4.3.1.0 does not support fulltext index")
 				}
 				if col.Desc && s.dbType == DBTypeOceanBase {
 					s.appendErrorMsg("OceanBase Desc index not supported")
-				}*/
+
+				}
 			}
 		}
 	}
@@ -6460,8 +6478,8 @@ func (s *session) checkCreateIndex(table *ast.TableName, IndexName string,
 		if len(indexOption.Comment) > INDEX_COMMENT_MAXLEN {
 			s.appendErrorNo(ER_TOO_LONG_INDEX_COMMENT, IndexName, INDEX_COMMENT_MAXLEN)
 		}
-		/* postgresql
-		if indexOption.Visibility != ast.VisibilityDefault {
+
+		if indexOption.Visibility != ast.IndexVisibilityDefault {
 			if s.dbType == DBTypeMariaDB ||
 				s.dbVersion < 80000 {
 				s.appendErrorNo(ErrUseIndexVisibility)
@@ -6472,7 +6490,7 @@ func (s *session) checkCreateIndex(table *ast.TableName, IndexName string,
 			if s.dbType != DBTypeOceanBase {
 				s.appendErrorMsg("Index option [GLOBAL|LOCAL] is not supported")
 			}
-		} */
+		}
 
 		if indexOption.ParserName.L != "" {
 			if tp != ast.ConstraintFulltext {
@@ -6511,10 +6529,9 @@ func (s *session) checkCreateIndex(table *ast.TableName, IndexName string,
 	}
 
 	indexType := "BTREE"
-	/* postgresql
 	if tp == ast.ConstraintSpatial {
 		indexType = "SPATIAL"
-	}*/
+	}
 	// cache new index
 	for i, col := range IndexColNames {
 		if col.Expr == nil {
@@ -6687,7 +6704,7 @@ func (s *session) checkAddConstraint(t *TableInfo, c *ast.AlterTableSpec) {
 
 	switch c.Constraint.Tp {
 	case ast.ConstraintKey, ast.ConstraintIndex,
-		/* postgresql ast.ConstraintSpatial,*/ ast.ConstraintFulltext:
+		ast.ConstraintSpatial, ast.ConstraintFulltext:
 		s.checkCreateIndex(nil, c.Constraint.Name,
 			c.Constraint.Keys, c.Constraint.Option, t, false, c.Constraint.Tp)
 	case ast.ConstraintUniq, ast.ConstraintUniqIndex, ast.ConstraintUniqKey:
@@ -7426,9 +7443,9 @@ func (s *session) executeInceptionSet(node *ast.InceptionSetStmt, sql string) ([
 		case ast.ValueExpr:
 			value = expr
 		case *ast.UnaryOperationExpr:
-			value, _ = expr.V.(*drivers.ValueExpr)
+			value, _ = expr.V.(*driver.ValueExpr)
 			if expr.Op == opcode.Minus {
-				if tmp, ok := value.(*drivers.ValueExpr); ok {
+				if tmp, ok := value.(*driver.ValueExpr); ok {
 					value = tmp
 				}
 
@@ -7599,7 +7616,7 @@ func (s *session) setConfigValue(name string, field reflect.Value, value ast.Val
 	}()
 
 	sVal := ""
-	if v, ok := value.(*drivers.ValueExpr); ok {
+	if v, ok := value.(*driver.ValueExpr); ok {
 		if !v.IsNull() {
 			sVal, err = v.ToString()
 		}
@@ -7819,7 +7836,7 @@ func (s *session) filterExprNode(expr ast.ExprNode, colNames []string, values []
 				return false, err
 			}
 			if colIndex > -1 {
-				if v, ok := x.R.(*drivers.ValueExpr); ok {
+				if v, ok := x.R.(*driver.ValueExpr); ok {
 					sVal, _ := v.ToString()
 					if sVal == values[colIndex] {
 						return true, nil
@@ -8115,7 +8132,7 @@ func (s *session) executeInceptionShow(sql string) ([]sqlexec.RecordSet, error) 
 				return nil, nil
 			}
 
-			var vv []driver.Value
+			var vv []sqlDriver.Value
 			for i := range cols {
 				val := columnPointers[i].(*interface{})
 				vv = append(vv, *val)

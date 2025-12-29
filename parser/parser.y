@@ -141,6 +141,14 @@ import (
 	grant             "GRANT"
 	group             "GROUP"
 	groups            "GROUPS"
+	geometryType      "GEOMETRY"
+	geometryType      "POINT"
+	geometryType      "LINESTRING"
+	geometryType      "POLYGON"
+	geometryType      "MULTIPOLYGON"
+	geometryType      "MULTIPOINT"
+	geometryType      "MULTILINESTRING"
+	geometryType      "GEOMETRYCOLLECTION"
 	having            "HAVING"
 	highPriority      "HIGH_PRIORITY"
 	hourMicrosecond   "HOUR_MICROSECOND"
@@ -1054,6 +1062,7 @@ import (
 	IndexHintScope                         "index hint scope"
 	IndexHintType                          "index hint type"
 	IndexInvisible                         "index visible/invisible"
+	ColumnInvisible                        "column visible/invisible"
 	IndexKeyTypeOpt                        "index key type"
 	IndexLockAndAlgorithmOpt               "index lock and algorithm"
 	IndexNameAndTypeOpt                    "index name and index type"
@@ -2182,6 +2191,17 @@ AlterTableSpec:
 		$$ = &ast.AlterTableSpec{
 			Tp:         ast.AlterTableAlterColumn,
 			NewColumns: []*ast.ColumnDef{colDef},
+		}
+	}
+|	"ALTER" ColumnKeywordOpt ColumnName "SET" ColumnInvisible
+	{
+		colDef := &ast.ColumnDef{
+			Name:    $3.(*ast.ColumnName),
+		}
+		$$ = &ast.AlterTableSpec{
+			Tp:         ast.AlterTableAlterColumnInvisible,
+			NewColumns: []*ast.ColumnDef{colDef},
+			ColumnVisibility: $5.(ast.ColumnVisibility),
 		}
 	}
 |	"ALTER" ColumnKeywordOpt ColumnName "DROP" "DEFAULT"
@@ -3393,6 +3413,10 @@ ColumnOption:
 	{
 		$$ = &ast.ColumnOption{Tp: ast.ColumnOptionAutoRandom, AutoRandomBitLength: $2.(int)}
 	}
+|	ColumnInvisible
+	{
+		$$ = &ast.ColumnOption{Tp: ast.ColumnOptionInvisible, Visibility: $1.(ast.ColumnVisibility),}
+	}
 
 StorageMedia:
 	"DEFAULT"
@@ -3478,6 +3502,19 @@ ConstraintElem:
 	{
 		c := &ast.Constraint{
 			Tp:           ast.ConstraintFulltext,
+			Keys:         $5.([]*ast.IndexPartSpecification),
+			Name:         $3.(*ast.NullString).String,
+			IsEmptyIndex: $3.(*ast.NullString).Empty,
+		}
+		if $7 != nil {
+			c.Option = $7.(*ast.IndexOption)
+		}
+		$$ = c
+	}
+|	"SPATIAL" KeyOrIndexOpt IndexName '(' IndexPartSpecificationList ')' IndexOptionList
+	{
+		c := &ast.Constraint{
+			Tp:           ast.ConstraintSpatial,
 			Keys:         $5.([]*ast.IndexPartSpecification),
 			Name:         $3.(*ast.NullString).String,
 			IsEmptyIndex: $3.(*ast.NullString).Empty,
@@ -3848,11 +3885,11 @@ IndexPartSpecification:
 	ColumnName OptFieldLen OptOrder
 	{
 		// Order is parsed but just ignored as MySQL did.
-		$$ = &ast.IndexPartSpecification{Column: $1.(*ast.ColumnName), Length: $2.(int)}
+		$$ = &ast.IndexPartSpecification{Column: $1.(*ast.ColumnName), Length: $2.(int), Desc: $3.(bool)}
 	}
 |	'(' Expression ')' OptOrder
 	{
-		$$ = &ast.IndexPartSpecification{Expr: $2}
+		$$ = &ast.IndexPartSpecification{Expr: $2, Desc: $4.(bool)}
 	}
 
 IndexLockAndAlgorithmOpt:
@@ -5952,6 +5989,18 @@ IndexOption:
 			PrimaryKeyTp: $1.(model.PrimaryKeyType),
 		}
 	}
+|	"LOCAL"
+	{
+		$$ = &ast.IndexOption{
+			PartitionIndexType: model.PartitionIndexTypeLocal,
+		}
+	}
+|	"GLOBAL"
+	{
+		$$ = &ast.IndexOption{
+			PartitionIndexType: model.PartitionIndexTypeGlobal,
+		}
+	}
 
 /*
   See: https://github.com/mysql/mysql-server/blob/8.0/sql/sql_yacc.yy#L7179
@@ -6024,6 +6073,16 @@ IndexInvisible:
 |	"INVISIBLE"
 	{
 		$$ = ast.IndexVisibilityInvisible
+	}
+
+ColumnInvisible:
+	"VISIBLE"
+	{
+		$$ = ast.ColumnVisibilityVisible
+	}
+|	"INVISIBLE"
+	{
+		$$ = ast.ColumnVisibilityInvisible
 	}
 
 /**********************************Identifier********************************************/
@@ -12208,6 +12267,11 @@ TextType:
 |	"LONGTEXT"
 	{
 		x := types.NewFieldType(mysql.TypeLongBlob)
+		$$ = x
+	}
+|	"GEOMETRY"
+	{
+		x := types.NewFieldType(mysql.TypeGeometry)
 		$$ = x
 	}
 

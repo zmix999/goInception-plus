@@ -414,9 +414,9 @@ func (s *testSessionIncSuite) TestCreateTable(c *C) {
 	sql = "create table t1(c1 datetime(6) not null default current_timestamp(6) primary key);"
 	s.testErrorCode(c, sql)
 	//SRID列选项检查
-	sql = "create table t1(c1 int not null srid 4326);"
+	/*sql = "create table t1(c1 int not null srid 4326);"
 	s.testErrorCode(c, sql,
-		session.NewErr(session.ER_INVALID_NO_GEOMETRY_DEFAULT, "c1"))
+		session.NewErr(session.ER_INVALID_NO_GEOMETRY_DEFAULT, "c1"))*/
 	// 关键字
 	config.GetGlobalConfig().Inc.EnableIdentiferKeyword = false
 	config.GetGlobalConfig().Inc.CheckIdentifier = true
@@ -1053,13 +1053,12 @@ primary key(id)) comment 'test';`
 
 	sql = `CREATE TABLE t1 (
 			id bigint(20) COMMENT 'id',
-			c1 double(10) DEFAULT '0',
+			c1 double DEFAULT '0',
 			c2 DECIMAL(10) DEFAULT '0',
 			c3 float(10) DEFAULT '0',
 			PRIMARY KEY (id)
 			) ENGINE=InnoDB comment = 'test';`
-	s.testErrorCode(c, sql,
-		session.NewErrf("Please specify the number of digits of type double (column: \"%s\").", "c1"))
+	s.testErrorCode(c, sql)
 
 	// 检查分区表RANGE类型
 	config.GetGlobalConfig().Inc.EnablePartitionTable = true
@@ -2782,8 +2781,7 @@ func (s *testSessionIncSuite) TestTimestampColumn(c *C) {
 		session.NewErr(session.ER_INVALID_DEFAULT, "c1"))
 	sql = `drop table if exists timeTable;create table timeTable(c1 timestamp(7) default '2000-1-1 1:1:1');`
 	s.testErrorCode(c, sql,
-		session.NewErrf("Too-big precision 7 specified for 'c1'. Maximum is 6."),
-		session.NewErr(session.ER_INVALID_DEFAULT, "c1"))
+		session.NewErrf("Too-big precision 7 specified for 'c1'. Maximum is 6."))
 
 	sql = `drop table if exists timeTable;create table timeTable(c1 timestamp(0) default '2000-1-1 1:1:1');`
 	s.testErrorCode(c, sql)

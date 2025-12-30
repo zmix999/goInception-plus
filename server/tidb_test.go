@@ -390,7 +390,7 @@ func generateCert(sn int, commonName string, parentCert *x509.Certificate, paren
 
 func (ts *tidbTestSuite) TestCreateTableFlen(c *C) {
 	// issue #4540
-	qctx, err := ts.tidbdrv.OpenCtx(uint64(0), 0, uint8(tmysql.DefaultCollationID), "test", nil)
+	qctx, err := ts.tidbdrv.OpenCtx(uint64(0), 0, uint16(tmysql.DefaultCollationID), "test", nil)
 	c.Assert(err, IsNil)
 	_, err = Execute(context.Background(), qctx, "use test;")
 	c.Assert(err, IsNil)
@@ -459,7 +459,7 @@ func Execute(ctx context.Context, qc *TiDBContext, sql string) (ResultSet, error
 }
 
 func (ts *tidbTestSuite) TestShowTablesFlen(c *C) {
-	qctx, err := ts.tidbdrv.OpenCtx(uint64(0), 0, uint8(tmysql.DefaultCollationID), "test", nil)
+	qctx, err := ts.tidbdrv.OpenCtx(uint64(0), 0, uint16(tmysql.DefaultCollationID), "test", nil)
 	c.Assert(err, IsNil)
 	ctx := context.Background()
 	_, err = Execute(ctx, qctx, "use test;")
@@ -487,7 +487,7 @@ func checkColNames(c *C, columns []*ColumnInfo, names ...string) {
 }
 
 func (ts *tidbTestSuite) TestFieldList(c *C) {
-	qctx, err := ts.tidbdrv.OpenCtx(uint64(0), 0, uint8(tmysql.DefaultCollationID), "test", nil)
+	qctx, err := ts.tidbdrv.OpenCtx(uint64(0), 0, uint16(tmysql.DefaultCollationID), "test", nil)
 	c.Assert(err, IsNil)
 	_, err = Execute(context.Background(), qctx, "use test;")
 	c.Assert(err, IsNil)
@@ -566,7 +566,7 @@ func (ts *tidbTestSuite) TestFieldList(c *C) {
 }
 
 func (ts *tidbTestSuite) TestNullFlag(c *C) {
-	qctx, err := ts.tidbdrv.OpenCtx(uint64(0), 0, uint8(tmysql.DefaultCollationID), "test", nil)
+	qctx, err := ts.tidbdrv.OpenCtx(uint64(0), 0, uint16(tmysql.DefaultCollationID), "test", nil)
 	c.Assert(err, IsNil)
 
 	ctx := context.Background()
@@ -632,7 +632,7 @@ func (ts *tidbTestSuite) TestNullFlag(c *C) {
 
 func (ts *tidbTestSuite) TestNO_DEFAULT_VALUEFlag(c *C) {
 	// issue #21465
-	qctx, err := ts.tidbdrv.OpenCtx(uint64(0), 0, uint8(tmysql.DefaultCollationID), "test", nil)
+	qctx, err := ts.tidbdrv.OpenCtx(uint64(0), 0, uint16(tmysql.DefaultCollationID), "test", nil)
 	c.Assert(err, IsNil)
 
 	ctx := context.Background()
@@ -655,7 +655,7 @@ func (ts *tidbTestSerialSuite) TestDefaultCharacterAndCollation(c *C) {
 	collate.SetNewCollationEnabledForTest(true)
 	defer collate.SetNewCollationEnabledForTest(false)
 	// 255 is the collation id of mysql client 8 default collation_connection
-	qctx, err := ts.tidbdrv.OpenCtx(uint64(0), 0, uint8(255), "test", nil)
+	qctx, err := ts.tidbdrv.OpenCtx(uint64(0), 0, uint16(255), "test", nil)
 	c.Assert(err, IsNil)
 	testCase := []struct {
 		variable string
@@ -674,7 +674,7 @@ func (ts *tidbTestSerialSuite) TestDefaultCharacterAndCollation(c *C) {
 }
 
 func (ts *tidbTestSuite) TestPessimisticInsertSelectForUpdate(c *C) {
-	qctx, err := ts.tidbdrv.OpenCtx(uint64(0), 0, uint8(tmysql.DefaultCollationID), "test", nil)
+	qctx, err := ts.tidbdrv.OpenCtx(uint64(0), 0, uint16(tmysql.DefaultCollationID), "test", nil)
 	c.Assert(err, IsNil)
 	defer qctx.Close()
 	ctx := context.Background()
@@ -696,7 +696,7 @@ func (ts *tidbTestSuite) TestPessimisticInsertSelectForUpdate(c *C) {
 }
 
 func (ts *tidbTestSerialSuite) TestPrepareCount(c *C) {
-	qctx, err := ts.tidbdrv.OpenCtx(uint64(0), 0, uint8(tmysql.DefaultCollationID), "test", nil)
+	qctx, err := ts.tidbdrv.OpenCtx(uint64(0), 0, uint16(tmysql.DefaultCollationID), "test", nil)
 	c.Assert(err, IsNil)
 	prepareCnt := atomic.LoadInt64(&variable.PreparedStmtCount)
 	ctx := context.Background()

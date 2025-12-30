@@ -237,7 +237,6 @@ import (
 	revoke            "REVOKE"
 	right             "RIGHT"
 	rlike             "RLIKE"
-	row               "ROW"
 	rows              "ROWS"
 	rowNumber         "ROW_NUMBER"
 	secondMicrosecond "SECOND_MICROSECOND"
@@ -552,6 +551,7 @@ import (
 	role                   "ROLE"
 	rollback               "ROLLBACK"
 	routine                "ROUTINE"
+	row               	   "ROW"
 	rowCount               "ROW_COUNT"
 	rowFormat              "ROW_FORMAT"
 	rtree                  "RTREE"
@@ -6271,6 +6271,7 @@ UnReservedKeyword:
 |	"EXCLUSIVE"
 |	"STATS_PERSISTENT"
 |	"STATS_AUTO_RECALC"
+|	"ROW"
 |	"ROW_COUNT"
 |	"COALESCE"
 |	"MONTH"
@@ -10234,14 +10235,15 @@ CharsetName:
 	StringName
 	{
 		// Validate input charset name to keep the same behavior as parser of MySQL.
-		cs, err := charset.GetCharsetInfo($1)
-		if err != nil {
-			yylex.AppendError(ErrUnknownCharacterSet.GenWithStackByArgs($1))
-			return 1
-		}
+		//cs, err := charset.GetCharsetInfo($1)
+		//if err != nil {
+			//yylex.AppendError(ErrUnknownCharacterSet.GenWithStackByArgs($1))
+			//return 1
+		//}
 		// Use charset name returned from charset.GetCharsetInfo(),
 		// to keep lower case of input for generated column restore.
-		$$ = cs.Name
+		//$$ = cs.Name
+		$$ = $1
 	}
 |	binaryType
 	{

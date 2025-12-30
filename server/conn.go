@@ -184,7 +184,7 @@ type clientConn struct {
 	peerPort      string            // peer port
 	status        int32             // dispatching/reading/shutdown/waitshutdown
 	lastCode      uint16            // last error code
-	collation     uint8             // collation used by client, may be different from the collation used by database.
+	collation     uint16            // collation used by client, may be different from the collation used by database.
 	lastActive    time.Time         // last active time
 	authPlugin    string            // default authentication plugin
 	isUnixSocket  bool              // connection is Unix Socket file
@@ -341,9 +341,9 @@ func (cc *clientConn) writeInitialHandshake(ctx context.Context) error {
 	data = append(data, byte(cc.server.capability), byte(cc.server.capability>>8))
 	// charset
 	if cc.collation == 0 {
-		cc.collation = uint8(mysql.DefaultCollationID)
+		cc.collation = uint16(mysql.DefaultCollationID)
 	}
-	data = append(data, cc.collation)
+	data = append(data, byte(cc.collation))
 	// status
 	data = dumpUint16(data, mysql.ServerStatusAutocommit)
 	// below 13 byte may not be used
@@ -416,7 +416,7 @@ func (cc *clientConn) getSessionVarsWaitTimeout(ctx context.Context) uint64 {
 
 type handshakeResponse41 struct {
 	Capability uint32
-	Collation  uint8
+	Collation  uint16
 	User       string
 	DBName     string
 	Auth       []byte
@@ -496,7 +496,7 @@ func parseHandshakeResponseHeader(ctx context.Context, packet *handshakeResponse
 	// skip max packet size
 	offset += 4
 	// charset, skip, if you want to use another charset, use set names
-	packet.Collation = data[offset]
+	packet.Collation = uint16(data[offset])
 	offset++
 	// skip reserved 23[00]
 	offset += 23

@@ -59,6 +59,7 @@ var charsetInfos = map[string]*Charset{
 	CharsetASCII:   {CharsetASCII, CollationASCII, make(map[string]*Collation), "US ASCII", 1},
 	CharsetLatin1:  {CharsetLatin1, CollationLatin1, make(map[string]*Collation), "Latin1", 1},
 	CharsetBin:     {CharsetBin, CollationBin, make(map[string]*Collation), "binary", 1},
+	CharsetGBK:     {CharsetGBK, CollationCHineseCi, make(map[string]*Collation), "GBK", 2},
 }
 
 // All the names supported collations should be in the following table.
@@ -229,7 +230,8 @@ const (
 	// CollationLatin1 is the default collation for CharsetLatin1.
 	CollationLatin1 = "latin1_bin"
 
-	CollationGBKBin = "gbk_bin"
+	CollationGBKBin    = "gbk_bin"
+	CollationCHineseCi = "gbk_chinese_ci"
 
 	CharsetARMSCII8 = "armscii8"
 	CharsetBig5     = "big5"
@@ -491,7 +493,10 @@ var collations = []*Collation{
 	{246, "utf8mb4", "utf8mb4_unicode_520_ci", false},
 	{247, "utf8mb4", "utf8mb4_vietnamese_ci", false},
 	{248, "utf8mb4", "utf8mb4_zh_0900_as_cs", false},
+	{249, "utf8mb3", "utf8mb3_general_ci", false},
+	{250, "utf8mb3", "utf8mb3_bin", true},
 	{255, "utf8mb4", "utf8mb4_0900_ai_ci", false},
+	{308, "utf8mb4", "utf8mb4_zh_0900_as_cs", false},
 	{2048, "utf8mb4", "utf8mb4_zh_pinyin_tidb_as_cs", false},
 }
 

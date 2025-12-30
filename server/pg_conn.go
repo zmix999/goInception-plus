@@ -413,7 +413,7 @@ func (cc *clientConn) handleStartupMessage(ctx context.Context, startupMessage *
 	// 所以添加部分常量作为参数 参照客户端为 Mysql 5.6.47
 	resp := handshakeResponse41{
 		Capability: uint32(8365701),
-		Collation:  uint8(28), //gbk_chinese_ci
+		Collation:  uint16(28), //gbk_chinese_ci
 		User:       startupMessage.Parameters["user"],
 		DBName:     startupMessage.Parameters["database"],
 		Attrs: map[string]string{

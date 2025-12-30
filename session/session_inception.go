@@ -5498,10 +5498,14 @@ func (s *session) mysqlCheckField(t *TableInfo, field *ast.ColumnDef, alterTable
 					hasDefaultValue = true
 				}
 				if funcCall, ok := defaultExpr.(*ast.FuncCallExpr); ok {
+					if IsCurrentTimestampExpr(defaultExpr) {
+						hasDefaultValue = true
+					}
 					if len(funcCall.Args) == 1 {
 						v := funcCall.Args[0]
 						if tmp, ok := v.(*driver.ValueExpr); ok {
 							defaultValue = tmp.Datum
+							hasDefaultValue = true
 						}
 					}
 				}

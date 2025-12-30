@@ -51,6 +51,9 @@ func (s *session) PostgreSQLCheckOptions() error {
 		if s.opt.SearchPath == "" {
 			msg += "模式为空,"
 		}
+		if s.opt.db == "" {
+			msg += "数据库名为空,"
+		}
 		return fmt.Errorf(s.getErrorMessage(ER_SQL_INVALID_SOURCE), strings.TrimRight(msg, ","))
 	}
 

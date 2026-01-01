@@ -2395,9 +2395,9 @@ func (s *session) parseOptions(sql string) {
 
 	if s.sessionVars.IsMySQLProtocol() {
 		err = s.checkOptions()
-
 	} else {
 		err = s.PostgreSQLCheckOptions()
+		s.isPostgreSqlMode = true
 	}
 
 	if err != nil {

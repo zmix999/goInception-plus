@@ -375,6 +375,8 @@ type session struct {
 	serach string
 	// PostgreSQL 事务ID
 	txID uint32
+	// PostgreSQL 模式
+	isPostgreSqlMode bool
 }
 
 type alterTableInfo struct {
@@ -1336,6 +1338,7 @@ func (s *session) ParseSQL(ctx context.Context, sql string, params ...parser.Par
 	defer parserPool.Put(p)
 	p.SetSQLMode(s.sessionVars.SQLMode)
 	p.SetParserConfig(s.sessionVars.BuildParserConfig())
+	p.EnablePostgreSqlMode(s.isPostgreSqlMode)
 	tmp, warn, err := p.ParseSQL(sql, params...)
 	// The []ast.StmtNode is referenced by the parser, to reuse the parser, make a copy of the result.
 	if len(tmp) == 1 {

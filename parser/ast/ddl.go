@@ -243,6 +243,9 @@ func (n *IndexPartSpecification) Restore(ctx *format.RestoreCtx) error {
 			return errors.Annotate(err, "An error occurred while splicing IndexPartSpecifications")
 		}
 		ctx.WritePlain(")")
+		if n.Desc {
+			ctx.WritePlain(" DESC")
+		}
 		return nil
 	}
 	if err := n.Column.Restore(ctx); err != nil {

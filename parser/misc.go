@@ -134,6 +134,22 @@ func isInTokenMap(target string) bool {
 	return ok
 }
 
+// isInTokenMapPG indicates whether the target string is contained in tokenMapPG.
+func isInTokenMapPG(target string) bool {
+	_, ok := tokenMapPG[target]
+	return ok
+}
+
+// tokenMapPG is a map of postgresql known identifiers to the parser token ID.
+// Please try to keep the map in alphabetical order.
+var tokenMapPG = map[string]int{
+	"CHARACTERISTICS": characteristics,
+	"CONFLICT":        conflict,
+	"NOTHING":         nothing,
+	"OVERRIDING":      overriding,
+	"RETURNING":       returning,
+}
+
 // tokenMap is a map of known identifiers to the parser token ID.
 // Please try to keep the map in alphabetical order.
 var tokenMap = map[string]int{
@@ -210,7 +226,6 @@ var tokenMap = map[string]int{
 	"CHANGE":                   change,
 	"CHAR":                     charType,
 	"CHARACTER":                character,
-	"CHARACTERISTICS":          characteristics,
 	"CHARSET":                  charsetKwd,
 	"CHECK":                    check,
 	"CHECKPOINT":               checkpoint,
@@ -236,7 +251,6 @@ var tokenMap = map[string]int{
 	"COMPRESSION":              compression,
 	"CONCURRENCY":              concurrency,
 	"CONFIG":                   config,
-	"CONFLICT":                 conflict,
 	"CONNECTION":               connection,
 	"CONSISTENCY":              consistency,
 	"CONSISTENT":               consistent,
@@ -507,7 +521,6 @@ var tokenMap = map[string]int{
 	"NONCLUSTERED":             nonclustered,
 	"NONE":                     none,
 	"NOT":                      not,
-	"NOTHING":                  nothing,
 	"NOW":                      now,
 	"NOWAIT":                   nowait,
 	"NULL":                     null,
@@ -532,7 +545,6 @@ var tokenMap = map[string]int{
 	"ORDER":                    order,
 	"OUTER":                    outer,
 	"OUTFILE":                  outfile,
-	"OVERRIDING":               overriding,
 	"PACK_KEYS":                packKeys,
 	"PAGE":                     pageSym,
 	"PARSER":                   parser,
@@ -807,7 +819,6 @@ var tokenMap = map[string]int{
 	"YEAR":                     yearType,
 	"ZEROFILL":                 zerofill,
 	"WAIT":                     wait,
-	"RETURNING":                returning,
 
 	"INC":                    inception,
 	"INCEPTION":              inception,
@@ -881,6 +892,7 @@ var aliases = map[string]string{
 	"SCHEMAS": "DATABASES",
 	"DEC":     "DECIMAL",
 	"SUBSTR":  "SUBSTRING",
+	"INC":     "INCEPTION",
 }
 
 // hintedTokens is a set of tokens which recognizes a hint.
@@ -1013,6 +1025,9 @@ func (s *Scanner) isTokenIdentifier(lit string, offset int) int {
 	tok, ok := tokenMap[string(data)]
 	if !ok && s.supportWindowFunc {
 		tok = windowFuncTokenMap[string(data)]
+	}
+	if !ok && tok == 0 && s.isPostgreSqlMode {
+		tok = tokenMapPG[string(data)]
 	}
 	return tok
 }

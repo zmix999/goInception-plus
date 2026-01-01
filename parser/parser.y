@@ -7938,9 +7938,12 @@ FunctionCallGeneric:
 		var tp ast.FuncCallExprType
 		if isInTokenMap($3) {
 			tp = ast.FuncCallExprTypeKeyword
+		} else if isInTokenMapPG($3) {
+			tp = ast.FuncCallExprTypeKeyword
 		} else {
 			tp = ast.FuncCallExprTypeGeneric
 		}
+		
 		$$ = &ast.FuncCallExpr{
 			Tp:     tp,
 			Schema: model.NewCIStr($1),
@@ -10235,15 +10238,14 @@ CharsetName:
 	StringName
 	{
 		// Validate input charset name to keep the same behavior as parser of MySQL.
-		//cs, err := charset.GetCharsetInfo($1)
-		//if err != nil {
-			//yylex.AppendError(ErrUnknownCharacterSet.GenWithStackByArgs($1))
-			//return 1
-		//}
+		cs, err := charset.GetCharsetInfo($1)
+		if err != nil {
+			yylex.AppendError(ErrUnknownCharacterSet.GenWithStackByArgs($1))
+			return 1
+		}
 		// Use charset name returned from charset.GetCharsetInfo(),
 		// to keep lower case of input for generated column restore.
-		//$$ = cs.Name
-		$$ = $1
+		$$ = cs.Name
 	}
 |	binaryType
 	{

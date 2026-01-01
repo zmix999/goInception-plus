@@ -201,6 +201,10 @@ func (parser *Parser) EnableWindowFunc(val bool) {
 	parser.lexer.EnableWindowFunc(val)
 }
 
+func (parser *Parser) EnablePostgreSqlMode(val bool) {
+	parser.lexer.EnablePostgreSqlMode(val)
+}
+
 // ParseErrorWith returns "You have a syntax error near..." error message compatible with mysql.
 func ParseErrorWith(errstr string, lineno int) error {
 	if len(errstr) > mysql.ErrTextLength {

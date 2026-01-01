@@ -80,6 +80,8 @@ type Scanner struct {
 
 	// true if a dot follows an identifier
 	identifierDot bool
+	// postgresql mode
+	isPostgreSqlMode bool
 }
 
 // Errors returns the errors and warns during a scan.
@@ -258,6 +260,11 @@ func (s *Scanner) EnableWindowFunc(val bool) {
 	s.supportWindowFunc = val
 }
 
+// EnablePostgreSqlMode controls whether the scanner recognize the keywords of postgresql.
+func (s *Scanner) EnablePostgreSqlMode(val bool) {
+	s.isPostgreSqlMode = val
+}
+
 // InheritScanner returns a new scanner object which inherits configurations from the parent scanner.
 func (s *Scanner) InheritScanner(sql string) *Scanner {
 	return &Scanner{
@@ -265,6 +272,7 @@ func (s *Scanner) InheritScanner(sql string) *Scanner {
 		encoding:          s.encoding,
 		sqlMode:           s.sqlMode,
 		supportWindowFunc: s.supportWindowFunc,
+		isPostgreSqlMode:  s.isPostgreSqlMode,
 	}
 }
 

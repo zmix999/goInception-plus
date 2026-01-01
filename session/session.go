@@ -297,7 +297,8 @@ type session struct {
 
 	db *gorm.DB
 
-	backupdb *gorm.DB
+	backupdb   *gorm.DB
+	pgbackupdb *gorm.DB
 
 	// 执行DDL操作的数据库连接. 仅用于事务功能
 	ddlDB *gorm.DB
@@ -372,6 +373,8 @@ type session struct {
 	maskingFields []MaskingFieldInfo
 	// PostgreSQL搜索模式
 	serach string
+	// PostgreSQL 事务ID
+	txID uint32
 }
 
 type alterTableInfo struct {
@@ -1566,14 +1569,6 @@ func (s *session) ParseWithParams(ctx context.Context, sql string, args ...inter
 	for _, warn := range warns {
 		s.sessionVars.StmtCtx.AppendWarning(util.SyntaxWarn(warn))
 	}
-	if variable.TopSQLEnabled() {
-		normalized, digest := parser.NormalizeDigest(sql)
-		if digest != nil {
-			// Reset the goroutine label when internal sql execute finish.
-			// Specifically reset in ExecRestrictedStmt function.
-			topsql.AttachSQLInfo(ctx, normalized, digest, "", nil, s.sessionVars.InRestrictedSQL)
-		}
-	}
 	return stmts[0], nil
 }
 
@@ -2651,44 +2646,44 @@ func BootstrapSession(store kv.Storage) (*domain.Domain, error) {
 			collate.EnableNewCharset()
 		}
 	}
-
-	newMemoryQuotaQuery, err := loadDefMemQuotaQuery(se)
-	if err != nil {
-		return nil, err
-	}
-	if !config.IsMemoryQuotaQuerySetByUser {
-		newCfg := *(config.GetGlobalConfig())
-		newCfg.MemQuotaQuery = newMemoryQuotaQuery
-		config.StoreGlobalConfig(&newCfg)
-		variable.SetSysVar(variable.TiDBMemQuotaQuery, strconv.FormatInt(newCfg.MemQuotaQuery, 10))
-	}
-	newOOMAction, err := loadDefOOMAction(se)
-	if err != nil {
-		return nil, err
-	}
-	if !config.IsOOMActionSetByUser {
-		config.UpdateGlobal(func(conf *config.Config) {
-			conf.OOMAction = newOOMAction
-		})
-	}
+	/*
+		newMemoryQuotaQuery, err := loadDefMemQuotaQuery(se)
+		if err != nil {
+			return nil, err
+		}
+		if !config.IsMemoryQuotaQuerySetByUser {
+			newCfg := *(config.GetGlobalConfig())
+			newCfg.MemQuotaQuery = newMemoryQuotaQuery
+			config.StoreGlobalConfig(&newCfg)
+			variable.SetSysVar(variable.TiDBMemQuotaQuery, strconv.FormatInt(newCfg.MemQuotaQuery, 10))
+		}
+		newOOMAction, err := loadDefOOMAction(se)
+		if err != nil {
+			return nil, err
+		}
+		if !config.IsOOMActionSetByUser {
+			config.UpdateGlobal(func(conf *config.Config) {
+				conf.OOMAction = newOOMAction
+			})
+		}*/
 
 	dom := domain.GetDomain(se)
-
-	se2, err := createSession(store)
-	if err != nil {
-		return nil, err
-	}
-	se3, err := createSession(store)
-	if err != nil {
-		return nil, err
-	}
-	// We should make the load bind-info loop before other loops which has internal SQL.
-	// Because the internal SQL may access the global bind-info handler. As the result, the data race occurs here as the
-	// LoadBindInfoLoop inits global bind-info handler.
-	err = dom.LoadBindInfoLoop(se2, se3)
-	if err != nil {
-		return nil, err
-	}
+	/*
+		se2, err := createSession(store)
+		if err != nil {
+			return nil, err
+		}
+		se3, err := createSession(store)
+		if err != nil {
+			return nil, err
+		}
+		// We should make the load bind-info loop before other loops which has internal SQL.
+		// Because the internal SQL may access the global bind-info handler. As the result, the data race occurs here as the
+		// LoadBindInfoLoop inits global bind-info handler.
+		err = dom.LoadBindInfoLoop(se2, se3)
+		if err != nil {
+			return nil, err
+		}*/
 
 	if !config.GetGlobalConfig().Security.SkipGrantTable {
 		se4, err := createSession(store)
@@ -2731,26 +2726,26 @@ func BootstrapSession(store kv.Storage) (*domain.Domain, error) {
 		return nil, err
 	}
 
-	dom.TelemetryReportLoop(se6)
-	dom.TelemetryRotateSubWindowLoop(se6)
+	//dom.TelemetryReportLoop(se6)
+	//dom.TelemetryRotateSubWindowLoop(se6)
 
-	se7, err := createSession(store)
+	/*se7, err := createSession(store)
 	if err != nil {
 		return nil, err
 	}
 	err = dom.UpdateTableStatsLoop(se7)
 	if err != nil {
 		return nil, err
-	}
+	}*/
 
-	dom.PlanReplayerLoop()
-
-	if raw, ok := store.(kv.EtcdBackend); ok {
-		err = raw.StartGCWorker()
-		if err != nil {
-			return nil, err
-		}
-	}
+	//dom.PlanReplayerLoop()
+	/*
+		if raw, ok := store.(kv.EtcdBackend); ok {
+			err = raw.StartGCWorker()
+			if err != nil {
+				return nil, err
+			}
+		}*/
 
 	return dom, err
 }

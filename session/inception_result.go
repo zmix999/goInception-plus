@@ -98,6 +98,8 @@ type Record struct {
 
 	// 判断该语句是否是需要被合并的(只有 alter table, create index, drop index三种语句需要被合并)，不需要为0，已经被合并过的SQL会被设置为-1，需要的数字为对应的合并后的SQL的行号
 	NeedMerge int
+	// PostgreSQL 事务ID
+	TxID uint32
 }
 
 func (r *Record) appendWarningMessage(msg string) {

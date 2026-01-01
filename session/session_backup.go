@@ -246,6 +246,7 @@ func (s *session) mysqlExecuteBackupInfoInsertSql(record *Record, longDataType b
 	values = append(values, strconv.Itoa(record.StartPosition))
 	values = append(values, record.EndFile)
 	values = append(values, strconv.Itoa(record.EndPosition))
+	values = append(values, record.TxID)
 	values = append(values, sql_stmt)
 	values = append(values, host)
 

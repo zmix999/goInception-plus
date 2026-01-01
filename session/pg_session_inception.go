@@ -1,6 +1,7 @@
 package session
 
 import (
+	"bytes"
 	"database/sql"
 	"fmt"
 	"math"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"gitee.com/zhoujin826/goInception-plus/parser/ast"
+	"github.com/jinzhu/gorm"
 	"github.com/lib/pq"
 	pgDriver "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
@@ -178,17 +180,22 @@ func (s *session) PostgreSQLCheckDBExists(db string, reportNotExists bool) bool 
 	return true
 }
 
-func (s *session) PostgreSQLexecuteRemoteStatement(record *Record, isTran bool) {
+func (s *session) PostgreSQLexecuteRemoteStatement(record *Record, isTran bool, isDml bool) {
 	log.Debug("PostgreSQLexecuteRemoteStatement")
 
-	sqlStmt := record.Sql
+	sqlStmt := record.Sql + " RETURNING xmin,xmax"
 
 	start := time.Now()
 
 	var res sql.Result
 	var err error
+	var affectedRows int64
+
 	if isTran {
 		res, err = s.PostgreSQLexecDDL(sqlStmt, false)
+	}
+	if isDml {
+		affectedRows = s.PostgreSQLrawScan(sqlStmt)
 	} else {
 		res, err = s.PostgreSQLexecSQL(sqlStmt, false)
 	}
@@ -219,6 +226,7 @@ func (s *session) PostgreSQLexecuteRemoteStatement(record *Record, isTran bool) 
 				}
 
 				record.ThreadId = s.PostgreSQLfetchThreadID()
+				record.TxID = s.txID
 				record.ExecComplete = true
 			} else {
 				s.appendErrorMsg("The execution result is unknown! Please confirm manually.")
@@ -230,11 +238,15 @@ func (s *session) PostgreSQLexecuteRemoteStatement(record *Record, isTran bool) 
 		return
 	}
 
-	affectedRows, err := res.RowsAffected()
-	if err != nil {
-		s.appendErrorMsg(err.Error())
+	if !isDml {
+		affectedRows, err = res.RowsAffected()
+		if err != nil {
+			s.appendErrorMsg(err.Error())
+		}
 	}
+
 	record.AffectedRows = affectedRows
+	record.TxID = s.txID
 	record.ThreadId = s.PostgreSQLfetchThreadID()
 	if record.ThreadId == 0 {
 		s.appendErrorMsg("无法获取线程号")
@@ -300,4 +312,86 @@ func (s *session) PostgreSQLfetchThreadID() uint32 {
 	}
 
 	return s.threadID
+}
+
+func (s *session) PostgreSQLcreateStatisticsTable() {
+	sql := "create schema if not exists inception;"
+	if err := s.pgbackupdb.Exec(sql).Error; err != nil {
+		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+		if myErr, ok := err.(*pgDriver.Error); ok {
+			if myErr.Code != "42P06" { /*duplicate_schema */
+				s.appendErrorMsg(myErr.Message)
+			}
+		} else {
+			s.appendErrorMsg(err.Error())
+		}
+	}
+
+	sql = PostgreSQLstatisticsTableSQL()
+	if err := s.pgbackupdb.Exec(sql).Error; err != nil {
+		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+		if myErr, ok := err.(*pgDriver.Error); ok {
+			if myErr.Code != "42P07" { /*duplicate_table*/
+				s.appendErrorMsg(myErr.Message)
+			}
+		} else {
+			s.appendErrorMsg(err.Error())
+		}
+	}
+}
+
+func PostgreSQLstatisticsTableSQL() string {
+
+	buf := bytes.NewBufferString("CREATE TABLE if not exists ")
+
+	buf.WriteString("inception.statistic")
+	buf.WriteString("(")
+
+	buf.WriteString("id serial primary key, ")
+	buf.WriteString("optime timestamp not null default current_timestamp, ")
+	buf.WriteString("usedb int not null default 0, ")
+	buf.WriteString("deleting int not null default 0, ")
+	buf.WriteString("inserting int not null default 0, ")
+	buf.WriteString("updating int not null default 0, ")
+	buf.WriteString("selecting int not null default 0, ")
+	buf.WriteString("altertable int not null default 0, ")
+	buf.WriteString("renaming int not null default 0, ")
+	buf.WriteString("createindex int not null default 0, ")
+	buf.WriteString("dropindex int not null default 0, ")
+	buf.WriteString("addcolumn int not null default 0, ")
+	buf.WriteString("dropcolumn int not null default 0, ")
+	buf.WriteString("changecolumn int not null default 0, ")
+	buf.WriteString("alteroption int not null default 0, ")
+	buf.WriteString("alterconvert int not null default 0, ")
+	buf.WriteString("createtable int not null default 0, ")
+	buf.WriteString("createview int not null default 0, ")
+	buf.WriteString("droptable int not null default 0, ")
+	buf.WriteString("createdb int not null default 0, ")
+	buf.WriteString("truncating int not null default 0, ")
+	buf.WriteString("createproc int not null default 0, ")
+	buf.WriteString("dropproc int not null default 0, ")
+	buf.WriteString("createfunc int not null default 0, ")
+	buf.WriteString("dropfunc int not null default 0, ")
+	buf.WriteString("host varchar(60) not null, ")
+	buf.WriteString("port int not null);")
+
+	return buf.String()
+}
+
+func (s *session) PostgreSQLcheckBackupdb() {
+	if err := s.pgbackupdb.DB().Ping(); err != nil {
+		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+
+		addr := fmt.Sprintf("user=%s password=%s host=%s port=%d dbname=%s sslmode=disable search_path=inception",
+			s.opt.User, s.opt.Password, s.opt.Host, s.opt.Port, s.opt.db)
+		db, err := gorm.Open("postgres", addr)
+		if err != nil {
+			log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+			s.appendErrorMsg(err.Error())
+			return
+		}
+		// 禁用日志记录器，不显示任何日志
+		db.LogMode(false)
+		s.pgbackupdb = db
+	}
 }

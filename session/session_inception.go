@@ -792,7 +792,7 @@ func (s *session) executeCommit(ctx context.Context) {
 		s.modifyWaitTimeout()
 	}
 
-	if s.opt.Backup {
+	if s.opt.Backup && s.dbType != DBPostgreSQL {
 		if !s.checkBinlogIsOn() {
 			s.appendErrorMsg("binlog日志未开启,无法备份!")
 			return
@@ -832,25 +832,11 @@ func (s *session) executeCommit(ctx context.Context) {
 		}
 
 		// 如果连接已断开
-		if err := s.backupdb.DB().Ping(); err != nil {
-			log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-			addr := fmt.Sprintf("%s:%s@tcp(%s:%d)/?charset=%s&parseTime=True&loc=Local&autocommit=1",
-				s.inc.BackupUser, s.inc.BackupPassword, s.inc.BackupHost, s.inc.BackupPort,
-				s.inc.DefaultCharset)
-			if s.inc.BackupTLS != "" {
-				addr += "&tls=" + s.inc.BackupTLS
-			}
-			db, err := gorm.Open("mysql", addr)
-			if err != nil {
-				log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-				s.appendErrorMsg(err.Error())
-				return
-			}
-			// 禁用日志记录器，不显示任何日志
-			db.LogMode(false)
-			s.backupdb = db
+		if s.dbType != DBPostgreSQL {
+			s.checkBackupdb()
+		} else {
+			s.PostgreSQLcheckBackupdb()
 		}
-
 		log.Debug("开始备份")
 
 		tmp := s.processInfo.Load()
@@ -863,7 +849,11 @@ func (s *session) executeCommit(ctx context.Context) {
 
 		s.stage = StageBackup
 
-		s.runBackup(ctx)
+		if s.dbType != DBPostgreSQL {
+			s.runBackup(ctx)
+		} else {
+			s.PostgreSQLrunBackup(ctx)
+		}
 
 		// for _, record := range s.recordSets.All() {
 
@@ -885,12 +875,13 @@ func (s *session) executeCommit(ctx context.Context) {
 		// 		}
 		// 	}
 		// }
-
-		if !s.isMiddleware() {
-			// 解析binlog生成回滚语句
-			s.parserBinlog(ctx)
-		} else if s.opt.parseHost != "" && s.opt.parsePort != 0 {
-			s.parserBinlog(ctx)
+		if s.dbType != DBPostgreSQL {
+			if !s.isMiddleware() {
+				// 解析binlog生成回滚语句
+				s.parserBinlog(ctx)
+			} else if s.opt.parseHost != "" && s.opt.parsePort != 0 {
+				s.parserBinlog(ctx)
+			}
 		}
 	}
 }
@@ -1520,7 +1511,11 @@ func (s *session) sqlStatisticsSave() {
 		return
 	}
 
-	s.createStatisticsTable()
+	if s.dbType != DBPostgreSQL {
+		s.createStatisticsTable()
+	} else {
+		s.PostgreSQLcreateStatisticsTable()
+	}
 
 	sql := `
 	INSERT INTO inception.statistic ( usedb, deleting, inserting, updating,
@@ -1752,7 +1747,7 @@ func (s *session) executeRemoteStatement(record *Record, isTran bool) {
 func (s *session) executeRemoteStatementAndBackup(record *Record) {
 	log.Debug("executeRemoteStatementAndBackup")
 
-	if s.opt.Backup {
+	if s.opt.Backup && s.dbType != DBPostgreSQL {
 		masterStatus := s.mysqlFetchMasterBinlogPosition()
 		if masterStatus == nil {
 			s.appendErrorNo(ErrNotFoundMasterStatus)
@@ -1770,11 +1765,11 @@ func (s *session) executeRemoteStatementAndBackup(record *Record) {
 	if s.dbType != DBPostgreSQL {
 		s.executeRemoteStatement(record, false)
 	} else {
-		s.PostgreSQLexecuteRemoteStatement(record, false)
+		s.PostgreSQLexecuteRemoteStatement(record, false, true)
 	}
 
 	if !s.hasError() || record.ExecComplete {
-		if s.opt.Backup {
+		if s.opt.Backup && s.dbType != DBPostgreSQL {
 			masterStatus := s.mysqlFetchMasterBinlogPosition()
 			if masterStatus == nil {
 				s.appendErrorNo(ErrNotFoundMasterStatus)
@@ -10424,4 +10419,25 @@ func (s *session) initDisableTypes() {
 
 func (s *session) InitDisableTypes() {
 	s.initDisableTypes()
+}
+
+func (s *session) checkBackupdb() {
+	if err := s.backupdb.DB().Ping(); err != nil {
+		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+		addr := fmt.Sprintf("%s:%s@tcp(%s:%d)/?charset=%s&parseTime=True&loc=Local&autocommit=1",
+			s.inc.BackupUser, s.inc.BackupPassword, s.inc.BackupHost, s.inc.BackupPort,
+			s.inc.DefaultCharset)
+		if s.inc.BackupTLS != "" {
+			addr += "&tls=" + s.inc.BackupTLS
+		}
+		db, err := gorm.Open("mysql", addr)
+		if err != nil {
+			log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+			s.appendErrorMsg(err.Error())
+			return
+		}
+		// 禁用日志记录器，不显示任何日志
+		db.LogMode(false)
+		s.backupdb = db
+	}
 }

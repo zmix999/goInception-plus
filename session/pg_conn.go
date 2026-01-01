@@ -24,6 +24,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type ReturningValues struct {
+	Xmin uint32
+	Xmax uint32
+}
+
 // 判断是否为无效连接错误
 func isInvalidConnError(err error) bool {
 	pgErr, ok := err.(*pgDriver.Error)
@@ -64,9 +69,9 @@ func (s *session) PostgreSQLraw(sqlStr string) (rows *sql.Rows, err error) {
 	return
 }
 
-// exec 执行sql语句,连接失败时自动重连,自动重置当前数据库
+// PostgreSQLexecSQL 执行sql语句,连接失败时自动重连,自动重置当前数据库
 func (s *session) PostgreSQLexecSQL(sqlStr string, retry bool) (res sql.Result, err error) {
-	log.Debug("exec")
+	log.Debug("PostgreSQLexecSQL")
 	// 连接断开无效时,自动重试
 	for i := 0; i < maxBadConnRetries; i++ {
 		res, err = s.db.DB().Exec(sqlStr)
@@ -92,9 +97,9 @@ func (s *session) PostgreSQLexecSQL(sqlStr string, retry bool) (res sql.Result, 
 	return
 }
 
-// execDDL 执行sql语句,连接失败时自动重连,自动重置当前数据库
+// PostgreSQLexecDDL 执行sql语句,连接失败时自动重连,自动重置当前数据库
 func (s *session) PostgreSQLexecDDL(sqlStr string, retry bool) (res sql.Result, err error) {
-	log.Debug("execDDL")
+	log.Debug("PostgreSQLexecDDL")
 	// 连接断开无效时,自动重试
 	for i := 0; i < maxBadConnRetries; i++ {
 		res, err = s.ddlDB.DB().Exec(sqlStr)
@@ -119,25 +124,19 @@ func (s *session) PostgreSQLexecDDL(sqlStr string, retry bool) (res sql.Result, 
 }
 
 // Raw 执行sql语句,连接失败时自动重连,自动重置当前数据库
-func (s *session) PostgreSQLrawScan(sqlStr string, dest interface{}) (err error) {
+func (s *session) PostgreSQLrawScan(sqlStr string) int64 {
 	// 连接断开无效时,自动重试
+	var result ReturningValues
+	var rows int64
 	for i := 0; i < maxBadConnRetries; i++ {
-		err = s.db.Raw(sqlStr).Scan(dest).Error
-		if err == nil {
-			return
+		rows = s.db.Raw(sqlStr).Scan(&result).RowsAffected
+		if result.Xmin > 0 {
+			s.txID = result.Xmin
+		} else if result.Xmax > 0 {
+			s.txID = result.Xmax
 		}
-		if isInvalidConnError(err) {
-			log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-			err1 := s.initConnection()
-			if err1 != nil {
-				return err1
-			}
-			s.appendErrorMsg(err.Error())
-			continue
-		}
-		return
 	}
-	return
+	return rows
 }
 
 // Raw 执行sql语句,连接失败时自动重连,自动重置当前数据库

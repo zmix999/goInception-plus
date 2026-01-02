@@ -128,15 +128,21 @@ func init() {
 	initTokenFunc("'\"", startString)
 }
 
-// isInTokenMap indicates whether the target string is contained in tokenMap.
-func isInTokenMap(target string) bool {
-	_, ok := tokenMap[target]
+// isInTokenMapPub indicates whether the target string is contained in tokenMapPub.
+func isInTokenMapPub(target string) bool {
+	_, ok := tokenMapPub[target]
 	return ok
 }
 
 // isInTokenMapPG indicates whether the target string is contained in tokenMapPG.
 func isInTokenMapPG(target string) bool {
 	_, ok := tokenMapPG[target]
+	return ok
+}
+
+// isInTokenMapMySQL indicates whether the target string is contained in tokenMapMySQL.
+func isInTokenMapMySQL(target string) bool {
+	_, ok := tokenMapMySQL[target]
 	return ok
 }
 
@@ -150,10 +156,21 @@ var tokenMapPG = map[string]int{
 	"RETURNING":       returning,
 }
 
+// tokenMapMySQL is a map of mysql known identifiers to the parser token ID.
+// Please try to keep the map in alphabetical order.
+var tokenMapMySQL = map[string]int{
+	"ACCOUNT":          account,
+	"ALGORITHM":        algorithm,
+	"AUTO_ID_CACHE":    autoIdCache,
+	"AUTO_RANDOM":      autoRandom,
+	"AUTO_RANDOM_BASE": autoRandomBase,
+	"AUTO_INCREMENT":   autoIncrement,
+	"AVG_ROW_LENGTH":   avgRowLength,
+}
+
 // tokenMap is a map of known identifiers to the parser token ID.
 // Please try to keep the map in alphabetical order.
-var tokenMap = map[string]int{
-	"ACCOUNT":                  account,
+var tokenMapPub = map[string]int{
 	"ACTION":                   action,
 	"ADD":                      add,
 	"ADDDATE":                  addDate,
@@ -162,7 +179,6 @@ var tokenMap = map[string]int{
 	"AFTER":                    after,
 	"AGAINST":                  against,
 	"AGO":                      ago,
-	"ALGORITHM":                algorithm,
 	"ALL":                      all,
 	"ALTER":                    alter,
 	"ALWAYS":                   always,
@@ -179,11 +195,6 @@ var tokenMap = map[string]int{
 	"STATS_SAMPLE_RATE":        statsSampleRate,
 	"STATS_COL_CHOICE":         statsColChoice,
 	"STATS_COL_LIST":           statsColList,
-	"AUTO_ID_CACHE":            autoIdCache,
-	"AUTO_INCREMENT":           autoIncrement,
-	"AUTO_RANDOM":              autoRandom,
-	"AUTO_RANDOM_BASE":         autoRandomBase,
-	"AVG_ROW_LENGTH":           avgRowLength,
 	"AVG":                      avg,
 	"BACKEND":                  backend,
 	"BACKUP":                   backup,
@@ -1022,12 +1033,15 @@ func (s *Scanner) isTokenIdentifier(lit string, offset int) int {
 			return tok
 		}
 	}
-	tok, ok := tokenMap[string(data)]
+	tok, ok := tokenMapPub[string(data)]
 	if !ok && s.supportWindowFunc {
 		tok = windowFuncTokenMap[string(data)]
 	}
 	if !ok && tok == 0 && s.isPostgreSqlMode {
 		tok = tokenMapPG[string(data)]
+	}
+	if !ok && tok == 0 && !s.isPostgreSqlMode {
+		tok = tokenMapMySQL[string(data)]
 	}
 	return tok
 }

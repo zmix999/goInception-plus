@@ -25,7 +25,7 @@ import (
 func TestTokenID(t *testing.T) {
 	t.Parallel()
 
-	for str, tok := range tokenMap {
+	for str, tok := range tokenMapPub {
 		l := NewScanner(str)
 		var v yySymType
 		tok1 := l.Lex(&v)

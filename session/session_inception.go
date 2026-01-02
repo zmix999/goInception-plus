@@ -3235,7 +3235,7 @@ func (s *session) mysqlForeignKeys(t *TableInfo) (keys []string) {
 	return
 }
 
-// mysqlGetTableSize 获取表估计的受影响行数
+// mysqlGetTableSize 获取表的大小
 func (s *session) mysqlGetTableSize(t *TableInfo) {
 
 	if t.IsNew || t.TableSize > 0 {
@@ -4124,14 +4124,30 @@ func (s *session) checkAlterTable(node *ast.AlterTableStmt, sql string, mergeOnl
 	log.Debug("checkAlterTable")
 
 	if node.Table.Schema.O == "" {
-		node.Table.Schema = model.NewCIStr(s.dbName)
+		if s.dbType != DBPostgreSQL {
+			node.Table.Schema = model.NewCIStr(s.dbName)
+		} else {
+			node.Table.Schema = model.NewCIStr(s.serach)
+		}
 	}
 
-	if !s.checkDBExists(node.Table.Schema.O, true) {
-		return
+	if s.dbType != DBPostgreSQL {
+		if !s.checkDBExists(node.Table.Schema.O, true) {
+			return
+		}
+	} else {
+		if !s.PostgreSQLcheckDBExists(node.Table.Schema.O, true) {
+			return
+		}
+	}
+	var table *TableInfo
+	if s.dbType != DBPostgreSQL {
+		table = s.getTableFromCache(node.Table.Schema.O, node.Table.Name.O, true)
+	} else {
+		table = s.PostgreSQLgetTableFromCache(node.Table.Schema.O, node.Table.Name.O, "", true)
+
 	}
 
-	table := s.getTableFromCache(node.Table.Schema.O, node.Table.Name.O, true)
 	if table == nil {
 		return
 	}
@@ -4201,13 +4217,16 @@ func (s *session) checkAlterTable(node *ast.AlterTableStmt, sql string, mergeOnl
 	// 		}
 	// 	}
 	// }
-
-	s.mysqlShowTableStatus(table)
-	s.mysqlGetTableSize(table)
-
-	// 设置osc开关
-	s.checkAlterUseOsc(table)
-	s.checkDDLInstant(node, table)
+	if s.dbType != DBPostgreSQL {
+		s.mysqlShowTableStatus(table)
+		s.mysqlGetTableSize(table)
+		// 设置osc开关
+		s.checkAlterUseOsc(table)
+		s.checkDDLInstant(node, table)
+	} else {
+		s.PostgreSQLShowTableStatus(table)
+		s.PostgreSQLGetTableSize(table)
+	}
 
 	// 如果修改了表名,则调整回滚语句
 	hasRenameTable := false
@@ -4220,7 +4239,7 @@ func (s *session) checkAlterTable(node *ast.AlterTableStmt, sql string, mergeOnl
 	}
 
 	// 判断是否忽略osc工具
-	if s.myRecord.useOsc && !hasRenameTable {
+	if s.myRecord.useOsc && !hasRenameTable && s.dbType != DBPostgreSQL {
 		ignoreOsc := false
 		for _, alter := range node.Specs {
 			ignoreOsc = false
@@ -4273,8 +4292,13 @@ func (s *session) checkAlterTable(node *ast.AlterTableStmt, sql string, mergeOnl
 	s.myRecord.TableInfo = table
 
 	if s.opt.Backup {
-		s.myRecord.DDLRollback += fmt.Sprintf("ALTER TABLE `%s`.`%s` ",
-			table.Schema, table.Name)
+		if s.dbType != DBPostgreSQL {
+			s.myRecord.DDLRollback += fmt.Sprintf("ALTER TABLE `%s`.`%s` ",
+				table.Schema, table.Name)
+		} else {
+			s.myRecord.DDLRollback += fmt.Sprintf("ALTER TABLE %s.%s ",
+				table.Schema, table.Name)
+		}
 	}
 	s.alterRollbackBuffer = nil
 
@@ -6068,7 +6092,9 @@ func (s *session) checkAddColumn(t *TableInfo, c *ast.AlterTableSpec) {
 		} else {
 			s.checkKeyWords(nc.Name.Name.O)
 			s.mysqlCheckField(t, nc, c.Tp)
-			s.checkAlterTableAutoIncrement(c)
+			if s.dbType != DBTypeOceanBase {
+				s.checkAlterTableAutoIncrement(c)
+			}
 			if !s.hasError() {
 				isPrimary := false
 				isUnique := false

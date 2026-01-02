@@ -56,6 +56,7 @@ const (
 	ER_INVALID_COMMAND
 	ER_SQL_INVALID_SOURCE
 	ER_WRONG_DB_NAME
+	ER_WRONG_SCHEMA_NAME
 	ER_NO_DB_ERROR
 	ER_WITH_LIMIT_CONDITION
 	ER_WITH_ORDERBY_CONDITION
@@ -125,6 +126,7 @@ const (
 	ER_UNKNOWN_CHARACTER_SET
 	ER_END_WITH_COMMIT
 	ER_DB_NOT_EXISTED_ERROR
+	ER_SCHEMA_NOT_EXISTED_ERROR
 	ER_TABLE_EXISTS_ERROR
 	ER_TABLE_GROUP_EXISTS_ERROR
 	ER_TABLE_GROUP_NOT_EXISTED_ERROR
@@ -269,6 +271,7 @@ var ErrorsDefault = map[ErrorCode]string{
 	ER_INVALID_COMMAND:                     "Invalid command.",
 	ER_SQL_INVALID_SOURCE:                  "Invalid source infomation(%s).",
 	ER_WRONG_DB_NAME:                       "Incorrect database name '%s'.",
+	ER_WRONG_SCHEMA_NAME:                   "Incorrect schema name '%s'.",
 	ER_NO_DB_ERROR:                         "No database selected.",
 	ER_WITH_LIMIT_CONDITION:                "Limit is not allowed in update/delete statement.",
 	ER_WITH_ORDERBY_CONDITION:              "Order by is not allowed in update/delete statement.",
@@ -339,6 +342,7 @@ var ErrorsDefault = map[ErrorCode]string{
 	ER_UNKNOWN_CHARACTER_SET:               "Unknown character set: '%s'.",
 	ER_END_WITH_COMMIT:                     "Must end with commit.",
 	ER_DB_NOT_EXISTED_ERROR:                "Selected Database '%s' not existed.",
+	ER_SCHEMA_NOT_EXISTED_ERROR:            "Selected Schema '%s' not existed.",
 	ER_TABLE_EXISTS_ERROR:                  "Table '%s' already exists.",
 	ER_TABLE_GROUP_EXISTS_ERROR:            "Table group '%s' already exists.",
 	ER_TABLE_GROUP_NOT_EXISTED_ERROR:       "Table group '%s' not existed.",
@@ -482,7 +486,8 @@ var ErrorsChinese = map[ErrorCode]string{
 	ER_CON_COUNT_ERROR:                  "Too many connections",
 	ER_INVALID_COMMAND:                  "Invalid command.",
 	ER_SQL_INVALID_SOURCE:               "不正确的数据源信息(%s).",
-	ER_WRONG_DB_NAME:                    "不正确的的数据库名 '%s'.",
+	ER_WRONG_DB_NAME:                    "不正确的数据库名 '%s'.",
+	ER_WRONG_SCHEMA_NAME:                "不正确的模式名 '%s'.",
 	ER_NO_DB_ERROR:                      "没有选择数据库.",
 	ER_WITH_LIMIT_CONDITION:             "update/delete语句不允许Limit.",
 	ER_WITH_ORDERBY_CONDITION:           "update/delete语句不允许Order by.",
@@ -553,6 +558,7 @@ var ErrorsChinese = map[ErrorCode]string{
 	ER_UNKNOWN_CHARACTER_SET:               "Unknown character set: '%s'.",
 	ER_END_WITH_COMMIT:                     "Must end with commit.",
 	ER_DB_NOT_EXISTED_ERROR:                "选择的数据库 '%s' 不存在.",
+	ER_SCHEMA_NOT_EXISTED_ERROR:            "选择的模式 '%s' 不存在.",
 	ER_TABLE_EXISTS_ERROR:                  "表 '%s' 已存在.",
 	ER_TABLE_GROUP_EXISTS_ERROR:            "表组 '%s' 已存在.",
 	ER_TABLE_GROUP_NOT_EXISTED_ERROR:       "表组 '%s' 不存在.",
@@ -740,6 +746,7 @@ func GetErrorLevel(code ErrorCode) uint8 {
 		ER_KEY_COLUMN_DOES_NOT_EXITS,
 		ER_TOO_LONG_BAKDB_NAME,
 		ER_DB_NOT_EXISTED_ERROR,
+		ER_SCHEMA_NOT_EXISTED_ERROR,
 		ER_TABLE_EXISTS_ERROR,
 		ER_COLUMN_EXISTED,
 		ER_START_AS_BEGIN,
@@ -762,6 +769,7 @@ func GetErrorLevel(code ErrorCode) uint8 {
 		ER_TOO_LONG_IDENT,
 		ER_SQL_INVALID_SOURCE,
 		ER_WRONG_DB_NAME,
+		ER_WRONG_SCHEMA_NAME,
 		ER_WITH_INSERT_VALUES,
 		ER_WRONG_VALUE_COUNT_ON_ROW,
 		ER_BAD_FIELD_ERROR,
@@ -900,6 +908,8 @@ func (e ErrorCode) String() string {
 		return "er_sql_invalid_source"
 	case ER_WRONG_DB_NAME:
 		return "er_wrong_db_name"
+	case ER_WRONG_SCHEMA_NAME:
+		return "er_wrong_schema_name"
 	case ER_NO_DB_ERROR:
 		return "er_no_db_error"
 	case ER_WITH_LIMIT_CONDITION:
@@ -1034,6 +1044,8 @@ func (e ErrorCode) String() string {
 		return "er_end_with_commit"
 	case ER_DB_NOT_EXISTED_ERROR:
 		return "er_db_not_existed_error"
+	case ER_SCHEMA_NOT_EXISTED_ERROR:
+		return "er_schema_not_existed_error"
 	case ER_TABLE_EXISTS_ERROR:
 		return "er_table_exists_error"
 	case ER_TABLE_GROUP_EXISTS_ERROR:

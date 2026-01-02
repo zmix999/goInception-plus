@@ -51,10 +51,10 @@ func TestKeywordConsistent(t *testing.T) {
 
 	for k, v := range aliases {
 		requires.NotEqual(t, k, v)
-		requires.Equal(t, tokenMap[v], tokenMap[k])
+		requires.Equal(t, tokenMapPub[v], tokenMapPub[k])
 	}
 	keywordCount := len(reservedKeywords) + len(unreservedKeywords) + len(notKeywordTokens) + len(tidbKeywords) + len(tipgKeywords)
-	requires.Equal(t, keywordCount-len(windowFuncTokenMap), len(tokenMap)+len(tokenMapPG)-len(aliases))
+	requires.Equal(t, keywordCount-len(windowFuncTokenMap), len(tokenMapPub)+len(tokenMapMySQL)+len(tokenMapPG)-len(aliases))
 
 	unreservedCollectionDef := extractKeywordsFromCollectionDef(content, "\nUnReservedKeyword:")
 	requires.Equal(t, unreservedCollectionDef, unreservedKeywords)

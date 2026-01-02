@@ -33,17 +33,17 @@ func (s *session) PostgreSQLServerVersion() {
 	}
 }
 
-func (s *session) PostgreSQLgetTableFromCache(db string, tableName string, indexName string, reportNotExists bool) *TableInfo {
-	if db == "" {
-		db = s.serach
+func (s *session) PostgreSQLgetTableFromCache(schema string, tableName string, indexName string, reportNotExists bool) *TableInfo {
+	if schema == "" {
+		schema = s.serach
 	}
 
-	if db == "" {
-		s.appendErrorNo(ER_WRONG_DB_NAME, "")
+	if schema == "" {
+		s.appendErrorNo(ER_WRONG_SCHEMA_NAME, "")
 		return nil
 	}
 
-	key := fmt.Sprintf("%s.%s", db, tableName)
+	key := fmt.Sprintf("%s.%s", schema, tableName)
 	if s.IgnoreCase() {
 		key = strings.ToLower(key)
 	}
@@ -60,23 +60,23 @@ func (s *session) PostgreSQLgetTableFromCache(db string, tableName string, index
 		return t
 	}
 
-	rows := s.PostgreSQLqueryTableFromDB(db, tableName, reportNotExists)
+	rows := s.PostgreSQLqueryTableFromDB(schema, tableName, reportNotExists)
 	if rows != nil {
 		newT := &TableInfo{
-			Schema: db,
+			Schema: schema,
 			Name:   tableName,
 			Fields: rows,
 		}
-		if rows := s.PostgreSQLqueryIndexFromDB(db, indexName, reportNotExists); rows != nil {
+		if rows := s.PostgreSQLqueryIndexFromDB(schema, indexName, reportNotExists); rows != nil {
 			newT.Indexes = rows
 		}
 		s.tableCacheList[key] = newT
 		return newT
 	}
-	index := s.PostgreSQLqueryIndexFromDB(db, indexName, reportNotExists)
+	index := s.PostgreSQLqueryIndexFromDB(schema, indexName, reportNotExists)
 	if index != nil {
 		newT := &TableInfo{
-			Schema: db,
+			Schema: schema,
 			Name:   tableName,
 			Fields: rows,
 		}
@@ -393,5 +393,124 @@ func (s *session) PostgreSQLcheckBackupdb() {
 		// 禁用日志记录器，不显示任何日志
 		db.LogMode(false)
 		s.pgbackupdb = db
+	}
+}
+
+func (s *session) PostgreSQLcheckDBExists(schema string, reportNotExists bool) bool {
+
+	if schema == "" {
+		schema = s.serach
+	}
+
+	if schema == "" {
+		s.appendErrorNo(ER_WRONG_SCHEMA_NAME, "")
+		return false
+	}
+
+	key := schema
+	if s.IgnoreCase() {
+		key = strings.ToLower(schema)
+	}
+	if v, ok := s.dbCacheList[key]; ok {
+		return !v.IsDeleted
+	}
+
+	sql := "select schema_name from information_schema.schemata where schema_name ='%s';"
+
+	// count:= s.Exec(fmt.Sprintf(sql,db)).AffectedRows
+	var name string
+
+	rows, err := s.PostgreSQLraw(fmt.Sprintf(sql, schema))
+	if rows != nil {
+		defer rows.Close()
+	}
+	if err != nil {
+		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+		if myErr, ok := err.(*pgDriver.Error); ok {
+			s.appendErrorMsg(myErr.Message)
+		} else {
+			s.appendErrorMsg(err.Error())
+		}
+	} else {
+		for rows.Next() {
+			rows.Scan(&name)
+		}
+	}
+
+	if name == "" {
+		if reportNotExists {
+			s.appendErrorNo(ER_SCHEMA_NOT_EXISTED_ERROR, schema)
+		}
+		return false
+	}
+
+	s.dbCacheList[key] = &DBInfo{
+		Name:      schema,
+		IsNew:     false,
+		IsDeleted: false,
+	}
+
+	return true
+}
+
+// PostgreSQLShowTableStatus 获取表估计的受影响行数
+func (s *session) PostgreSQLShowTableStatus(t *TableInfo) {
+
+	if t.IsNew {
+		return
+	}
+
+	sql := fmt.Sprintf(`select n_live_tup as TABLE_ROWS from pg_catalog.pg_stat_user_tables where schemaname='%s' and relname='%s';`, t.Schema, t.Name)
+
+	var (
+		res uint64
+	)
+
+	rows, err := s.PostgreSQLraw(sql)
+	if rows != nil {
+		defer rows.Close()
+	}
+	if err != nil {
+		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+		if myErr, ok := err.(*pgDriver.Error); ok {
+			s.appendErrorMsg(myErr.Message)
+		} else {
+			s.appendErrorMsg(err.Error())
+		}
+	} else if rows != nil {
+		for rows.Next() {
+			rows.Scan(&res)
+		}
+		s.myRecord.AffectedRows = int64(res)
+	}
+}
+
+// PostgreSQLGetTableSize 获取表的大小
+func (s *session) PostgreSQLGetTableSize(t *TableInfo) {
+
+	if t.IsNew || t.TableSize > 0 {
+		return
+	}
+
+	sql := fmt.Sprintf(`select pg_total_relation_size(relid)/1024/1024 as v from pg_catalog.pg_stat_user_tables where schemaname='%s' and relname='%s';`, t.Schema, t.Name)
+
+	var res float64
+
+	rows, err := s.raw(sql)
+	if rows != nil {
+		defer rows.Close()
+	}
+	if err != nil {
+		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+		if myErr, ok := err.(*pgDriver.Error); ok {
+			s.appendErrorMsg(myErr.Message)
+		} else {
+			s.appendErrorMsg(err.Error())
+		}
+	} else if rows != nil {
+		for rows.Next() {
+			rows.Scan(&res)
+		}
+		t.TableSize = uint(res)
 	}
 }

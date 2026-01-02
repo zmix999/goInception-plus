@@ -7936,7 +7936,9 @@ FunctionCallGeneric:
 |	Identifier '.' Identifier '(' ExpressionListOpt ')'
 	{
 		var tp ast.FuncCallExprType
-		if isInTokenMap($3) {
+		if isInTokenMapPub($3) {
+			tp = ast.FuncCallExprTypeKeyword
+		} else if isInTokenMapMySQL($3) {
 			tp = ast.FuncCallExprTypeKeyword
 		} else if isInTokenMapPG($3) {
 			tp = ast.FuncCallExprTypeKeyword

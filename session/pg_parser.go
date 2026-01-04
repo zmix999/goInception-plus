@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -246,17 +247,17 @@ func (s *session) PostgreSQLparserBinlog(ctx context.Context) {
 		for _, col := range change.Change {
 			switch col.Kind {
 			case "insert":
-				err := s.PostgreSQLgenerateDeleteSql(col)
+				err := s.PostgreSQLgenerateDeleteSql(record.TableInfo, col)
 				if err == nil {
 					goto ENDCHECK
 				}
 			case "delete":
-				err := s.PostgreSQLgenerateInsertSql(col)
+				err := s.PostgreSQLgenerateInsertSql(record.TableInfo, col)
 				if err == nil {
 					goto ENDCHECK
 				}
 			case "update":
-				err := s.PostgreSQLgenerateUpdateSql(col)
+				err := s.PostgreSQLgenerateUpdateSql(record.TableInfo, col)
 				if err == nil {
 					goto ENDCHECK
 				}
@@ -273,33 +274,38 @@ func (s *session) PostgreSQLparserBinlog(ctx context.Context) {
 	}
 }
 
-func (s *session) PostgreSQLgenerateDeleteSql(change Change) (err error) {
-	if len(change.ColumnNames) != len(change.ColumnValues) {
-		log.Debug("Error: Column names and values count mismatch")
+func (s *session) PostgreSQLgenerateDeleteSql(t *TableInfo, change Change) (err error) {
+
+	if len(t.Fields) < len(change.OldKeys.KeyNames) {
+		return errors.Errorf("表%s.%s缺少列!当前列数:%d,binlog的列数%d",
+			change.Schema, change.Table, len(t.Fields), len(change.OldKeys.KeyNames))
 	}
 
-	// Build WHERE clause using all column names and their values
-	whereParts := make([]string, len(change.ColumnNames))
-	for i, colName := range change.ColumnNames {
+	template := "DELETE FROM %s.%s WHERE"
+
+	sql := fmt.Sprintf(template, change.Schema, change.Table)
+
+	var columnNames []string
+	c_null := " %s IS ?"
+	c := " %s=?"
+	var vv []driver.Value
+
+	for i, _ := range change.ColumnNames {
 		value := change.ColumnValues[i]
-		var valueStr string
-
-		// Format the value based on its type
-		switch v := value.(type) {
-		case string:
-			valueStr = fmt.Sprintf("'%s'", strings.ReplaceAll(v, "'", "''")) // Escape single quotes
-		case int, int32, int64, float64, float32:
-			valueStr = fmt.Sprintf("%v", v)
-		default:
-			valueStr = fmt.Sprintf("'%v'", v) // Default to string with quotes
+		if t.Fields[i].isUnsigned() {
+			value = processValue(value, GetDataTypeBase(t.Fields[i].Type))
 		}
-
-		whereParts[i] = fmt.Sprintf("%s = %s", colName, valueStr)
+		vv = append(vv, value)
+		if value == nil {
+			columnNames = append(columnNames,
+				fmt.Sprintf(c_null, t.Fields[i].Field))
+		} else {
+			columnNames = append(columnNames,
+				fmt.Sprintf(c, t.Fields[i].Field))
+		}
 	}
-
-	whereClause := strings.Join(whereParts, " AND ")
-	newSql := fmt.Sprintf("DELETE FROM %s.%s WHERE %s", change.Schema, change.Table, whereClause)
-	r, err := interpolateParams(newSql, nil, s.inc.HexBlob)
+	newSql := strings.Join([]string{sql, strings.Join(columnNames, " AND")}, "")
+	r, err := interpolateParams(newSql, vv, s.inc.HexBlob)
 	if err != nil {
 		log.Error(err)
 	}
@@ -308,102 +314,103 @@ func (s *session) PostgreSQLgenerateDeleteSql(change Change) (err error) {
 	return
 }
 
-func (s *session) PostgreSQLgenerateInsertSql(change Change) (err error) {
-	if change.OldKeys == nil {
-		return errors.Errorf("Error: OldKeys is missing for DELETE operation")
+func (s *session) PostgreSQLgenerateInsertSql(t *TableInfo, change Change) (err error) {
+	if len(t.Fields) < len(change.OldKeys.KeyNames) {
+		return errors.Errorf("表%s.%s缺少列!当前列数:%d,binlog的列数%d",
+			change.Schema, change.Table, len(t.Fields), len(change.OldKeys.KeyNames))
 	}
 
-	if len(change.OldKeys.KeyNames) != len(change.OldKeys.KeyValues) {
-		return errors.Errorf("Error: Key names and values count mismatch")
+	var vv []driver.Value
+	var columnNames []string
+	c := "%s"
+	template := "INSERT INTO %s.%s (%s) VALUES (%s)"
+	for i, col := range t.Fields {
+		if i < len(change.OldKeys.KeyNames) && !col.IsGenerated() {
+			columnNames = append(columnNames, fmt.Sprintf(c, col.Field))
+		}
 	}
 
-	// Build column names and values parts
-	columns := strings.Join(change.OldKeys.KeyNames, ", ")
-	valuesParts := make([]string, len(change.OldKeys.KeyValues))
+	paramValues := strings.Repeat("?,", t.EffectiveFieldCount())
+	paramValues = strings.TrimRight(paramValues, ",")
+
+	sql := fmt.Sprintf(template, change.Schema, change.Table,
+		strings.Join(columnNames, ","), paramValues)
+
 	for i, value := range change.OldKeys.KeyValues {
-		var valueStr string
-
-		// Format the value based on its type
-		switch v := value.(type) {
-		case string:
-			valueStr = fmt.Sprintf("'%s'", strings.ReplaceAll(v, "'", "''")) // Escape single quotes
-		case int, int32, int64, float64, float32:
-			valueStr = fmt.Sprintf("%v", v)
-		default:
-			valueStr = fmt.Sprintf("'%v'", v) // Default to string with quotes
+		if t.Fields[i].IsGenerated() {
+			continue
 		}
-
-		valuesParts[i] = valueStr
+		if t.Fields[i].isUnsigned() {
+			value = processValue(value, GetDataTypeBase(t.Fields[i].Type))
+		}
+		vv = append(vv, value)
 	}
 
-	valuesClause := strings.Join(valuesParts, ", ")
-	newSql := fmt.Sprintf("INSERT INTO %s.%s (%s) VALUES (%s)", change.Schema, change.Table, columns, valuesClause)
-	r, err := interpolateParams(newSql, nil, s.inc.HexBlob)
+	r, err := interpolateParams(sql, vv, s.inc.HexBlob)
 	if err != nil {
 		log.Error(err)
 	}
-
+	log.Debug(r)
 	s.PostgreSQLwrite(r)
 	return
 }
 
-func (s *session) PostgreSQLgenerateUpdateSql(change Change) (err error) {
-	if len(change.ColumnNames) != len(change.ColumnValues) {
-		return errors.Errorf("Error: Column names and values count mismatch")
+func (s *session) PostgreSQLgenerateUpdateSql(t *TableInfo, change Change) (err error) {
+	if len(t.Fields) < len(change.OldKeys.KeyNames) {
+		return errors.Errorf("表%s.%s缺少列!当前列数:%d,binlog的列数%d",
+			change.Schema, change.Table, len(t.Fields), len(change.OldKeys.KeyNames))
 	}
 
-	if change.OldKeys == nil {
-		return errors.Errorf("Error: OldKeys is missing for UPDATE operation")
-	}
+	template := "UPDATE %s.%s SET%s WHERE"
 
-	if len(change.OldKeys.KeyNames) != len(change.OldKeys.KeyValues) {
-		return errors.Errorf("Error: OldKeys names and values count mismatch")
-	}
+	setValue := " %s=?"
 
-	// Build SET clause with old values (what we want to revert to)
-	setParts := make([]string, len(change.OldKeys.KeyNames))
-	for i, colName := range change.OldKeys.KeyNames {
-		value := change.OldKeys.KeyValues[i]
-		var valueStr string
+	var sql string
+	var sets []string
+	var columnNames []string
+	c_null := " %s IS ?"
+	c := " %s=?"
 
-		// Format the value based on its type
-		switch v := value.(type) {
-		case string:
-			valueStr = fmt.Sprintf("'%s'", strings.ReplaceAll(v, "'", "''")) // Escape single quotes
-		case int, int32, int64, float64, float32:
-			valueStr = fmt.Sprintf("%v", v)
-		default:
-			valueStr = fmt.Sprintf("'%v'", v) // Default to string with quotes
+	for i, col := range t.Fields {
+		if i < len(change.OldKeys.KeyNames) && !col.IsGenerated() {
+			sets = append(sets, fmt.Sprintf(setValue, col.Field))
 		}
-
-		setParts[i] = fmt.Sprintf("%s = %s", colName, valueStr)
 	}
+	sql = fmt.Sprintf(template, change.Schema, change.Table, strings.Join(sets, ","))
 
-	setClause := strings.Join(setParts, ", ")
+	var (
+		oldValues []driver.Value
+		newValues []driver.Value
+		newSql    string
+	)
 
-	// Build WHERE clause using the new values (the current state after update)
-	whereParts := make([]string, len(change.ColumnNames))
-	for i, colName := range change.ColumnNames {
+	for i, _ := range change.ColumnNames {
 		value := change.ColumnValues[i]
-		var valueStr string
-
-		// Format the value based on its type
-		switch v := value.(type) {
-		case string:
-			valueStr = fmt.Sprintf("'%s'", strings.ReplaceAll(v, "'", "''")) // Escape single quotes
-		case int, int32, int64, float64, float32:
-			valueStr = fmt.Sprintf("%v", v)
-		default:
-			valueStr = fmt.Sprintf("'%v'", v) // Default to string with quotes
+		if t.Fields[i].isUnsigned() {
+			value = processValue(value, GetDataTypeBase(t.Fields[i].Type))
 		}
-
-		whereParts[i] = fmt.Sprintf("%s = %s", colName, valueStr)
+		oldValues = append(oldValues, value)
 	}
 
-	whereClause := strings.Join(whereParts, " AND ")
+	for i, _ := range change.OldKeys.KeyNames {
+		value := change.OldKeys.KeyValues[i]
+		if t.Fields[i].isUnsigned() {
+			value = processValue(value, GetDataTypeBase(t.Fields[i].Type))
+		}
+		newValues = append(newValues, value)
 
-	newSql := fmt.Sprintf("UPDATE %s.%s SET %s WHERE %s", change.Schema, change.Table, setClause, whereClause)
-	r, err := interpolateParams(newSql, nil, s.inc.HexBlob)
+		if value == nil {
+			columnNames = append(columnNames,
+				fmt.Sprintf(c_null, t.Fields[i].Field))
+		} else {
+			columnNames = append(columnNames,
+				fmt.Sprintf(c, t.Fields[i].Field))
+		}
+	}
+
+	newSql = strings.Join([]string{sql, strings.Join(columnNames, " AND")}, "")
+	newValues = append(newValues, oldValues...)
+	r, err := interpolateParams(newSql, newValues, s.inc.HexBlob)
 	if err != nil {
 		log.Error(err)
 	}

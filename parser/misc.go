@@ -168,7 +168,7 @@ var tokenMapMySQL = map[string]int{
 	"AVG_ROW_LENGTH":   avgRowLength,
 }
 
-// tokenMap is a map of known identifiers to the parser token ID.
+// tokenMapPub is a map of public known identifiers to the parser token ID.
 // Please try to keep the map in alphabetical order.
 var tokenMapPub = map[string]int{
 	"ACTION":                   action,

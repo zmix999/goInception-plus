@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 	"time"
 
@@ -180,9 +181,32 @@ func (s *session) PostgreSQLCheckDBExists(db string, reportNotExists bool) bool 
 	return true
 }
 
+func (s *session) PostgreSQLbuildReturningSQL(record *Record) string {
+	var sqlBuilder strings.Builder
+	sqlBuilder.Grow(len(record.Sql) + 15) // xmin,xmax length + space
+	sqlBuilder.WriteString(record.Sql)
+	sqlBuilder.WriteString(" returning xmin,xmax")
+	return sqlBuilder.String()
+}
+
+func (s *session) PostgreSQLbuildWalSQL(record *Record, returing ReturningValues) {
+	if returing.Xmax > 0 {
+		record.TxID = returing.Xmax
+	} else if returing.Xmin > 0 {
+		record.TxID = returing.Xmin
+	}
+	var walsql strings.Builder
+	walsql.Grow(128)
+	walsql.WriteString("SELECT data FROM pg_logical_slot_peek_changes('")
+	walsql.WriteString(logicalPlugin)
+	walsql.WriteString("', NULL, NULL) WHERE xid = ")
+	walsql.WriteString(strconv.Itoa(record.TxID))
+	record.WalSql = walsql.String()
+}
+
 type ReturningValues struct {
-	Xmin uint32 `gorm:"Column:xmin"`
-	Xmax uint32 `gorm:"Column:xmax"`
+	Xmin int `gorm:"Column:xmin"`
+	Xmax int `gorm:"Column:xmax"`
 }
 
 func (s *session) PostgreSQLexecuteRemoteStatement(record *Record, isTran bool, isDml bool) {
@@ -190,8 +214,7 @@ func (s *session) PostgreSQLexecuteRemoteStatement(record *Record, isTran bool, 
 	//创建逻辑解密槽
 	s.clearLogicalPlugin(false)
 	s.initLogicalPlugin()
-	sqlStmt := record.Sql + " RETURNING xmin,xmax"
-
+	sqlStmt := s.PostgreSQLbuildReturningSQL(record)
 	start := time.Now()
 
 	var res sql.Result
@@ -209,7 +232,7 @@ func (s *session) PostgreSQLexecuteRemoteStatement(record *Record, isTran bool, 
 
 	record.ExecTime = fmt.Sprintf("%.3f", time.Since(start).Seconds())
 	record.ExecTimestamp = time.Now().Unix()
-
+	s.PostgreSQLbuildWalSQL(record, returing)
 	if err != nil {
 		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
 		if myErr, ok := err.(*pgDriver.Error); ok {
@@ -233,7 +256,6 @@ func (s *session) PostgreSQLexecuteRemoteStatement(record *Record, isTran bool, 
 				}
 
 				record.ThreadId = s.PostgreSQLfetchThreadID()
-				record.TxID = s.txID
 				record.ExecComplete = true
 			} else {
 				s.appendErrorMsg("The execution result is unknown! Please confirm manually.")
@@ -251,15 +273,8 @@ func (s *session) PostgreSQLexecuteRemoteStatement(record *Record, isTran bool, 
 			s.appendErrorMsg(err.Error())
 		}
 	}
-	if returing.Xmin > 0 && returing.Xmax > 0 {
-		s.txID = returing.Xmax
-	} else if returing.Xmin > 0 {
-		s.txID = returing.Xmin
-	} else if returing.Xmax > 0 {
-		s.txID = returing.Xmax
-	}
+
 	record.AffectedRows = affectedRows
-	record.TxID = s.txID
 	record.ThreadId = s.PostgreSQLfetchThreadID()
 	if record.ThreadId == 0 {
 		s.appendErrorMsg("无法获取线程号")

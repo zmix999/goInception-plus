@@ -228,12 +228,12 @@ func (s *session) PostgreSQLparserBinlog(ctx context.Context) {
 
 	log.Debug("Parser")
 	startTime := time.Now()
-	sql := fmt.Sprintf("select data from pg_logical_slot_peek_changes('%s', null, null) where xid=%d;", logicalPlugin, record.TxID)
+
 	s.lastBackupTable = fmt.Sprintf("\"%s\".%s", record.BackupDBName, record.TableInfo.Name)
 
 	var results []Restult
 
-	_, err := s.PostgreSQLrawScan(sql, &results)
+	_, err := s.PostgreSQLrawScan(record.WalSql, &results)
 	if err != nil {
 		log.Errorf(err.Error())
 	}

@@ -372,8 +372,6 @@ type session struct {
 	maskingFields []MaskingFieldInfo
 	// PostgreSQL搜索模式
 	serach string
-	// PostgreSQL 事务ID
-	txID uint32
 	// PostgreSQL 模式
 	isPostgreSqlMode bool
 }

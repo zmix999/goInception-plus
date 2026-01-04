@@ -180,9 +180,16 @@ func (s *session) PostgreSQLCheckDBExists(db string, reportNotExists bool) bool 
 	return true
 }
 
+type ReturningValues struct {
+	Xmin uint32 `gorm:"Column:xmin"`
+	Xmax uint32 `gorm:"Column:xmax"`
+}
+
 func (s *session) PostgreSQLexecuteRemoteStatement(record *Record, isTran bool, isDml bool) {
 	log.Debug("PostgreSQLexecuteRemoteStatement")
-
+	//创建逻辑解密槽
+	s.clearLogicalPlugin(false)
+	s.initLogicalPlugin()
 	sqlStmt := record.Sql + " RETURNING xmin,xmax"
 
 	start := time.Now()
@@ -190,12 +197,12 @@ func (s *session) PostgreSQLexecuteRemoteStatement(record *Record, isTran bool, 
 	var res sql.Result
 	var err error
 	var affectedRows int64
-
+	var returing ReturningValues
 	if isTran {
 		res, err = s.PostgreSQLexecDDL(sqlStmt, false)
 	}
 	if isDml {
-		affectedRows = s.PostgreSQLrawScan(sqlStmt)
+		affectedRows, err = s.PostgreSQLrawScan(sqlStmt, &returing)
 	} else {
 		res, err = s.PostgreSQLexecSQL(sqlStmt, false)
 	}
@@ -244,7 +251,13 @@ func (s *session) PostgreSQLexecuteRemoteStatement(record *Record, isTran bool, 
 			s.appendErrorMsg(err.Error())
 		}
 	}
-
+	if returing.Xmin > 0 && returing.Xmax > 0 {
+		s.txID = returing.Xmax
+	} else if returing.Xmin > 0 {
+		s.txID = returing.Xmin
+	} else if returing.Xmax > 0 {
+		s.txID = returing.Xmax
+	}
 	record.AffectedRows = affectedRows
 	record.TxID = s.txID
 	record.ThreadId = s.PostgreSQLfetchThreadID()
@@ -255,7 +268,6 @@ func (s *session) PostgreSQLexecuteRemoteStatement(record *Record, isTran bool, 
 	}
 
 	record.StageStatus = StatusExecOK
-
 	// log.Infof("[%s] [%d] %s,RowsAffected: %d", s.DBName, s.fetchThreadID(), record.Sql, record.AffectedRows)
 
 	switch node := record.Type.(type) {
@@ -512,5 +524,138 @@ func (s *session) PostgreSQLGetTableSize(t *TableInfo) {
 			rows.Scan(&res)
 		}
 		t.TableSize = uint(res)
+	}
+}
+
+func (s *session) checkWalLevelIsLogical() bool {
+	log.Debug("checkWalLevel")
+
+	sql := "SELECT setting FROM pg_catalog.pg_settings WHERE name = 'wal_level';"
+
+	var setting string
+
+	rows, err := s.PostgreSQLraw(sql)
+	if rows != nil {
+		defer rows.Close()
+	}
+	if err != nil {
+		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+		if myErr, ok := err.(*pgDriver.Error); ok {
+			s.appendErrorMsg(myErr.Message)
+		} else {
+			s.appendErrorMsg(err.Error())
+		}
+	} else {
+		for rows.Next() {
+			rows.Scan(&setting)
+		}
+	}
+	return setting != "replica" || setting != "minimal"
+}
+
+func (s *session) modifyWalLevelIsLogical() {
+	log.Debug("modifyWalLevelIsLogical")
+
+	sql := "alter system set wal_level='logical';"
+
+	if _, err := s.PostgreSQLexecSQL(sql, true); err != nil {
+		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+		if myErr, ok := err.(*pgDriver.Error); ok {
+			s.appendErrorMsg(myErr.Message + " (sql: " + sql + ")")
+		} else {
+			s.appendErrorMsg(err.Error())
+		}
+	}
+}
+
+func (s *session) checkLogicalPlugin() bool {
+	log.Debug("checkLogicalPlugin")
+
+	sql := fmt.Sprintf("select pg_create_logical_replication_slot('%s', 'wal2json');", testLogicalPlugin)
+	if _, err := s.PostgreSQLexecSQL(sql, true); err != nil {
+		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+		if err != nil {
+			return false
+		}
+	}
+	return true
+}
+
+func (s *session) clearLogicalPlugin(isCheck bool) {
+	log.Debug("clearLogicalPlugin")
+
+	var sql string
+	if isCheck {
+		sql = fmt.Sprintf("select pg_drop_replication_slot('%s');", testLogicalPlugin)
+	} else {
+		sql = fmt.Sprintf("select pg_drop_replication_slot('%s');", logicalPlugin)
+	}
+	if _, err := s.PostgreSQLexecSQL(sql, true); err != nil {
+		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+		if myErr, ok := err.(*pgDriver.Error); ok {
+			if myErr.Code != "42704" { /*replication slot does not exist */
+				s.appendErrorMsg(myErr.Message + " (sql: " + sql + ")")
+			}
+		} else {
+			s.appendErrorMsg(err.Error())
+		}
+	}
+}
+
+func (s *session) checkReplicaIdentityIsFull() bool {
+	log.Debug("checkReplicaIdentityIsFull")
+
+	sql := fmt.Sprintf("select pc.relreplident from pg_catalog.pg_class pc, pg_catalog.pg_namespace pn where pc.relnamespace = pn.oid and pn.nspname ='%s' and pc.relname ='%s';", s.myRecord.TableInfo.Schema, s.myRecord.TableInfo.Name)
+
+	var format string
+
+	rows, err := s.PostgreSQLraw(sql)
+	if rows != nil {
+		defer rows.Close()
+	}
+
+	if err != nil {
+		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+		if myErr, ok := err.(*pgDriver.Error); ok {
+			s.appendErrorMsg(myErr.Message)
+		} else {
+			s.appendErrorMsg(err.Error())
+		}
+	} else {
+		for rows.Next() {
+			rows.Scan(&format)
+		}
+	}
+
+	return format != "d"
+}
+
+func (s *session) modifyReplicaIdentityIsFull() {
+	log.Debug("modifyReplicaIdentityIsFull")
+
+	sql := fmt.Sprintf("alter table %s.%s replica identity full;", s.myRecord.TableInfo.Schema, s.myRecord.TableInfo.Name)
+
+	if _, err := s.execSQL(sql, true); err != nil {
+		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+		if myErr, ok := err.(*pgDriver.Error); ok {
+			s.appendErrorMsg(myErr.Message + " (sql: " + sql + ")")
+		} else {
+			s.appendErrorMsg(err.Error())
+		}
+	}
+}
+
+func (s *session) initLogicalPlugin() {
+	log.Debug("initLogicalPlugin")
+
+	sql := fmt.Sprintf("select pg_create_logical_replication_slot('%s','wal2json');", logicalPlugin)
+
+	if _, err := s.PostgreSQLexecSQL(sql, true); err != nil {
+		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+		if myErr, ok := err.(*pgDriver.Error); ok {
+			s.appendErrorMsg(myErr.Message + " (sql: " + sql + ")")
+		} else {
+			s.appendErrorMsg(err.Error())
+		}
 	}
 }

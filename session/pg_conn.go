@@ -24,11 +24,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type ReturningValues struct {
-	Xmin uint32
-	Xmax uint32
-}
-
 // 判断是否为无效连接错误
 func isInvalidConnError(err error) bool {
 	pgErr, ok := err.(*pgDriver.Error)
@@ -58,7 +53,7 @@ func (s *session) PostgreSQLraw(sqlStr string) (rows *sql.Rows, err error) {
 		}
 		// 如果是无效连接错误，则尝试重新初始化连接
 		if isInvalidConnError(err) {
-			err1 := s.initConnection()
+			err1 := s.PostgreSQLinitConnection()
 			if err1 != nil {
 				return nil, err1
 			}
@@ -82,7 +77,7 @@ func (s *session) PostgreSQLexecSQL(sqlStr string, retry bool) (res sql.Result, 
 			s.sessionVars.ConnectionID, i, err, sqlStr)
 
 		if isInvalidConnError(err) {
-			err1 := s.initConnection()
+			err1 := s.PostgreSQLinitConnection()
 			if err1 != nil {
 				return res, err1
 			}
@@ -108,7 +103,7 @@ func (s *session) PostgreSQLexecDDL(sqlStr string, retry bool) (res sql.Result, 
 		}
 		log.Errorf("con:%d %v sql:%s", s.sessionVars.ConnectionID, err, sqlStr)
 		if isInvalidConnError(err) {
-			err1 := s.initConnection()
+			err1 := s.PostgreSQLinitConnection()
 			if err1 != nil {
 				return res, err1
 			}
@@ -124,19 +119,26 @@ func (s *session) PostgreSQLexecDDL(sqlStr string, retry bool) (res sql.Result, 
 }
 
 // Raw 执行sql语句,连接失败时自动重连,自动重置当前数据库
-func (s *session) PostgreSQLrawScan(sqlStr string) int64 {
+
+func (s *session) PostgreSQLrawScan(sqlStr string, dest interface{}) (int64, error) {
 	// 连接断开无效时,自动重试
-	var result ReturningValues
-	var rows int64
 	for i := 0; i < maxBadConnRetries; i++ {
-		rows = s.db.Raw(sqlStr).Scan(&result).RowsAffected
-		if result.Xmin > 0 {
-			s.txID = result.Xmin
-		} else if result.Xmax > 0 {
-			s.txID = result.Xmax
+		res := s.db.Raw(sqlStr).Scan(dest)
+		if res.Error == nil {
+			return res.RowsAffected, nil
 		}
+		if res.Error == pgDriver.ErrChannelNotOpen {
+			log.Errorf("con:%d %v", s.sessionVars.ConnectionID, res.Error)
+			err1 := s.PostgreSQLinitConnection()
+			if err1 != nil {
+				return res.RowsAffected, err1
+			}
+			s.appendErrorMsg(res.Error.Error())
+			continue
+		}
+		return res.RowsAffected, res.Error
 	}
-	return rows
+	return 0, nil
 }
 
 // Raw 执行sql语句,连接失败时自动重连,自动重置当前数据库
@@ -149,7 +151,7 @@ func (s *session) PostgreSQLrawDB(dest interface{}, sqlStr string, values ...int
 		}
 		if isInvalidConnError(err) {
 			log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-			err1 := s.initConnection()
+			err1 := s.PostgreSQLinitConnection()
 			if err1 != nil {
 				return err1
 			}

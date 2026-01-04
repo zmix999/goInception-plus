@@ -68,6 +68,8 @@ const (
 	remoteBackupTable              = "$_$Inception_backup_information$_$"
 	transactionMarkDb              = "$_$Inception$_$"
 	transactionMarkTable           = "transaction_mark"
+	testLogicalPlugin              = "test_logical_plugin"
+	logicalPlugin                  = "logical_plugin"
 	TABLE_COMMENT_MAXLEN           = 2048
 	COLUMN_COMMENT_MAXLEN          = 1024
 	INDEX_COMMENT_MAXLEN           = 1024
@@ -805,6 +807,24 @@ func (s *session) executeCommit(ctx context.Context) {
 		if !s.checkBinlogRowImageIsFull() {
 			s.modifyBinlogRowImageFull()
 		}
+	} else {
+		if s.opt.Backup && s.dbType == DBPostgreSQL {
+			if !s.checkLogicalPlugin() {
+				s.appendErrorMsg("wal2json插件不存在,无法备份!")
+				return
+			} else {
+				s.clearLogicalPlugin(true)
+
+			}
+			if !s.checkWalLevelIsLogical() {
+				s.modifyWalLevelIsLogical()
+			}
+
+			if !s.checkReplicaIdentityIsFull() {
+				s.modifyReplicaIdentityIsFull()
+			}
+		}
+
 	}
 
 	if s.hasErrorBefore() {
@@ -882,6 +902,8 @@ func (s *session) executeCommit(ctx context.Context) {
 			} else if s.opt.parseHost != "" && s.opt.parsePort != 0 {
 				s.parserBinlog(ctx)
 			}
+		} else {
+			s.PostgreSQLparserBinlog(ctx)
 		}
 	}
 }
@@ -7164,7 +7186,7 @@ func (s *session) checkInsert(node *ast.InsertStmt, sql string) {
 // getTableList 根据表对象获取访问的所有表，并判断是否存在新表以避免explain失败
 func (s *session) getTableList(tableList []*ast.TableSource, cmmonTable string) ([]*TableInfo, bool) {
 	var tableInfoList []*TableInfo
-
+	var t *TableInfo
 	// 判断select中是否有新表
 	haveNewTable := false
 	for _, tblSource := range tableList {
@@ -7180,7 +7202,12 @@ func (s *session) getTableList(tableList []*ast.TableSource, cmmonTable string) 
 				tableInfoList = append(tableInfoList, t.copy())
 				return tableInfoList, haveNewTable
 			}
-			t := s.getTableFromCache(tblName.Schema.O, tblName.Name.O, true)
+			if s.dbType != DBPostgreSQL {
+				t = s.getTableFromCache(tblName.Schema.O, tblName.Name.O, true)
+			} else {
+				t = s.PostgreSQLgetTableFromCache(tblName.Schema.O, tblName.Name.O, "", true)
+			}
+
 			if t != nil {
 				if tblSource.AsName.L != "" {
 					t.AsName = tblSource.AsName.O
@@ -7344,6 +7371,7 @@ func (s *session) getSubSelectColumns(node ast.ResultSetNode) []string {
 			}
 		} else {
 			var tableList []*ast.TableSource
+			var t *TableInfo
 			if sel.With != nil {
 				tableList = extractTableList(sel.With.CTEs[0].Query.Query, tableList)
 			} else {
@@ -7374,7 +7402,12 @@ func (s *session) getSubSelectColumns(node ast.ResultSetNode) []string {
 								if tblName.Schema.L == "" {
 									tblName.Schema = model.NewCIStr(s.dbName)
 								}
-								t := s.getTableFromCache(tblName.Schema.O, tblName.Name.O, true)
+								if s.dbType != DBPostgreSQL {
+									t = s.getTableFromCache(tblName.Schema.O, tblName.Name.O, true)
+								} else {
+									t = s.PostgreSQLgetTableFromCache(tblName.Schema.O, tblName.Name.O, "", true)
+								}
+
 								if t != nil {
 									for _, field := range t.Fields {
 										columns = append(columns, field.Field)
@@ -7402,7 +7435,12 @@ func (s *session) getSubSelectColumns(node ast.ResultSetNode) []string {
 								wildTable == tName) ||
 								(!ok && wildTable == tName) {
 								if ok {
-									t := s.getTableFromCache(tblName.Schema.O, tblName.Name.O, false)
+									if s.dbType != DBPostgreSQL {
+										t = s.getTableFromCache(tblName.Schema.O, tblName.Name.O, false)
+									} else {
+										t = s.PostgreSQLgetTableFromCache(tblName.Schema.O, tblName.Name.O, "", false)
+									}
+
 									if t != nil {
 										for _, field := range t.Fields {
 											columns = append(columns, field.Field)
@@ -8743,7 +8781,7 @@ func (s *session) checkUpdate(node *ast.UpdateStmt, sql string) {
 	tableList = extractTableList(node.TableRefs.TableRefs, tableList)
 
 	var tableInfoList []*TableInfo
-
+	var t *TableInfo
 	haveNewTable := false
 	catchError := false
 	for _, tblSource := range tableList {
@@ -8769,8 +8807,12 @@ func (s *session) checkUpdate(node *ast.UpdateStmt, sql string) {
 		if tblName.Name.O == commonTableInfoList {
 			return
 		}
+		if s.dbType != DBPostgreSQL {
+			t = s.getTableFromCache(tblName.Schema.O, tblName.Name.O, true)
+		} else {
+			t = s.PostgreSQLgetTableFromCache(tblName.Schema.O, tblName.Name.O, "", true)
+		}
 
-		t := s.getTableFromCache(tblName.Schema.O, tblName.Name.O, true)
 		if t == nil {
 			catchError = true
 		} else if s.myRecord.TableInfo == nil {
@@ -10005,9 +10047,15 @@ func (s *session) checkSelectItem(node ast.ResultSetNode,
 		}
 		return tableInfoList
 	case *ast.TableSource:
+		var t *TableInfo
 		switch tblSource := x.Source.(type) {
 		case *ast.TableName:
-			t := s.getTableFromCache(tblSource.Schema.O, tblSource.Name.O, true)
+			if s.dbType != DBPostgreSQL {
+				t = s.getTableFromCache(tblSource.Schema.O, tblSource.Name.O, true)
+			} else {
+				t = s.PostgreSQLgetTableFromCache(tblSource.Schema.O, tblSource.Name.O, "", true)
+			}
+
 			if t != nil {
 				if x.AsName.L != "" {
 					t.AsName = x.AsName.O

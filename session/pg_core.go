@@ -98,7 +98,7 @@ func (s *session) PostgreSQLCheckOptions() error {
 		}
 
 		pgbackupdb.LogMode(false)
-		s.pgbackupdb = pgbackupdb
+		s.backupdb = pgbackupdb
 	}
 
 	tmp := s.processInfo.Load()

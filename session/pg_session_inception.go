@@ -328,7 +328,7 @@ func (s *session) PostgreSQLfetchThreadID() uint32 {
 
 func (s *session) PostgreSQLcreateStatisticsTable() {
 	sql := "create schema if not exists inception;"
-	if err := s.pgbackupdb.Exec(sql).Error; err != nil {
+	if err := s.backupdb.Exec(sql).Error; err != nil {
 		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
 		if myErr, ok := err.(*pgDriver.Error); ok {
 			if myErr.Code != "42P06" { /*duplicate_schema */
@@ -340,7 +340,7 @@ func (s *session) PostgreSQLcreateStatisticsTable() {
 	}
 
 	sql = PostgreSQLstatisticsTableSQL()
-	if err := s.pgbackupdb.Exec(sql).Error; err != nil {
+	if err := s.backupdb.Exec(sql).Error; err != nil {
 		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
 		if myErr, ok := err.(*pgDriver.Error); ok {
 			if myErr.Code != "42P07" { /*duplicate_table*/
@@ -391,7 +391,7 @@ func PostgreSQLstatisticsTableSQL() string {
 }
 
 func (s *session) PostgreSQLcheckBackupdb() {
-	if err := s.pgbackupdb.DB().Ping(); err != nil {
+	if err := s.backupdb.DB().Ping(); err != nil {
 		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
 
 		addr := fmt.Sprintf("user=%s password=%s host=%s port=%d dbname=%s sslmode=disable search_path=inception",
@@ -404,7 +404,7 @@ func (s *session) PostgreSQLcheckBackupdb() {
 		}
 		// 禁用日志记录器，不显示任何日志
 		db.LogMode(false)
-		s.pgbackupdb = db
+		s.backupdb = db
 	}
 }
 

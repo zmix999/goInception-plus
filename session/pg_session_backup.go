@@ -71,7 +71,7 @@ func (s *session) PostgreSQLCreateBackupTable(record *Record) (
 
 	if _, ok := s.backupDBCacheList[backupDBName]; !ok {
 		sql := fmt.Sprintf("create schema if not exists \"%s\";", backupDBName)
-		if err := s.pgbackupdb.Exec(sql).Error; err != nil {
+		if err := s.backupdb.Exec(sql).Error; err != nil {
 			log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
 			if myErr, ok := err.(*pgDriver.Error); ok {
 				if myErr.Code != "42P06" { /*duplicate_schema*/
@@ -89,7 +89,7 @@ func (s *session) PostgreSQLCreateBackupTable(record *Record) (
 	key := fmt.Sprintf("%s.%s", backupDBName, record.TableInfo.Name)
 	if _, ok := s.backupTableCacheList[key]; !ok {
 		createSql := s.PostgreSQLCreateSqlFromTableInfo(backupDBName, record.TableInfo)
-		if err := s.pgbackupdb.Exec(createSql).Error; err != nil {
+		if err := s.backupdb.Exec(createSql).Error; err != nil {
 			log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
 			if myErr, ok := err.(*pgDriver.Error); ok {
 				if myErr.Code != "42P07" { /*duplicate_table*/
@@ -110,7 +110,7 @@ func (s *session) PostgreSQLCreateBackupTable(record *Record) (
 	key = fmt.Sprintf("%s.%s", backupDBName, remoteBackupTable)
 	if _, ok := s.backupTableCacheList[key]; !ok {
 		createSql := s.PostgreSQLCreateSqlBackupTable(backupDBName)
-		if err := s.pgbackupdb.Exec(createSql).Error; err != nil {
+		if err := s.backupdb.Exec(createSql).Error; err != nil {
 			if myErr, ok := err.(*pgDriver.Error); ok {
 				if myErr.Code != "42P07" { /*ER_TABLE_EXISTS_ERROR*/
 					log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
@@ -153,7 +153,7 @@ func (s *session) PostgreSQLcheckBackupTableSqlStmtColumnType(dbname string) (lo
 
 	var res string
 
-	rows, err2 := s.pgbackupdb.DB().Query(sql)
+	rows, err2 := s.backupdb.DB().Query(sql)
 	if err2 != nil {
 		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err2)
 		if myErr, ok := err2.(*pgDriver.Error); ok {
@@ -183,7 +183,7 @@ func (s *session) PostgreSQLcheckBackupTableHostMaxLength(dbname string) (length
 
 	var res string
 
-	rows, err2 := s.pgbackupdb.DB().Query(sql)
+	rows, err2 := s.backupdb.DB().Query(sql)
 	if err2 != nil {
 		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err2)
 		if myErr, ok := err2.(*pgDriver.Error); ok {
@@ -281,7 +281,7 @@ func (s *session) PostgreSQLflushBackupRecord(dbname string, record *Record) {
 		values := strings.TrimRight(
 			strings.Repeat(rowSQL, len(s.insertBuffer)/backupRecordColumnCount), ",")
 
-		err := s.pgbackupdb.Exec(fmt.Sprintf(sql, tableName, values),
+		err := s.backupdb.Exec(fmt.Sprintf(sql, tableName, values),
 			s.insertBuffer...).Error
 		if err != nil {
 			log.Error(err)

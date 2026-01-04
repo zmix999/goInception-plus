@@ -54,7 +54,7 @@ func (s *session) PostgreSQLflush(table string, record *Record) {
 		sql := "insert into %s(rollback_statement,opid_time) values%s"
 		values := strings.TrimRight(strings.Repeat(rowSQL, len(s.insertBuffer)/2), ",")
 		sql = fmt.Sprintf(sql, table, values)
-		err := s.pgbackupdb.Exec(sql,
+		err := s.backupdb.Exec(sql,
 			s.insertBuffer...).Error
 		if err != nil {
 			record.StageStatus = StatusBackupFail
@@ -276,9 +276,9 @@ func (s *session) PostgreSQLparserBinlog(ctx context.Context) {
 
 func (s *session) PostgreSQLgenerateDeleteSql(t *TableInfo, change Change) (err error) {
 
-	if len(t.Fields) < len(change.OldKeys.KeyNames) {
-		return errors.Errorf("表%s.%s缺少列!当前列数:%d,binlog的列数%d",
-			change.Schema, change.Table, len(t.Fields), len(change.OldKeys.KeyNames))
+	if len(t.Fields) < len(change.ColumnNames) {
+		return errors.Errorf("表%s.%s缺少列!当前列数:%d,wal的列数%d",
+			change.Schema, change.Table, len(t.Fields), len(change.ColumnNames))
 	}
 
 	template := "DELETE FROM %s.%s WHERE"
@@ -315,9 +315,9 @@ func (s *session) PostgreSQLgenerateDeleteSql(t *TableInfo, change Change) (err 
 }
 
 func (s *session) PostgreSQLgenerateInsertSql(t *TableInfo, change Change) (err error) {
-	if len(t.Fields) < len(change.OldKeys.KeyNames) {
-		return errors.Errorf("表%s.%s缺少列!当前列数:%d,binlog的列数%d",
-			change.Schema, change.Table, len(t.Fields), len(change.OldKeys.KeyNames))
+	if len(t.Fields) < len(change.ColumnNames) {
+		return errors.Errorf("表%s.%s缺少列!当前列数:%d,wal的列数%d",
+			change.Schema, change.Table, len(t.Fields), len(change.ColumnNames))
 	}
 
 	var vv []driver.Value
@@ -356,9 +356,9 @@ func (s *session) PostgreSQLgenerateInsertSql(t *TableInfo, change Change) (err 
 }
 
 func (s *session) PostgreSQLgenerateUpdateSql(t *TableInfo, change Change) (err error) {
-	if len(t.Fields) < len(change.OldKeys.KeyNames) {
-		return errors.Errorf("表%s.%s缺少列!当前列数:%d,binlog的列数%d",
-			change.Schema, change.Table, len(t.Fields), len(change.OldKeys.KeyNames))
+	if len(t.Fields) < len(change.ColumnNames) {
+		return errors.Errorf("表%s.%s缺少列!当前列数:%d,wal的列数%d",
+			change.Schema, change.Table, len(t.Fields), len(change.ColumnNames))
 	}
 
 	template := "UPDATE %s.%s SET%s WHERE"

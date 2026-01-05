@@ -68,7 +68,6 @@ func (s *session) PostgreSQLparserBinlog(ctx context.Context) {
 		// sendMsg(p.cfg.SocketUser, "rollback_binlog_parse_complete", "binlog解析进度", "", kwargs)
 	}()
 
-	// 获取binlog解析起点
 	record := s.getNextBackupRecord()
 	if record == nil {
 		return
@@ -91,45 +90,40 @@ func (s *session) PostgreSQLparserBinlog(ctx context.Context) {
 		log.Errorf(err.Error())
 	}
 
+	var totalChanges int64 = 0
 	var change SlotChanges
+
 	for _, row := range results {
 		err = json.Unmarshal([]byte(row.Data), &change)
 		if err != nil {
 			continue
 		}
 		for _, col := range change.Change {
+			var err error
 			switch col.Kind {
 			case "insert":
-				err := s.PostgreSQLgenerateDeleteSql(record.TableInfo, col)
-				if err != nil {
-					log.Error(err)
-				} else {
-					goto ENDCHECK
-				}
+				err = s.PostgreSQLgenerateDeleteSql(record.TableInfo, col)
 			case "delete":
-				err := s.PostgreSQLgenerateInsertSql(record.TableInfo, col)
-				if err != nil {
-					log.Error(err)
-				} else {
-					goto ENDCHECK
-				}
+				err = s.PostgreSQLgenerateInsertSql(record.TableInfo, col)
 			case "update":
-				err := s.PostgreSQLgenerateUpdateSql(record.TableInfo, col)
-				if err != nil {
-					log.Error(err)
-				} else {
-					goto ENDCHECK
-				}
+				err = s.PostgreSQLgenerateUpdateSql(record.TableInfo, col)
+			}
+			if err != nil {
+				log.Error(err)
+			} else {
+				totalChanges++
 			}
 		}
-	ENDCHECK:
+		// 检查受影响行数状态
 		if record.AffectedRows > 0 {
-			if int64(len(change.Change)) >= record.AffectedRows {
+			if totalChanges >= record.AffectedRows {
 				record.StageStatus = StatusBackupOK
 			}
 		}
+
 		record.BackupCostTime = fmt.Sprintf("%.3f", time.Since(startTime).Seconds())
 		s.clearLogicalPlugin(false)
+
 		if !s.killExecute {
 			// 进程Killed
 			if err := checkClose(ctx); err != nil {
@@ -139,7 +133,6 @@ func (s *session) PostgreSQLparserBinlog(ctx context.Context) {
 			}
 		}
 	}
-
 }
 
 func (s *session) PostgreSQLgenerateDeleteSql(t *TableInfo, change Change) (err error) {

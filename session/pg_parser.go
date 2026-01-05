@@ -101,17 +101,23 @@ func (s *session) PostgreSQLparserBinlog(ctx context.Context) {
 			switch col.Kind {
 			case "insert":
 				err := s.PostgreSQLgenerateDeleteSql(record.TableInfo, col)
-				if err == nil {
+				if err != nil {
+					log.Error(err)
+				} else {
 					goto ENDCHECK
 				}
 			case "delete":
 				err := s.PostgreSQLgenerateInsertSql(record.TableInfo, col)
-				if err == nil {
+				if err != nil {
+					log.Error(err)
+				} else {
 					goto ENDCHECK
 				}
 			case "update":
 				err := s.PostgreSQLgenerateUpdateSql(record.TableInfo, col)
-				if err == nil {
+				if err != nil {
+					log.Error(err)
+				} else {
 					goto ENDCHECK
 				}
 			}
@@ -124,7 +130,16 @@ func (s *session) PostgreSQLparserBinlog(ctx context.Context) {
 		}
 		record.BackupCostTime = fmt.Sprintf("%.3f", time.Since(startTime).Seconds())
 		s.clearLogicalPlugin(false)
+		if !s.killExecute {
+			// 进程Killed
+			if err := checkClose(ctx); err != nil {
+				log.Warn("Killed: ", err)
+				s.appendErrorMsg("Operation has been killed!")
+				break
+			}
+		}
 	}
+
 }
 
 func (s *session) PostgreSQLgenerateDeleteSql(t *TableInfo, change Change) (err error) {

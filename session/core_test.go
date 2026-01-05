@@ -25,6 +25,7 @@ func (s *testInceptionSuite) SetUpSuite(c *C) {
 	inc.BackupPort = 3306
 	inc.BackupUser = "test"
 	inc.BackupPassword = "test"
+	inc.BackupDbType = "mysql"
 
 	inc.Lang = "en-US"
 	inc.EnableFingerprint = true

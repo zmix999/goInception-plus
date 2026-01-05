@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"strconv"
-	"strings"
-	"sync"
 
 	pgDriver "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
@@ -210,64 +208,4 @@ func (s *session) PostgreSQLCreateSqlBackupTable(dbname string) string {
 	buf.WriteString("PRIMARY KEY(opid_time));")
 
 	return buf.String()
-}
-
-func (s *session) PostgreSQLprocessChanBackup(wg *sync.WaitGroup) {
-	for {
-		r := <-s.chBackupRecord
-
-		if r == nil {
-			s.PostgreSQLflushBackupRecord(s.lastBackupTable, s.myRecord)
-			wg.Done()
-			break
-		}
-		// flush标志. 不能在外面调用flush函数,会导致线程并发操作,写入数据错误
-		// 如数据尚未进入到ch通道,此时调用flush,数据无法正确入库
-		if r.values == nil {
-			s.PostgreSQLflushBackupRecord(r.dbname, r.record)
-		} else {
-			s.PostgreSQLwriteBackupRecord(r.dbname, r.record, r.values)
-		}
-	}
-}
-
-func (s *session) PostgreSQLflushBackupRecord(dbname string, record *Record) {
-	// log.Info("flush ", len(s.insertBuffer))
-
-	if len(s.insertBuffer) > 0 {
-		const backupRecordColumnCount int = 11
-		const rowSQL = "(?,?,?,?,?,?,?,?,?,?,NOW(),?),"
-		tableName := fmt.Sprintf("\"%s\".\"%s\"", dbname, remoteBackupTable)
-
-		sql := "insert into %s values%s"
-		values := strings.TrimRight(
-			strings.Repeat(rowSQL, len(s.insertBuffer)/backupRecordColumnCount), ",")
-
-		err := s.backupdb.Exec(fmt.Sprintf(sql, tableName, values),
-			s.insertBuffer...).Error
-		if err != nil {
-			log.Error(err)
-			if myErr, ok := err.(*pgDriver.Error); ok {
-				s.recordSets.MaxLevel = 2
-				record.StageStatus = StatusBackupFail
-				record.appendErrorMessage(myErr.Message)
-			}
-		}
-
-		// s.BackupTotalRows += len(s.insertBuffer) / backupRecordColumnCount
-		// s.SetMyProcessInfo(record.Sql, time.Now(),
-		//     float64(s.BackupTotalRows)/float64(s.TotalChangeRows))
-
-		s.insertBuffer = nil
-	}
-}
-
-func (s *session) PostgreSQLwriteBackupRecord(dbname string, record *Record, values []interface{}) {
-
-	s.insertBuffer = append(s.insertBuffer, values...)
-
-	// 每500行insert提交一次
-	if len(s.insertBuffer) >= 500*11 {
-		s.flushBackupRecord(dbname, record)
-	}
 }

@@ -547,7 +547,7 @@ func (s *session) checkWalLevelIsLogical() bool {
 			rows.Scan(&setting)
 		}
 	}
-	return setting != "replica" || setting != "minimal"
+	return setting != "replica"
 }
 
 func (s *session) modifyWalLevelIsLogical() {

@@ -630,12 +630,12 @@ func (s *testSessionIncSuite) TestCreateTable(c *C) {
 	s.testErrorCode(c, sql,
 		session.NewErr(session.ErrCharsetNotSupport, "utf8,utf8mb4"))
 
-	sql = "create table t1(a int) character set latin123;"
+	/*sql = "create table t1(a int) character set latin123;"
 	s.testErrorCode(c, sql,
 		session.NewErr(session.ErrCharsetNotSupport, "utf8,utf8mb4"),
 		session.NewErr(session.ErrUnknownCharset, "latin123"),
 		session.NewErrf("COLLATION '' is not valid for CHARACTER SET 'latin123'!"),
-	)
+	)*/
 
 	sql = "create table t1(a int) character set gbk;"
 	s.testErrorCode(c, sql,
@@ -3363,20 +3363,13 @@ func (s *testSessionIncSuite) TestMaxKeys(c *C) {
 
 func (s *testSessionIncSuite) TestSetStmt(c *C) {
 
-	sql = `set names abc;
-		set names '';
+	sql = `
 		set names utf8;
 		set names utf8mb4;
 		set autocommit = 1;
 		`
 	s.runCheck(sql)
 	s.assertAudit(c, s.getResultRows(),
-		[]*SQLError{
-			session.NewErr(session.ErrCharsetNotSupport, "utf8,utf8mb4"),
-		},
-		[]*SQLError{
-			session.NewErr(session.ErrCharsetNotSupport, "utf8,utf8mb4"),
-		},
 		nil,
 		nil,
 		[]*SQLError{

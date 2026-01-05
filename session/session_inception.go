@@ -852,11 +852,7 @@ func (s *session) executeCommit(ctx context.Context) {
 		}
 
 		// 如果连接已断开
-		if s.dbType != DBPostgreSQL {
-			s.checkBackupdb()
-		} else {
-			s.PostgreSQLcheckBackupdb()
-		}
+		s.checkBackupdb()
 		log.Debug("开始备份")
 
 		tmp := s.processInfo.Load()
@@ -869,11 +865,7 @@ func (s *session) executeCommit(ctx context.Context) {
 
 		s.stage = StageBackup
 
-		if s.dbType != DBPostgreSQL {
-			s.runBackup(ctx)
-		} else {
-			s.PostgreSQLrunBackup(ctx)
-		}
+		s.runBackup(ctx)
 
 		// for _, record := range s.recordSets.All() {
 
@@ -10498,13 +10490,20 @@ func (s *session) InitDisableTypes() {
 func (s *session) checkBackupdb() {
 	if err := s.backupdb.DB().Ping(); err != nil {
 		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-		addr := fmt.Sprintf("%s:%s@tcp(%s:%d)/?charset=%s&parseTime=True&loc=Local&autocommit=1",
-			s.inc.BackupUser, s.inc.BackupPassword, s.inc.BackupHost, s.inc.BackupPort,
-			s.inc.DefaultCharset)
-		if s.inc.BackupTLS != "" {
-			addr += "&tls=" + s.inc.BackupTLS
+		var addr string
+		if s.inc.BackupDbType == "mysql" {
+			addr := fmt.Sprintf("%s:%s@tcp(%s:%d)/?charset=%s&parseTime=True&loc=Local&autocommit=1",
+				s.inc.BackupUser, s.inc.BackupPassword, s.inc.BackupHost, s.inc.BackupPort,
+				s.inc.DefaultCharset)
+			if s.inc.BackupTLS != "" {
+				addr += "&tls=" + s.inc.BackupTLS
+			}
+		} else if s.inc.BackupDbType == "postgres" {
+			addr = fmt.Sprintf("user=%s password=%s host=%s port=%d dbname=%s sslmode=disable",
+				s.inc.BackupUser, s.inc.BackupPassword, s.inc.BackupHost, s.inc.BackupPort, s.inc.BackupDb)
 		}
-		db, err := gorm.Open("mysql", addr)
+
+		db, err := gorm.Open(s.inc.BackupDbType, addr)
 		if err != nil {
 			log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
 			s.appendErrorMsg(err.Error())

@@ -505,20 +505,7 @@ func (s *session) checkOptions() error {
 		if s.inc.BackupHost == "" || s.inc.BackupPort == 0 || s.inc.BackupUser == "" {
 			return errors.New(s.getErrorMessage(ER_INVALID_BACKUP_HOST_INFO))
 		}
-		addr = fmt.Sprintf("%s:%s@tcp(%s:%d)/?charset=%s&parseTime=True&loc=Local&autocommit=1",
-			s.inc.BackupUser, s.inc.BackupPassword, s.inc.BackupHost, s.inc.BackupPort,
-			s.inc.DefaultCharset)
-		if s.inc.BackupTLS != "" {
-			addr += "&tls=" + s.inc.BackupTLS
-		}
-		backupdb, err := gorm.Open("mysql", addr)
-
-		if err != nil {
-			return fmt.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-		}
-
-		backupdb.LogMode(false)
-		s.backupdb = backupdb
+		s.inintbackupdb()
 	}
 
 	tmp := s.processInfo.Load()
@@ -557,6 +544,30 @@ func (s *session) checkOptions() error {
 		s.ddlDB.LogMode(false)
 	}
 	return nil
+}
+
+func (s *session) inintbackupdb() {
+	var addr string
+	if s.inc.BackupDbType == "mysql" {
+		addr = fmt.Sprintf("%s:%s@tcp(%s:%d)/?charset=%s&parseTime=True&loc=Local&autocommit=1",
+			s.inc.BackupUser, s.inc.BackupPassword, s.inc.BackupHost, s.inc.BackupPort,
+			s.inc.DefaultCharset)
+		if s.inc.BackupTLS != "" {
+			addr += "&tls=" + s.inc.BackupTLS
+		}
+	} else if s.inc.BackupDbType == "postgres" {
+		addr = fmt.Sprintf("user=%s password=%s host=%s port=%d dbname=%s sslmode=disable",
+			s.inc.BackupUser, s.inc.BackupPassword, s.inc.BackupHost, s.inc.BackupPort, s.inc.BackupDb)
+	}
+
+	backupdb, err := gorm.Open(s.inc.BackupDbType, addr)
+
+	if err != nil {
+		fmt.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+	}
+
+	backupdb.LogMode(false)
+	s.backupdb = backupdb
 }
 
 func printMemStats() {

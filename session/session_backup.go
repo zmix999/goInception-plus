@@ -14,6 +14,7 @@ import (
 	"github.com/go-mysql-org/go-mysql/replication"
 	mysqlDriver "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
+	pgDriver "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -66,7 +67,13 @@ func (s *session) runBackup(ctx context.Context) {
 			s.myRecord = record
 
 			if record.TableInfo != nil {
-				longDataType, hostMaxLength := s.mysqlCreateBackupTable(record)
+				var longDataType bool
+				var hostMaxLength int
+				if s.inc.BackupDbType == "mysql" {
+					longDataType, hostMaxLength = s.mysqlCreateBackupTable(record)
+				} else if s.inc.BackupDbType == "postgres" {
+					longDataType, hostMaxLength = s.PostgreSQLCreateBackupTable(record)
+				}
 				s.mysqlBackupSql(record, longDataType, hostMaxLength)
 			} else if record.SequencesInfo != nil {
 				longDataType, hostMaxLength := s.mysqlCreateBackupSequencesTable(record)
@@ -117,7 +124,12 @@ func (s *session) flushBackupRecord(dbname string, record *Record) {
 	if len(s.insertBuffer) > 0 {
 		const backupRecordColumnCount int = 11
 		const rowSQL = "(?,?,?,?,?,?,?,?,?,?,NOW(),?),"
-		tableName := fmt.Sprintf("`%s`.`%s`", dbname, remoteBackupTable)
+		var tableName string
+		if s.inc.BackupDbType == "mysql" {
+			tableName = fmt.Sprintf("`%s`.`%s`", dbname, remoteBackupTable)
+		} else if s.inc.BackupDbType == "postgres" {
+			tableName = fmt.Sprintf("\"%s\".\"%s\"", dbname, remoteBackupTable)
+		}
 
 		sql := "insert into %s values%s"
 		values := strings.TrimRight(
@@ -128,6 +140,10 @@ func (s *session) flushBackupRecord(dbname string, record *Record) {
 		if err != nil {
 			log.Error(err)
 			if myErr, ok := err.(*mysqlDriver.MySQLError); ok {
+				s.recordSets.MaxLevel = 2
+				record.StageStatus = StatusBackupFail
+				record.appendErrorMessage(myErr.Message)
+			} else if myErr, ok := err.(*pgDriver.Error); ok {
 				s.recordSets.MaxLevel = 2
 				record.StageStatus = StatusBackupFail
 				record.appendErrorMessage(myErr.Message)
@@ -246,7 +262,6 @@ func (s *session) mysqlExecuteBackupInfoInsertSql(record *Record, longDataType b
 	values = append(values, strconv.Itoa(record.StartPosition))
 	values = append(values, record.EndFile)
 	values = append(values, strconv.Itoa(record.EndPosition))
-	values = append(values, record.TxID)
 	values = append(values, sql_stmt)
 	values = append(values, host)
 

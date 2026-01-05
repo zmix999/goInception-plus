@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"github.com/jinzhu/gorm"
 	"github.com/lib/pq"
 	pgDriver "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
@@ -190,17 +189,18 @@ func (s *session) PostgreSQLbuildReturningSQL(record *Record) string {
 }
 
 func (s *session) PostgreSQLbuildWalSQL(record *Record, returing ReturningValues) {
+	var trx_id int
 	if returing.Xmax > 0 {
-		record.TxID = returing.Xmax
+		trx_id = returing.Xmax
 	} else if returing.Xmin > 0 {
-		record.TxID = returing.Xmin
+		trx_id = returing.Xmin
 	}
 	var walsql strings.Builder
 	walsql.Grow(128)
 	walsql.WriteString("SELECT data FROM pg_logical_slot_peek_changes('")
 	walsql.WriteString(logicalPlugin)
 	walsql.WriteString("', NULL, NULL) WHERE xid = ")
-	walsql.WriteString(strconv.Itoa(record.TxID))
+	walsql.WriteString(strconv.Itoa(trx_id))
 	record.WalSql = walsql.String()
 }
 
@@ -403,24 +403,6 @@ func PostgreSQLstatisticsTableSQL() string {
 	buf.WriteString("port int not null);")
 
 	return buf.String()
-}
-
-func (s *session) PostgreSQLcheckBackupdb() {
-	if err := s.backupdb.DB().Ping(); err != nil {
-		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-
-		addr := fmt.Sprintf("user=%s password=%s host=%s port=%d dbname=%s sslmode=disable search_path=inception",
-			s.opt.User, s.opt.Password, s.opt.Host, s.opt.Port, s.opt.db)
-		db, err := gorm.Open("postgres", addr)
-		if err != nil {
-			log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-			s.appendErrorMsg(err.Error())
-			return
-		}
-		// 禁用日志记录器，不显示任何日志
-		db.LogMode(false)
-		s.backupdb = db
-	}
 }
 
 func (s *session) PostgreSQLcheckDBExists(schema string, reportNotExists bool) bool {

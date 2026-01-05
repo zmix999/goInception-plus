@@ -17,6 +17,7 @@ import (
 	"github.com/go-mysql-org/go-mysql/replication"
 	mysqlDriver "github.com/go-sql-driver/mysql"
 	"github.com/juju/errors"
+	pgDriver "github.com/lib/pq"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
@@ -54,7 +55,11 @@ func (s *session) processChan(wg *sync.WaitGroup) {
 			// log.Info("flush标志")
 			s.flush(r.table, r.record)
 		} else {
-			s.myWrite(r.sql, r.e, r.opid, r.table, r.record)
+			if s.inc.BackupDbType == "mysql" {
+				s.myWrite(r.sql, r.e, r.opid, r.table, r.record)
+			} else if s.inc.BackupDbType == "postgres" {
+				s.PostgreSQLmyWrite(r.sql, r.opid, r.table, r.record)
+			}
 		}
 	}
 }
@@ -67,8 +72,12 @@ func (s *session) getNextBackupRecord() *Record {
 		}
 
 		if r.TableInfo != nil {
-
-			lastBackupTable := fmt.Sprintf("`%s`.`%s`", s.getRemoteBackupDBName(r), r.TableInfo.Name)
+			var lastBackupTable string
+			if s.inc.BackupDbType == "mysql" {
+				lastBackupTable = fmt.Sprintf("`%s`.`%s`", s.getRemoteBackupDBName(r), r.TableInfo.Name)
+			} else if s.inc.BackupDbType == "postgres" {
+				lastBackupTable = fmt.Sprintf("\"%s\".%s", s.getRemoteBackupDBName(r), r.TableInfo.Name)
+			}
 
 			if s.lastBackupTable == "" {
 				s.lastBackupTable = lastBackupTable
@@ -96,7 +105,7 @@ func (s *session) getNextBackupRecord() *Record {
 				// }
 
 				// 如果开始位置和结果位置相同,说明无变更(受影响行数为0)
-				if !s.needTransactionMark() && r.StartFile == r.EndFile && r.StartPosition == r.EndPosition {
+				if !s.needTransactionMark() && r.StartFile == r.EndFile && r.StartPosition == r.EndPosition && s.dbType != DBPostgreSQL {
 					continue
 				}
 
@@ -276,7 +285,11 @@ func (s *session) parserBinlog(ctx context.Context) {
 		Pos: uint32(record.StartPosition)}
 	stopPosition := mysql.Position{Name: record.EndFile,
 		Pos: uint32(record.EndPosition)}
-	s.lastBackupTable = fmt.Sprintf("`%s`.`%s`", record.BackupDBName, record.TableInfo.Name)
+	if s.inc.BackupDbType == "mysql" {
+		s.lastBackupTable = fmt.Sprintf("`%s`.`%s`", record.BackupDBName, record.TableInfo.Name)
+	} else if s.inc.BackupDbType == "postgres" {
+		s.lastBackupTable = fmt.Sprintf("\"%s\".%s", record.BackupDBName, record.TableInfo.Name)
+	}
 	startTime := time.Now()
 
 	logSync, err := b.StartSync(startPosition)
@@ -607,6 +620,8 @@ func (s *session) flush(table string, record *Record) {
 		if err != nil {
 			record.StageStatus = StatusBackupFail
 			if myErr, ok := err.(*mysqlDriver.MySQLError); ok {
+				record.appendErrorMessage(myErr.Message)
+			} else if myErr, ok := err.(*pgDriver.Error); ok {
 				record.appendErrorMessage(myErr.Message)
 			} else {
 				s.appendErrorMsg(err.Error())

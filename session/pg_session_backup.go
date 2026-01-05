@@ -2,7 +2,6 @@ package session
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -11,42 +10,6 @@ import (
 	pgDriver "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
 )
-
-func (s *session) PostgreSQLrunBackup(ctx context.Context) {
-	log.Debug("PostgreSQLrunBackup")
-	var wg sync.WaitGroup
-	wg.Add(1)
-	s.chBackupRecord = make(chan *chanBackup, 50)
-	go s.PostgreSQLprocessChanBackup(&wg)
-	defer func() {
-		close(s.chBackupRecord)
-		wg.Wait()
-		// 清空临时的库名
-		s.lastBackupTable = ""
-	}()
-
-	for _, record := range s.recordSets.All() {
-
-		if s.checkSqlIsDML(record) || s.checkSqlIsDDL(record) {
-			s.myRecord = record
-
-			if record.TableInfo != nil {
-				longDataType, hostMaxLength := s.PostgreSQLCreateBackupTable(record)
-				s.mysqlBackupSql(record, longDataType, hostMaxLength)
-			} else {
-				if record.TableInfo == nil {
-					s.appendErrorNo(ErrNotFoundTableInfo)
-				} else if record.SequencesInfo == nil {
-					s.appendErrorNo(ErrNotFoundTableInfo)
-				}
-			}
-
-			if s.hasError() {
-				break
-			}
-		}
-	}
-}
 
 func (s *session) PostgreSQLCreateBackupTable(record *Record) (
 	longDataType bool, hostMaxLength int) {
@@ -235,7 +198,6 @@ func (s *session) PostgreSQLCreateSqlBackupTable(dbname string) string {
 	buf.WriteString("start_binlog_pos int,")
 	buf.WriteString("end_binlog_file varchar(512),")
 	buf.WriteString("end_binlog_pos int,")
-	buf.WriteString("trx_id int,")
 	buf.WriteString("sql_statement text,")
 	buf.WriteString("host VARCHAR(")
 	buf.WriteString(strconv.Itoa(backupTableHostDataLength))
@@ -274,7 +236,7 @@ func (s *session) PostgreSQLflushBackupRecord(dbname string, record *Record) {
 
 	if len(s.insertBuffer) > 0 {
 		const backupRecordColumnCount int = 11
-		const rowSQL = "(?,?,?,?,?,?,?,?,?,?,?,NOW(),?),"
+		const rowSQL = "(?,?,?,?,?,?,?,?,?,?,NOW(),?),"
 		tableName := fmt.Sprintf("\"%s\".\"%s\"", dbname, remoteBackupTable)
 
 		sql := "insert into %s values%s"

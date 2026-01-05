@@ -9,69 +9,9 @@ import (
 	"sync"
 	"time"
 
-	pgDriver "github.com/lib/pq"
 	"github.com/pingcap/errors"
 	log "github.com/sirupsen/logrus"
 )
-
-func (s *session) PostgreSQLprocessChan(wg *sync.WaitGroup) {
-	for {
-		r := <-s.ch
-		if r == nil {
-			// log.Info("剩余ch", len(s.ch), "cap ch", cap(s.ch), "通道关闭,跳出循环")
-			// log.Info("ProcessChan,close")
-			s.PostgreSQLflush(s.lastBackupTable, s.myRecord)
-			wg.Done()
-			break
-		}
-		// flush标志. 不能在外面调用flush函数,会导致线程并发操作,写入数据错误
-		// 如数据尚未进入到ch通道,此时调用flush,数据无法正确入库
-
-		if len(r.sqlStr) > 0 {
-			s.PostgreSQLmyWriteDDL(r.sqlStr, r.opid, r.table, r.record)
-		} else if len(r.sql) == 0 {
-			// log.Info("flush标志")
-			s.PostgreSQLflush(r.table, r.record)
-		} else {
-			s.PostgreSQLmyWrite(r.sql, r.opid, r.table, r.record)
-		}
-	}
-}
-
-func (s *session) PostgreSQLmyWriteDDL(sql string, opid string, table string, record *Record) {
-	s.insertBuffer = append(s.insertBuffer, sql, opid)
-
-	if len(s.insertBuffer) >= 1000 {
-		s.PostgreSQLflush(table, record)
-	}
-}
-
-func (s *session) PostgreSQLflush(table string, record *Record) {
-	// log.Info("flush ", len(s.insertBuffer))
-	if len(s.insertBuffer) > 0 {
-
-		const rowSQL = "(?,?),"
-		sql := "insert into %s(rollback_statement,opid_time) values%s"
-		values := strings.TrimRight(strings.Repeat(rowSQL, len(s.insertBuffer)/2), ",")
-		sql = fmt.Sprintf(sql, table, values)
-		err := s.backupdb.Exec(sql,
-			s.insertBuffer...).Error
-		if err != nil {
-			record.StageStatus = StatusBackupFail
-			if myErr, ok := err.(*pgDriver.Error); ok {
-				record.appendErrorMessage(myErr.Message)
-			} else {
-				s.appendErrorMsg(err.Error())
-			}
-			log.Errorf("con:%d %v sql:%s params:%v",
-				s.sessionVars.ConnectionID, err, sql, s.insertBuffer)
-		}
-		s.backupTotalRows += len(s.insertBuffer) / 2
-		s.SetMyProcessInfo(record.Sql, time.Now(),
-			float64(s.backupTotalRows)/float64(s.totalChangeRows))
-	}
-	s.insertBuffer = nil
-}
 
 func (s *session) PostgreSQLmyWrite(b []byte,
 	opid string, table string, record *Record) {
@@ -81,97 +21,7 @@ func (s *session) PostgreSQLmyWrite(b []byte,
 	s.insertBuffer = append(s.insertBuffer, string(b), opid)
 
 	if len(s.insertBuffer) >= 1000 {
-		s.PostgreSQLflush(table, record)
-	}
-}
-
-func (s *session) PostgreSQLgetNextBackupRecord() *Record {
-	for {
-		r := s.recordSets.Next()
-		if r == nil {
-			return nil
-		}
-
-		if r.TableInfo != nil {
-
-			lastBackupTable := fmt.Sprintf("\"%s\".%s", s.getRemoteBackupDBName(r), r.TableInfo.Name)
-
-			if s.lastBackupTable == "" {
-				s.lastBackupTable = lastBackupTable
-			}
-
-			if s.checkSqlIsDDL(r) {
-				if s.lastBackupTable != lastBackupTable {
-					s.ch <- &chanData{sql: nil, table: s.lastBackupTable, record: s.myRecord}
-					s.lastBackupTable = lastBackupTable
-				}
-
-				s.ch <- &chanData{sqlStr: r.DDLRollback, opid: r.OPID,
-					table: s.lastBackupTable, record: r}
-
-				if r.StageStatus != StatusExecFail {
-					r.StageStatus = StatusBackupOK
-				}
-
-				continue
-
-			} else if (r.AffectedRows > 0 || r.StageStatus == StatusExecFail) && s.checkSqlIsDML(r) {
-
-				// if s.opt.middlewareExtend != "" {
-				// 	continue
-				// }
-
-				// 当使用事务标记时，不再使用 binlog 偏移量判断是否有变更
-				if r.AffectedRows == 0 {
-					continue
-				}
-
-				if s.lastBackupTable != lastBackupTable {
-					s.ch <- &chanData{sql: nil, table: s.lastBackupTable, record: s.myRecord}
-					s.lastBackupTable = lastBackupTable
-				}
-
-				// 先置默认值为备份失败,在备份完成后置为成功
-				// if r.AffectedRows > 0 {
-				if r.StageStatus != StatusExecFail {
-					r.StageStatus = StatusBackupFail
-				}
-				// 清理已删除的列
-				clearDeleteColumns(r.TableInfo)
-				if r.MultiTables != nil {
-					for _, t := range r.MultiTables {
-						clearDeleteColumns(t)
-					}
-				}
-
-				return r
-			}
-
-		} else if r.SequencesInfo != nil {
-
-			lastBackupTable := fmt.Sprintf("\"%s\".%s", s.getRemoteBackupDBName(r), r.SequencesInfo.Name)
-
-			if s.lastBackupTable == "" {
-				s.lastBackupTable = lastBackupTable
-			}
-
-			if s.checkSqlIsDDL(r) {
-				if s.lastBackupTable != lastBackupTable {
-					s.ch <- &chanData{sql: nil, table: s.lastBackupTable, record: s.myRecord}
-					s.lastBackupTable = lastBackupTable
-				}
-
-				s.ch <- &chanData{sqlStr: r.DDLRollback, opid: r.OPID,
-					table: s.lastBackupTable, record: r}
-
-				if r.StageStatus != StatusExecFail {
-					r.StageStatus = StatusBackupOK
-				}
-
-				continue
-
-			}
-		}
+		s.flush(table, record)
 	}
 }
 
@@ -206,7 +56,7 @@ func (s *session) PostgreSQLparserBinlog(ctx context.Context) {
 
 	wg.Add(1)
 	s.ch = make(chan *chanData, 50)
-	go s.PostgreSQLprocessChan(&wg)
+	go s.processChan(&wg)
 
 	// 最终关闭和返回
 	defer func() {
@@ -219,7 +69,7 @@ func (s *session) PostgreSQLparserBinlog(ctx context.Context) {
 	}()
 
 	// 获取binlog解析起点
-	record := s.PostgreSQLgetNextBackupRecord()
+	record := s.getNextBackupRecord()
 	if record == nil {
 		return
 	}
@@ -228,8 +78,11 @@ func (s *session) PostgreSQLparserBinlog(ctx context.Context) {
 
 	log.Debug("Parser")
 	startTime := time.Now()
-
-	s.lastBackupTable = fmt.Sprintf("\"%s\".%s", record.BackupDBName, record.TableInfo.Name)
+	if s.inc.BackupDbType == "mysql" {
+		s.lastBackupTable = fmt.Sprintf("`%s`.`%s`", record.BackupDBName, record.TableInfo.Name)
+	} else if s.inc.BackupDbType == "postgres" {
+		s.lastBackupTable = fmt.Sprintf("\"%s\".%s", record.BackupDBName, record.TableInfo.Name)
+	}
 
 	var results []Restult
 

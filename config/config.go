@@ -515,10 +515,12 @@ type Binlog struct {
 // Inc is the inception section of the config.
 type Inc struct {
 	AlterAutoMerge bool   `toml:"alter_auto_merge" json:"alter_auto_merge"`
-	BackupHost     string `toml:"backup_host" json:"backup_host"` // 远程备份库信息
+	BackupDbType   string `toml:"backup_db_type" json:"backup_db_type"` // 远程备份数据库类型[mysql,postgresql]
+	BackupHost     string `toml:"backup_host" json:"backup_host"`       // 远程备份库信息
 	BackupPassword string `toml:"backup_password" json:"backup_password"`
 	BackupPort     uint   `toml:"backup_port" json:"backup_port"`
 	BackupUser     string `toml:"backup_user" json:"backup_user"`
+	BackupDb       string `toml:"backup_db" json:"backup_db"` // postgresql备份需要指定db名
 	// 指定backup mysql ssl认证规则,默认为空. 可指定tls=skip-verify等来跳过服务器ssl认证. https://github.com/go-sql-driver/mysql/issues/899#issuecomment-443493840
 	BackupTLS string `toml:"backup_tls" json:"backup_tls"`
 

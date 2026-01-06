@@ -74,7 +74,7 @@ func (s *session) PostgreSQLCheckOptions() error {
 
 	s.db = db
 
-	s.dbName = s.opt.db
+	//s.dbName = s.opt.db
 
 	if s.opt.Backup {
 		// 不再检查密码是否为空

@@ -817,12 +817,7 @@ func (s *session) executeCommit(ctx context.Context) {
 			if !s.checkWalLevelIsLogical() {
 				s.modifyWalLevelIsLogical()
 			}
-
-			if !s.checkReplicaIdentityIsFull() {
-				s.modifyReplicaIdentityIsFull()
-			}
 		}
-
 	}
 
 	if s.hasErrorBefore() {
@@ -1341,7 +1336,11 @@ func (s *session) executeRemoteCommand(record *Record, isTran bool) int {
 		*ast.DropMaterializedViewLogStmt,
 		*ast.TriggerInfo,
 		*ast.DropTriggerStmt:*/
-		s.executeRemoteStatement(record, false)
+		if s.dbType != DBPostgreSQL {
+			s.executeRemoteStatement(record, false)
+		} else {
+			s.PostgreSQLexecuteRemoteStatement(record, false, false)
+		}
 
 	default:
 		log.Warnf("无匹配类型: %T\n", node)
@@ -1758,6 +1757,9 @@ func (s *session) executeRemoteStatementAndBackup(record *Record) {
 	if s.dbType != DBPostgreSQL {
 		s.executeRemoteStatement(record, false)
 	} else {
+		if !s.checkReplicaIdentityIsFull() {
+			s.modifyReplicaIdentityIsFull()
+		}
 		s.PostgreSQLexecuteRemoteStatement(record, false, true)
 	}
 

@@ -211,10 +211,23 @@ type ReturningValues struct {
 
 func (s *session) PostgreSQLexecuteRemoteStatement(record *Record, isTran bool, isDml bool) {
 	log.Debug("PostgreSQLexecuteRemoteStatement")
+	var sqlStmt string
+	var isUse bool
+	switch record.Type.(type) {
+	case *ast.UseStmt:
+		isUse = true
+	}
 	//创建逻辑解密槽
-	s.clearLogicalPlugin(false)
-	s.initLogicalPlugin()
-	sqlStmt := s.PostgreSQLbuildReturningSQL(record)
+	if !isUse && isDml {
+		s.clearLogicalPlugin(false)
+		s.initLogicalPlugin()
+		sqlStmt = s.PostgreSQLbuildReturningSQL(record)
+	} else if isUse {
+		sqlStmt = fmt.Sprintf("set search_path to %s", s.dbName)
+	} else {
+		sqlStmt = record.Sql
+	}
+
 	start := time.Now()
 
 	var res sql.Result
@@ -232,7 +245,9 @@ func (s *session) PostgreSQLexecuteRemoteStatement(record *Record, isTran bool, 
 
 	record.ExecTime = fmt.Sprintf("%.3f", time.Since(start).Seconds())
 	record.ExecTimestamp = time.Now().Unix()
-	s.PostgreSQLbuildWalSQL(record, returing)
+	if !isUse {
+		s.PostgreSQLbuildWalSQL(record, returing)
+	}
 	if err != nil {
 		s.checkError(err)
 		record.StageStatus = StatusExecFail

@@ -185,22 +185,10 @@ func (s *session) PostgreSQLinitConnection() (err error) {
 
 		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
 		if !isInvalidConnError(err) {
-			if myErr, ok := err.(*pgDriver.Error); ok {
-				s.appendErrorMsg(myErr.Message)
-			} else {
-				s.appendErrorMsg(err.Error())
-			}
+			s.checkError(err)
 			return
 		}
 	}
-
-	if err != nil {
-		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-		if myErr, ok := err.(*pgDriver.Error); ok {
-			s.appendErrorMsg(myErr.Message)
-		} else {
-			s.appendErrorMsg(err.Error())
-		}
-	}
+	s.checkError(err)
 	return
 }

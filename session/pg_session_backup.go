@@ -115,14 +115,7 @@ func (s *session) PostgreSQLcheckBackupTableSqlStmtColumnType(dbname string) (lo
 	var res string
 
 	rows, err2 := s.backupdb.DB().Query(sql)
-	if err2 != nil {
-		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err2)
-		if myErr, ok := err2.(*pgDriver.Error); ok {
-			s.appendErrorMsg(myErr.Message)
-		} else {
-			s.appendErrorMsg(err2.Error())
-		}
-	}
+	s.checkError(err2)
 	if rows != nil {
 		defer rows.Close()
 		for rows.Next() {
@@ -145,14 +138,7 @@ func (s *session) PostgreSQLcheckBackupTableHostMaxLength(dbname string) (length
 	var res string
 
 	rows, err2 := s.backupdb.DB().Query(sql)
-	if err2 != nil {
-		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err2)
-		if myErr, ok := err2.(*pgDriver.Error); ok {
-			s.appendErrorMsg(myErr.Message)
-		} else {
-			s.appendErrorMsg(err2.Error())
-		}
-	}
+	s.checkError(err2)
 	if rows != nil {
 		defer rows.Close()
 		for rows.Next() {

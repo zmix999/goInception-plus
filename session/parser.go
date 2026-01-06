@@ -619,13 +619,7 @@ func (s *session) flush(table string, record *Record) {
 			s.insertBuffer...).Error
 		if err != nil {
 			record.StageStatus = StatusBackupFail
-			if myErr, ok := err.(*mysqlDriver.MySQLError); ok {
-				record.appendErrorMessage(myErr.Message)
-			} else if myErr, ok := err.(*pgDriver.Error); ok {
-				record.appendErrorMessage(myErr.Message)
-			} else {
-				s.appendErrorMsg(err.Error())
-			}
+			s.checkError(err)
 			log.Errorf("con:%d %v sql:%s params:%v",
 				s.sessionVars.ConnectionID, err, sql, s.insertBuffer)
 		}
@@ -636,16 +630,16 @@ func (s *session) flush(table string, record *Record) {
 	s.insertBuffer = nil
 }
 
-func (s *session) checkError(e error) {
-	if e != nil {
-		log.Error(e)
-
-		// if len(p.cfg.SocketUser) > 0 {
-		// 	kwargs := map[string]interface{}{"error": e.Error()}
-		// 	sendMsg(p.cfg.SocketUser, "rollback_binlog_parse_complete", "binlog解析进度",
-		// 		"", kwargs)
-		// }
-		// panic(errors.ErrorStack(e))
+func (s *session) checkError(err error) {
+	if err != nil {
+		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+		if myErr, ok := err.(*mysqlDriver.MySQLError); ok {
+			s.appendErrorMsg(myErr.Message)
+		} else if myErr, ok := err.(*pgDriver.Error); ok {
+			s.appendErrorMsg(myErr.Message)
+		} else {
+			s.appendErrorMsg(err.Error())
+		}
 	}
 }
 

@@ -219,73 +219,11 @@ func (s *session) initConnection() (err error) {
 
 		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
 		if err != mysqlDriver.ErrInvalidConn {
-			if myErr, ok := err.(*mysqlDriver.MySQLError); ok {
-				s.appendErrorMsg(myErr.Message)
-			} else {
-				s.appendErrorMsg(err.Error())
-			}
+			s.checkError(err)
 			return
 		}
 	}
 
-	if err != nil {
-		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-		if myErr, ok := err.(*mysqlDriver.MySQLError); ok {
-			s.appendErrorMsg(myErr.Message)
-		} else {
-			s.appendErrorMsg(err.Error())
-		}
-	}
+	s.checkError(err)
 	return
 }
-
-// // SwitchDatabase USE切换到当前数据库. (避免连接断开后当前数据库置空)
-// func (s *session) SwitchDatabase(db *gorm.DB) error {
-// 	name := s.DBName
-// 	if name == "" {
-// 		name = s.opt.db
-// 	}
-// 	if name == "" {
-// 		return nil
-// 	}
-
-// 	// log.Infof("SwitchDatabase: %v", name)
-// 	_, err := db.DB().Exec(fmt.Sprintf("USE `%s`", name))
-// 	if err != nil {
-// 		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-// 		if myErr, ok := err.(*mysqlDriver.MySQLError); ok {
-// 			s.AppendErrorMessage(myErr.Message)
-// 		} else {
-// 			s.AppendErrorMessage(err.Error())
-// 		}
-// 	}
-// 	return err
-// }
-
-// // GetDatabase 获取当前数据库
-// func (s *session) GetDatabase() string {
-// 	log.Debug("GetDatabase")
-
-// 	var value string
-// 	sql := "select database();"
-
-// 	rows, err := s.Raw(sql)
-// 	if rows != nil {
-// 		defer rows.Close()
-// 	}
-
-// 	if err != nil {
-// 		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-// 		if myErr, ok := err.(*mysqlDriver.MySQLError); ok {
-// 			s.AppendErrorMessage(myErr.Message)
-// 		} else {
-// 			s.AppendErrorMessage(err.Error())
-// 		}
-// 	} else {
-// 		for rows.Next() {
-// 			rows.Scan(&value)
-// 		}
-// 	}
-
-// 	return value
-// }

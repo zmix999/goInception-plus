@@ -120,7 +120,6 @@ type SourceOptions struct {
 	Port           int
 	User           string
 	Password       string
-	SearchPath     string
 	Check          bool
 	Execute        bool
 	Backup         bool

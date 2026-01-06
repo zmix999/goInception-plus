@@ -48,25 +48,19 @@ func (s *session) PostgreSQLCheckOptions() error {
 		if s.opt.User == "" {
 			msg += "用户名为空,"
 		}
-		if s.opt.SearchPath == "" {
-			msg += "模式为空,"
-		}
-		if s.opt.db == "" {
-			msg += "数据库名为空,"
-		}
 		return fmt.Errorf(s.getErrorMessage(ER_SQL_INVALID_SOURCE), strings.TrimRight(msg, ","))
 	}
 
 	var addr string
-	if s.opt.middlewareExtend == "" {
-		addr = fmt.Sprintf("user=%s password=%s host=%s port=%d dbname=%s sslmode=disable search_path=%s",
-			s.opt.User, s.opt.Password, s.opt.Host, s.opt.Port, s.opt.db, s.opt.SearchPath)
+	if s.opt.middlewareExtend == "" && s.opt.db != "" {
+		addr = fmt.Sprintf("user=%s password=%s host=%s port=%d dbname=%s sslmode=disable",
+			s.opt.User, s.opt.Password, s.opt.Host, s.opt.Port, s.opt.db)
 	} else {
 		s.opt.middlewareExtend = fmt.Sprintf("/*%s*/",
 			strings.Replace(s.opt.middlewareExtend, ": ", "=", 1))
 
-		addr = fmt.Sprintf("user=%s password=%s host=%s port=%d dbname=postgres sslmode=disable search_path=%s",
-			s.opt.User, s.opt.Password, s.opt.Host, s.opt.Port, s.opt.SearchPath)
+		addr = fmt.Sprintf("user=%s password=%s host=%s port=%d dbname=postgres sslmode=disable",
+			s.opt.User, s.opt.Password, s.opt.Host, s.opt.Port)
 	}
 
 	db, err := gorm.Open("postgres", addr)
@@ -81,7 +75,6 @@ func (s *session) PostgreSQLCheckOptions() error {
 	s.db = db
 
 	s.dbName = s.opt.db
-	s.serach = s.opt.SearchPath
 
 	if s.opt.Backup {
 		// 不再检查密码是否为空

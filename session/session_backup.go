@@ -177,11 +177,7 @@ func (s *session) mysqlExecuteBackupSqlForDDL(record *Record) {
 
 	if err := s.backupdb.Exec(sql).Error; err != nil {
 		log.Errorf("con:%d %v sql:%s", s.sessionVars.ConnectionID, err, sql)
-		if myErr, ok := err.(*mysqlDriver.MySQLError); ok {
-			s.appendErrorMsg(myErr.Message)
-		} else {
-			s.appendErrorMsg(err.Error())
-		}
+		s.checkError(err)
 		record.StageStatus = StatusBackupFail
 	} else {
 		record.StageStatus = StatusBackupOK
@@ -590,14 +586,7 @@ func (s *session) checkBackupTableSqlStmtColumnType(dbname string) (longDataType
 	var res string
 
 	rows, err2 := s.backupdb.DB().Query(sql)
-	if err2 != nil {
-		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err2)
-		if myErr, ok := err2.(*mysqlDriver.MySQLError); ok {
-			s.appendErrorMsg(myErr.Message)
-		} else {
-			s.appendErrorMsg(err2.Error())
-		}
-	}
+	s.checkError(err2)
 	if rows != nil {
 		defer rows.Close()
 		for rows.Next() {
@@ -621,14 +610,7 @@ func (s *session) checkBackupTableHostMaxLength(dbname string) (length int) {
 	var res string
 
 	rows, err2 := s.backupdb.DB().Query(sql)
-	if err2 != nil {
-		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err2)
-		if myErr, ok := err2.(*mysqlDriver.MySQLError); ok {
-			s.appendErrorMsg(myErr.Message)
-		} else {
-			s.appendErrorMsg(err2.Error())
-		}
-	}
+	s.checkError(err2)
 	if rows != nil {
 		defer rows.Close()
 		for rows.Next() {

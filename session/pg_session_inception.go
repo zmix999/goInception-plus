@@ -35,7 +35,7 @@ func (s *session) PostgreSQLServerVersion() {
 
 func (s *session) PostgreSQLgetTableFromCache(schema string, tableName string, indexName string, reportNotExists bool) *TableInfo {
 	if schema == "" {
-		schema = s.serach
+		schema = s.dbName
 	}
 
 	if schema == "" {
@@ -90,7 +90,7 @@ func (s *session) PostgreSQLgetTableFromCache(schema string, tableName string, i
 
 func (s *session) PostgreSQLqueryTableFromDB(db string, tableName string, reportNotExists bool) []FieldInfo {
 	if db == "" {
-		db = s.serach
+		db = s.dbName
 	}
 	var rows []FieldInfo
 	sql := fmt.Sprintf("SELECT column_name as \"Field\",concat(data_type,case when character_maximum_length is not null then '(' || character_maximum_length || ')' else NULL end) as \"Type\",collation_name as \"Collation\",is_nullable as \"Null\",column_default as \"Default\" FROM information_schema.columns WHERE table_schema = '%s' AND table_name = '%s';", db, tableName)
@@ -111,7 +111,7 @@ func (s *session) PostgreSQLqueryTableFromDB(db string, tableName string, report
 
 func (s *session) PostgreSQLqueryIndexFromDB(db string, tableName string, reportNotExists bool) []*IndexInfo {
 	if db == "" {
-		db = s.serach
+		db = s.dbName
 	}
 	var rows []*IndexInfo
 	sql := fmt.Sprintf("select tablename as \"Table\" ,indexname as \"Key_name\" from pg_indexes where schemaname='%s' and indexname='%s'", db, tableName)
@@ -234,12 +234,7 @@ func (s *session) PostgreSQLexecuteRemoteStatement(record *Record, isTran bool, 
 	record.ExecTimestamp = time.Now().Unix()
 	s.PostgreSQLbuildWalSQL(record, returing)
 	if err != nil {
-		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-		if myErr, ok := err.(*pgDriver.Error); ok {
-			s.appendErrorMsg(myErr.Message)
-		} else {
-			s.appendErrorMsg(err.Error())
-		}
+		s.checkError(err)
 		record.StageStatus = StatusExecFail
 
 		// 无法确认是否执行成功,需要通过备份来确认
@@ -408,7 +403,7 @@ func PostgreSQLstatisticsTableSQL() string {
 func (s *session) PostgreSQLcheckDBExists(schema string, reportNotExists bool) bool {
 
 	if schema == "" {
-		schema = s.serach
+		schema = s.dbName
 	}
 
 	if schema == "" {
@@ -434,12 +429,7 @@ func (s *session) PostgreSQLcheckDBExists(schema string, reportNotExists bool) b
 		defer rows.Close()
 	}
 	if err != nil {
-		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-		if myErr, ok := err.(*pgDriver.Error); ok {
-			s.appendErrorMsg(myErr.Message)
-		} else {
-			s.appendErrorMsg(err.Error())
-		}
+		s.checkError(err)
 	} else {
 		for rows.Next() {
 			rows.Scan(&name)
@@ -480,12 +470,7 @@ func (s *session) PostgreSQLShowTableStatus(t *TableInfo) {
 		defer rows.Close()
 	}
 	if err != nil {
-		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-		if myErr, ok := err.(*pgDriver.Error); ok {
-			s.appendErrorMsg(myErr.Message)
-		} else {
-			s.appendErrorMsg(err.Error())
-		}
+		s.checkError(err)
 	} else if rows != nil {
 		for rows.Next() {
 			rows.Scan(&res)
@@ -505,17 +490,12 @@ func (s *session) PostgreSQLGetTableSize(t *TableInfo) {
 
 	var res float64
 
-	rows, err := s.raw(sql)
+	rows, err := s.PostgreSQLraw(sql)
 	if rows != nil {
 		defer rows.Close()
 	}
 	if err != nil {
-		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-		if myErr, ok := err.(*pgDriver.Error); ok {
-			s.appendErrorMsg(myErr.Message)
-		} else {
-			s.appendErrorMsg(err.Error())
-		}
+		s.checkError(err)
 	} else if rows != nil {
 		for rows.Next() {
 			rows.Scan(&res)
@@ -536,12 +516,7 @@ func (s *session) checkWalLevelIsLogical() bool {
 		defer rows.Close()
 	}
 	if err != nil {
-		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-		if myErr, ok := err.(*pgDriver.Error); ok {
-			s.appendErrorMsg(myErr.Message)
-		} else {
-			s.appendErrorMsg(err.Error())
-		}
+		s.checkError(err)
 	} else {
 		for rows.Next() {
 			rows.Scan(&setting)
@@ -556,12 +531,7 @@ func (s *session) modifyWalLevelIsLogical() {
 	sql := "alter system set wal_level='logical';"
 
 	if _, err := s.PostgreSQLexecSQL(sql, true); err != nil {
-		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-		if myErr, ok := err.(*pgDriver.Error); ok {
-			s.appendErrorMsg(myErr.Message + " (sql: " + sql + ")")
-		} else {
-			s.appendErrorMsg(err.Error())
-		}
+		s.checkError(err)
 	}
 }
 
@@ -612,12 +582,7 @@ func (s *session) checkReplicaIdentityIsFull() bool {
 	}
 
 	if err != nil {
-		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-		if myErr, ok := err.(*pgDriver.Error); ok {
-			s.appendErrorMsg(myErr.Message)
-		} else {
-			s.appendErrorMsg(err.Error())
-		}
+		s.checkError(err)
 	} else {
 		for rows.Next() {
 			rows.Scan(&format)
@@ -632,13 +597,8 @@ func (s *session) modifyReplicaIdentityIsFull() {
 
 	sql := fmt.Sprintf("alter table %s.%s replica identity full;", s.myRecord.TableInfo.Schema, s.myRecord.TableInfo.Name)
 
-	if _, err := s.execSQL(sql, true); err != nil {
-		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-		if myErr, ok := err.(*pgDriver.Error); ok {
-			s.appendErrorMsg(myErr.Message + " (sql: " + sql + ")")
-		} else {
-			s.appendErrorMsg(err.Error())
-		}
+	if _, err := s.PostgreSQLexecSQL(sql, true); err != nil {
+		s.checkError(err)
 	}
 }
 
@@ -648,11 +608,6 @@ func (s *session) initLogicalPlugin() {
 	sql := fmt.Sprintf("select pg_create_logical_replication_slot('%s','wal2json');", logicalPlugin)
 
 	if _, err := s.PostgreSQLexecSQL(sql, true); err != nil {
-		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-		if myErr, ok := err.(*pgDriver.Error); ok {
-			s.appendErrorMsg(myErr.Message + " (sql: " + sql + ")")
-		} else {
-			s.appendErrorMsg(err.Error())
-		}
+		s.checkError(err)
 	}
 }

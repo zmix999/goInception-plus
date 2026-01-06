@@ -1,5 +1,7 @@
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
+gitee.com/zhoujin826/goInception-plus/parser v0.0.0-20260106085925-0f9fb49952d3 h1:oZCmAK4c+bnu6/v7/3qcXZPtfZ2akfPDR78vJJnsYmc=
+gitee.com/zhoujin826/goInception-plus/parser v0.0.0-20260106085925-0f9fb49952d3/go.mod h1:pV1FgviVyyghLDSxXrHDD5QTegxP/l+Ztt8khO3/OVg=
 github.com/AndreasBriese/bbloom v0.0.0-20190306092124-e2d15f34fcf9/go.mod h1:bOvUY6CB00SOBii9/FifXqc0awNKxLFCL/+pkDPuyl8=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/toml v1.3.2 h1:o7IhLm0Msx3BaB+n3Ag7L8EVlByGnpq14C4YWiu/gL8=

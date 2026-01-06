@@ -1095,7 +1095,6 @@ import (
 	NoWriteToBinLogAliasOpt                "NO_WRITE_TO_BINLOG alias LOCAL or empty"
 	ObjectType                             "Grant statement object type"
 	OnDuplicateKeyUpdate                   "ON DUPLICATE KEY UPDATE value list"
-	OnConflictOpt                          "ON CONFLICT optional"
 	OverridingOpt                          "OVERRIDING VALUE optional"
 	OnCommitOpt                            "ON COMMIT DELETE |PRESERVE ROWS"
 	DuplicateOpt                           "[IGNORE|REPLACE] in CREATE TABLE ... SELECT statement or LOAD DATA statement"
@@ -6727,23 +6726,23 @@ SystemSym:
 	"SYSTEM"
 |	"USER"
 
-OnConflictOpt:
-	{
-		$$ = nil
-	}
-|	OnConflictClause
-	{
-		$$ = $1
-	}
 
 OnConflictClause:
 	"ON" "CONFLICT" "DO" "NOTHING"
 	{
 		$$ = nil
 	}
+|	"ON" "CONFLICT" '(' ColumnNameListOpt ')' "DO" "NOTHING"
+	{
+		$$ = nil
+	}
 |	"ON" "CONFLICT" "DO" "UPDATE" "SET" AssignmentList
 	{
 		$$ = $6
+	}
+|	"ON" "CONFLICT" '(' ColumnNameListOpt ')' "DO" "UPDATE" "SET" AssignmentList
+	{
+		$$ = $9
 	}
 
 ValueSym:

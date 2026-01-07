@@ -369,51 +369,52 @@ func (s *session) checkColumn(t *TableInfo, colDef *ast.ColumnDef, tableCharset 
 			s.appendErrorMsg(fmt.Sprintf("Column length too big for column '%s' (max = %d); use BLOB or TEXT instead", cName, mysql.MaxFieldCharLength))
 		}
 	case mysql.TypeVarchar:
-		var charLen int
-		maxFlen := mysql.MaxFieldVarCharLength
-		cs := tp.Charset
-		// TODO: TableDefaultCharset-->DatabaseDefaultCharset-->SystemDefaultCharset.
-		// TODO: Change TableOption parser to parse collate.
-		// Reference https://github.com/hanchuanchuan/goInception/blob/b091e828cfa1d506b014345fb8337e424a4ab905/ddl/ddl_api.go#L185-L204
-		if len(tp.Charset) == 0 {
-			if tableCharset != "" {
-				if strings.Contains(tableCharset, "_") {
-					tableCharset = strings.SplitN(tableCharset, "_", 2)[0]
+		if s.dbType != DBPostgreSQL {
+			var charLen int
+			maxFlen := mysql.MaxFieldVarCharLength
+			cs := tp.Charset
+			// TODO: TableDefaultCharset-->DatabaseDefaultCharset-->SystemDefaultCharset.
+			// TODO: Change TableOption parser to parse collate.
+			// Reference https://github.com/hanchuanchuan/goInception/blob/b091e828cfa1d506b014345fb8337e424a4ab905/ddl/ddl_api.go#L185-L204
+			if len(tp.Charset) == 0 {
+				if tableCharset != "" {
+					if strings.Contains(tableCharset, "_") {
+						tableCharset = strings.SplitN(tableCharset, "_", 2)[0]
+					}
+					cs = tableCharset
+				} else {
+					cs = s.databaseCharset
 				}
-				cs = tableCharset
+			}
+			// log.Errorf("field: %#v,cs: %v", colDef, cs)
+			if _, ok := charSets[strings.ToLower(cs)]; ok {
+				bysPerChar := charSets[strings.ToLower(cs)]
+				maxFlen /= bysPerChar
+				charLen = bysPerChar
 			} else {
-				cs = s.databaseCharset
+				desc, err := charset.GetCharsetDesc(cs)
+				if err != nil {
+					s.appendErrorMsg(err.Error())
+					return
+				}
+				maxFlen /= desc.Maxlen
+				charLen = desc.Maxlen
 			}
-		}
-		// log.Errorf("field: %#v,cs: %v", colDef, cs)
-		if _, ok := charSets[strings.ToLower(cs)]; ok {
-			bysPerChar := charSets[strings.ToLower(cs)]
-			maxFlen /= bysPerChar
-			charLen = bysPerChar
-		} else {
-			desc, err := charset.GetCharsetDesc(cs)
-			if err != nil {
-				s.appendErrorMsg(err.Error())
-				return
-			}
-			maxFlen /= desc.Maxlen
-			charLen = desc.Maxlen
-		}
 
-		if tp.Flen != types.UnspecifiedLength && tp.Flen > maxFlen {
-			s.appendErrorMsg(fmt.Sprintf("Column length too big for column '%s' (max = %d); use BLOB or TEXT instead", cName, maxFlen))
-		}
-		if t.RowSize != 0 {
-			if tp.Flen*charLen > t.RowSize/charLen && alterTableType == ast.AlterTableAddColumns {
-				s.appendErrorMsg(fmt.Sprintf("Column length too big for column '%s' (max = %d); use BLOB or TEXT instead", cName, t.RowSize/charLen))
+			if tp.Flen != types.UnspecifiedLength && tp.Flen > maxFlen {
+				s.appendErrorMsg(fmt.Sprintf("Column length too big for column '%s' (max = %d); use BLOB or TEXT instead", cName, maxFlen))
+			}
+			if t.RowSize != 0 {
+				if tp.Flen*charLen > t.RowSize/charLen && alterTableType == ast.AlterTableAddColumns {
+					s.appendErrorMsg(fmt.Sprintf("Column length too big for column '%s' (max = %d); use BLOB or TEXT instead", cName, t.RowSize/charLen))
+				}
+			}
+			// check varchar length and ignore other alter table operation
+			if alterTableType == ast.AlterTableAddColumns && tp.Flen != types.UnspecifiedLength &&
+				s.inc.MaxVarcharLength > 0 && tp.Flen > int(s.inc.MaxVarcharLength) {
+				s.appendErrorNo(ErrMaxVarcharLength, cName, s.inc.MaxVarcharLength)
 			}
 		}
-		// check varchar length and ignore other alter table operation
-		if alterTableType == ast.AlterTableAddColumns && tp.Flen != types.UnspecifiedLength &&
-			s.inc.MaxVarcharLength > 0 && tp.Flen > int(s.inc.MaxVarcharLength) {
-			s.appendErrorNo(ErrMaxVarcharLength, cName, s.inc.MaxVarcharLength)
-		}
-
 	case mysql.TypeFloat, mysql.TypeDouble:
 		if tp.Decimal > mysql.MaxFloatingTypeScale {
 			s.appendErrorMsg(fmt.Sprintf("Too big scale %d specified for column '%-.192s'. Maximum is %d.", tp.Decimal, cName, mysql.MaxFloatingTypeScale))

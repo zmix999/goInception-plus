@@ -2473,8 +2473,12 @@ func (s *session) checkDropTable(node *ast.DropTableStmt, sql string) {
 		if t.Schema.O == "" {
 			t.Schema = model.NewCIStr(s.dbName)
 		}
-
-		table := s.getTableFromCache(t.Schema.O, t.Name.O, false)
+		var table *TableInfo
+		if s.dbType != DBPostgreSQL {
+			table = s.getTableFromCache(t.Schema.O, t.Name.O, false)
+		} else {
+			table = s.PostgreSQLgetTableFromCache(t.Schema.O, t.Name.O, "", false)
+		}
 
 		//如果表不存在，但存在if existed，则跳过
 		if table == nil {
@@ -2484,12 +2488,20 @@ func (s *session) checkDropTable(node *ast.DropTableStmt, sql string) {
 		} else {
 			if s.opt.Execute {
 				// 生成回滚语句
-				s.mysqlShowCreateTable(table, node.IsView, node.IsMvView)
+				if s.dbType != DBPostgreSQL {
+					s.mysqlShowCreateTable(table, node.IsView, node.IsMvView)
+				}
 			}
 
 			if s.opt.Check {
 				// 获取表估计的受影响行数
-				s.mysqlShowTableStatus(table)
+				if s.dbType != DBPostgreSQL {
+					s.mysqlShowTableStatus(table)
+				} else {
+					s.PostgreSQLShowTableStatus(table)
+
+				}
+
 			}
 
 			s.myRecord.TableInfo = table
@@ -3302,9 +3314,14 @@ func (s *session) checkCreateTable(node *ast.CreateTableStmt, sql string) {
 	if node.Table.Schema.O == "" {
 		node.Table.Schema = model.NewCIStr(s.dbName)
 	}
-
-	if !s.checkDBExists(node.Table.Schema.O, true) {
-		return
+	if s.dbType != DBPostgreSQL {
+		if !s.checkDBExists(node.Table.Schema.O, true) {
+			return
+		}
+	} else {
+		if !s.PostgreSQLCheckDBExists(node.Table.Schema.O, true) {
+			return
+		}
 	}
 
 	s.checkKeyWords(node.Table.Name.O)
@@ -3312,7 +3329,12 @@ func (s *session) checkCreateTable(node *ast.CreateTableStmt, sql string) {
 	if s.myRecord.ErrLevel == 2 {
 		return
 	}
-	table := s.getTableFromCache(node.Table.Schema.O, node.Table.Name.O, false)
+	var table *TableInfo
+	if s.dbType != DBPostgreSQL {
+		table = s.getTableFromCache(node.Table.Schema.O, node.Table.Name.O, false)
+	} else {
+		table = s.PostgreSQLgetTableFromCache(node.Table.Schema.O, node.Table.Name.O, "", false)
+	}
 
 	hasPrimary := false
 
@@ -3329,12 +3351,20 @@ func (s *session) checkCreateTable(node *ast.CreateTableStmt, sql string) {
 		s.myRecord.TableName = node.Table.Name.O
 
 		s.checkCreateTableGrammar(node)
-		s.checkAutoIncrement(node)
+		if s.dbType != DBPostgreSQL {
+			s.checkAutoIncrement(node)
+		}
 		s.checkContainDotColumn(node)
 
 		// 缓存表结构 CREATE TABLE LIKE
+		var originTable *TableInfo
 		if node.ReferTable != nil {
-			originTable := s.getTableFromCache(node.ReferTable.Schema.O, node.ReferTable.Name.O, true)
+			if s.dbType != DBPostgreSQL {
+				originTable = s.getTableFromCache(node.ReferTable.Schema.O, node.ReferTable.Name.O, true)
+			} else {
+				originTable = s.PostgreSQLgetTableFromCache(node.ReferTable.Schema.O, node.ReferTable.Name.O, "", true)
+
+			}
 			if originTable != nil {
 				table = originTable.copy()
 
@@ -3375,37 +3405,39 @@ func (s *session) checkCreateTable(node *ast.CreateTableStmt, sql string) {
 			}
 
 			hasComment := false
-			for _, opt := range node.Options {
-				switch opt.Tp {
-				case ast.TableOptionEngine:
-					if s.inc.EnableSetEngine {
-						s.checkEngine(opt.StrValue)
-					} else {
-						s.appendErrorNo(ER_CANT_SET_ENGINE, node.Table.Name.O)
-					}
-				case ast.TableOptionCharset:
-					if s.inc.EnableSetCharset {
-						s.checkCharset(opt.StrValue)
-					} else {
-						s.appendErrorNo(ER_TABLE_CHARSET_MUST_NULL, node.Table.Name.O)
-					}
-				case ast.TableOptionCollate:
-					if s.inc.EnableSetCollation {
-						s.checkCollation(opt.StrValue)
-					} else {
-						s.appendErrorNo(ErrTableCollationNotSupport, node.Table.Name.O)
-					}
-				case ast.TableOptionComment:
-					if opt.StrValue != "" {
-						hasComment = true
-					}
-					if len(opt.StrValue) > TABLE_COMMENT_MAXLEN {
-						s.appendErrorMsg(fmt.Sprintf("Comment for table '%s' is too long (max = %d)",
-							node.Table.Name.O, TABLE_COMMENT_MAXLEN))
-					}
-				case ast.TableOptionAutoIncrement:
-					if opt.UintValue > 1 {
-						s.appendErrorNo(ER_INC_INIT_ERR)
+			if s.dbType != DBPostgreSQL {
+				for _, opt := range node.Options {
+					switch opt.Tp {
+					case ast.TableOptionEngine:
+						if s.inc.EnableSetEngine {
+							s.checkEngine(opt.StrValue)
+						} else {
+							s.appendErrorNo(ER_CANT_SET_ENGINE, node.Table.Name.O)
+						}
+					case ast.TableOptionCharset:
+						if s.inc.EnableSetCharset {
+							s.checkCharset(opt.StrValue)
+						} else {
+							s.appendErrorNo(ER_TABLE_CHARSET_MUST_NULL, node.Table.Name.O)
+						}
+					case ast.TableOptionCollate:
+						if s.inc.EnableSetCollation {
+							s.checkCollation(opt.StrValue)
+						} else {
+							s.appendErrorNo(ErrTableCollationNotSupport, node.Table.Name.O)
+						}
+					case ast.TableOptionComment:
+						if opt.StrValue != "" {
+							hasComment = true
+						}
+						if len(opt.StrValue) > TABLE_COMMENT_MAXLEN {
+							s.appendErrorMsg(fmt.Sprintf("Comment for table '%s' is too long (max = %d)",
+								node.Table.Name.O, TABLE_COMMENT_MAXLEN))
+						}
+					case ast.TableOptionAutoIncrement:
+						if opt.UintValue > 1 {
+							s.appendErrorNo(ER_INC_INIT_ERR)
+						}
 					}
 				}
 			}
@@ -3637,7 +3669,7 @@ func (s *session) checkCreateTable(node *ast.CreateTableStmt, sql string) {
 		}
 
 		if node.Select != nil {
-			if s.enforeGtidConsistency {
+			if s.enforeGtidConsistency && s.dbType == DBTypeMysql {
 				s.appendErrorMsg("Statement violates GTID consistency: CREATE TABLE ... SELECT.")
 			} else {
 				s.checkSelectItem(node.Select, nil, false, "")
@@ -3904,27 +3936,27 @@ func (s *session) buildTableInfo(node *ast.CreateTableStmt) *TableInfo {
 	} else {
 		table.Schema = node.Table.Schema.O
 	}
+	if s.dbType != DBPostgreSQL {
+		var character, collation string
+		var chuintvalue uint64
+		for _, opt := range node.Options {
+			switch opt.Tp {
+			case ast.TableOptionCharset:
+				character = opt.StrValue
+				chuintvalue = opt.UintValue
+			case ast.TableOptionCollate:
+				collation = opt.StrValue
+			}
+		}
 
-	var character, collation string
-	var chuintvalue uint64
-	for _, opt := range node.Options {
-		switch opt.Tp {
-		case ast.TableOptionCharset:
-			character = opt.StrValue
-			chuintvalue = opt.UintValue
-		case ast.TableOptionCollate:
-			collation = opt.StrValue
+		s.checkTableCharsetCollation(table, chuintvalue, character, collation)
+
+		if collation != "" {
+			table.Collation = collation
+		} else if character != "" {
+			table.Character = character
 		}
 	}
-
-	s.checkTableCharsetCollation(table, chuintvalue, character, collation)
-
-	if collation != "" {
-		table.Collation = collation
-	} else if character != "" {
-		table.Character = character
-	}
-
 	table.Name = node.Table.Name.O
 	table.Fields = make([]FieldInfo, 0, len(node.Cols))
 

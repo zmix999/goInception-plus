@@ -345,30 +345,30 @@ func (s *MyRecordSets) setFields(r *Record) {
 
 	row[0].SetInt64(int64(s.rc.count + 1))
 
-	row[1].SetString(StageList[r.Stage], "")
+	row[1].SetString(StageList[r.Stage], mysql.DefaultCollationName)
 	row[2].SetInt64(int64(r.ErrLevel))
-	row[3].SetString(StatusList[r.StageStatus], "")
+	row[3].SetString(StatusList[r.StageStatus], mysql.DefaultCollationName)
 
 	if r.ErrorMessage != "" {
-		row[4].SetString(r.ErrorMessage, "")
+		row[4].SetString(r.ErrorMessage, mysql.DefaultCollationName)
 	} else {
 		e := strings.TrimSpace(r.Buf.String())
 		if e == "" {
 			row[4].SetNull()
 		} else {
-			row[4].SetString(e, "")
+			row[4].SetString(e, mysql.DefaultCollationName)
 		}
 	}
 
-	row[5].SetString(r.Sql, "")
+	row[5].SetString(r.Sql, mysql.DefaultCollationName)
 	row[6].SetInt64(r.AffectedRows)
 	if r.OPID == "" {
 		// record.OPID =
 		// row[7].SetNull()
 		row[7].SetString(makeOPIDByTime(r.ExecTimestamp,
-			r.ThreadId, r.SeqNo), "")
+			r.ThreadId, r.SeqNo), mysql.DefaultCollationName)
 	} else {
-		row[7].SetString(r.OPID, "")
+		row[7].SetString(r.OPID, mysql.DefaultCollationName)
 	}
 
 	// if r.StageStatus == StatusBackupOK {
@@ -378,25 +378,25 @@ func (s *MyRecordSets) setFields(r *Record) {
 	if r.BackupDBName == "" {
 		row[8].SetNull()
 	} else {
-		row[8].SetString(r.BackupDBName, "")
+		row[8].SetString(r.BackupDBName, mysql.DefaultCollationName)
 	}
 
 	if r.ExecTime == "" {
-		row[9].SetString("0", "")
+		row[9].SetString("0", mysql.DefaultCollationName)
 	} else {
-		row[9].SetString(r.ExecTime, "")
+		row[9].SetString(r.ExecTime, mysql.DefaultCollationName)
 	}
 
 	if r.Sqlsha1 == "" {
 		row[10].SetNull()
 	} else {
-		row[10].SetString(r.Sqlsha1, "")
+		row[10].SetString(r.Sqlsha1, mysql.DefaultCollationName)
 	}
 
 	if r.BackupCostTime == "" {
-		row[11].SetString("0", "")
+		row[11].SetString("0", mysql.DefaultCollationName)
 	} else {
-		row[11].SetString(r.BackupCostTime, "")
+		row[11].SetString(r.BackupCostTime, mysql.DefaultCollationName)
 	}
 	row[12].SetValueWithDefaultCollation(r.NeedMerge)
 	s.rc.data[s.rc.count] = row
@@ -698,12 +698,12 @@ func (s *SplitSets) Append(sql string, errmsg string) {
 	row := make([]types.Datum, s.rc.fieldCount)
 
 	row[0].SetInt64(s.id)
-	row[1].SetString(sql, "")
+	row[1].SetString(sql, mysql.DefaultCollationName)
 	row[2].SetInt64(s.ddlflag)
 	if errmsg == "" {
 		row[3].SetNull()
 	} else {
-		row[3].SetString(errmsg, "")
+		row[3].SetString(errmsg, mysql.DefaultCollationName)
 	}
 
 	s.rc.data = append(s.rc.data, row)

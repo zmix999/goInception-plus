@@ -3762,7 +3762,11 @@ func (s *session) checkCreateTable(node *ast.CreateTableStmt, sql string) {
 	}
 
 	if !s.hasError() && s.opt.Execute {
-		s.myRecord.DDLRollback = fmt.Sprintf("DROP TABLE `%s`.`%s`;", table.Schema, table.Name)
+		if s.dbType != DBPostgreSQL {
+			s.myRecord.DDLRollback = fmt.Sprintf("DROP TABLE `%s`.`%s`;", table.Schema, table.Name)
+		} else {
+			s.myRecord.DDLRollback = fmt.Sprintf("DROP TABLE \"%s\".\"%s\";", table.Schema, table.Name)
+		}
 	}
 }
 

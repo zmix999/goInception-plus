@@ -52,9 +52,15 @@ func (s *session) PostgreSQLCheckOptions() error {
 	}
 
 	var addr string
-	if s.opt.middlewareExtend == "" && s.opt.db != "" {
-		addr = fmt.Sprintf("user=%s password=%s host=%s port=%d dbname=%s sslmode=disable",
-			s.opt.User, s.opt.Password, s.opt.Host, s.opt.Port, s.opt.db)
+	if s.opt.middlewareExtend == "" {
+		if s.opt.db != "" {
+			addr = fmt.Sprintf("user=%s password=%s host=%s port=%d dbname=%s sslmode=disable",
+				s.opt.User, s.opt.Password, s.opt.Host, s.opt.Port, s.opt.db)
+		} else {
+			addr = fmt.Sprintf("user=%s password=%s host=%s port=%d dbname=postgres sslmode=disable",
+				s.opt.User, s.opt.Password, s.opt.Host, s.opt.Port)
+		}
+
 	} else {
 		s.opt.middlewareExtend = fmt.Sprintf("/*%s*/",
 			strings.Replace(s.opt.middlewareExtend, ": ", "=", 1))

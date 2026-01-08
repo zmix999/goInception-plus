@@ -72,6 +72,10 @@ require (
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/cakturk/go-netstat v0.0.0-20200220111822-e5b49efee7a5 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
+	github.com/cznic/golex v0.0.0-20181122101858-9c343928389c // indirect
+	github.com/cznic/parser v0.0.0-20181122101858-d773202d5b1f // indirect
+	github.com/cznic/strutil v0.0.0-20181122101858-275e90344537 // indirect
+	github.com/cznic/y v0.0.0-20181122101901-b05e8c2e8d7b // indirect
 	github.com/denisenkom/go-mssqldb v0.11.0 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
@@ -153,7 +157,7 @@ require (
 	github.com/tklauser/numcpus v0.2.1 // indirect
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20201229170055-e5319fda7802 // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
-	github.com/zmix999/goInception-plus/parser v0.0.0-00010101000000-000000000000
+	github.com/zmix999/goInception-plus/parser v0.0.0-20260108021409-337f85e0332d
 	go.etcd.io/bbolt v1.3.7 // indirect
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 // indirect
 	golang.org/x/time v0.5.0 // indirect
@@ -177,8 +181,6 @@ replace google.golang.org/api => google.golang.org/api v0.54.0
 replace vitess.io/vitess => github.com/vitessio/vitess v0.19.1
 
 replace github.com/aws/aws-sdk-go => github.com/aws/aws-sdk-go v1.35.3
-
-replace github.com/zmix999/goInception-plus/parser => ./parser
 
 // fix potential security issue(CVE-2020-26160) introduced by indirect dependency.
 replace github.com/dgrijalva/jwt-go => github.com/form3tech-oss/jwt-go v3.2.6-0.20210809144907-32ab6a8243d7+incompatible

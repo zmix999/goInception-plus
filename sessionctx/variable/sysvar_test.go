@@ -23,9 +23,9 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/terror"
 	"github.com/stretchr/testify/require"
 )
 
@@ -376,7 +376,7 @@ func TestTimeZone(t *testing.T) {
 	// Unfortunately this is not strictly MySQL compatible. i.e.
 	// This should not fail:
 	// val, err := sv.Validate(vars, "America/EDMONTON", ScopeSession)
-	// See: https://gitee.com/zhoujin826/goInception-plus/issues/8087
+	// See: https://github.com/zmix999/goInception-plus/issues/8087
 
 	val, err := sv.Validate(vars, "America/Edmonton", ScopeSession)
 	require.NoError(t, err)

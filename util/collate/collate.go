@@ -19,11 +19,11 @@ import (
 	"sync/atomic"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/parser/charset"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/util/dbterror"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/parser/charset"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/util/dbterror"
+	"github.com/zmix999/goInception-plus/util/logutil"
 	"go.uber.org/zap"
 )
 

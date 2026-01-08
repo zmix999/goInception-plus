@@ -22,11 +22,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/charset"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/collate"
-	"gitee.com/zhoujin826/goInception-plus/util/timeutil"
+	"github.com/zmix999/goInception-plus/parser/charset"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/collate"
+	"github.com/zmix999/goInception-plus/util/timeutil"
 	"github.com/pingcap/errors"
 	"github.com/tikv/client-go/v2/oracle"
 )

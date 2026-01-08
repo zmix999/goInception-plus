@@ -19,10 +19,10 @@ import (
 	"sync"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/planner/core"
-	"gitee.com/zhoujin826/goInception-plus/tablecodec"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/planner/core"
+	"github.com/zmix999/goInception-plus/tablecodec"
 	"github.com/stretchr/testify/require"
 )
 

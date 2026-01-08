@@ -17,14 +17,14 @@ package core
 import (
 	"fmt"
 
-	"gitee.com/zhoujin826/goInception-plus/domain"
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
-	"gitee.com/zhoujin826/goInception-plus/parser/auth"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/mock"
+	"github.com/zmix999/goInception-plus/domain"
+	"github.com/zmix999/goInception-plus/infoschema"
+	"github.com/zmix999/goInception-plus/parser/auth"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/mock"
 )
 
 func newLongType() types.FieldType {

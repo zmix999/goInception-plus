@@ -23,10 +23,10 @@ import (
 	"time"
 
 	pingcapErrors "github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/domain/infosync"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/domain/infosync"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/util/logutil"
 	pmodel "github.com/prometheus/common/model"
 	"go.uber.org/zap"
 )

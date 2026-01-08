@@ -16,9 +16,9 @@ package expression
 
 import (
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
 )
 
 func genVecFromConstExpr(ctx sessionctx.Context, expr Expression, targetType types.EvalType, input *chunk.Chunk, result *chunk.Column) error {

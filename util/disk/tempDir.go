@@ -21,8 +21,8 @@ import (
 	"github.com/danjacques/gofslock/fslock"
 	"github.com/pingcap/errors"
 	"github.com/pingcap/log"
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/parser/terror"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 )

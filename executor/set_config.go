@@ -24,17 +24,17 @@ import (
 	"strings"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/planner/core"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/pdapi"
-	"gitee.com/zhoujin826/goInception-plus/util/set"
-	"gitee.com/zhoujin826/goInception-plus/util/stringutil"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/infoschema"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/planner/core"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/pdapi"
+	"github.com/zmix999/goInception-plus/util/set"
+	"github.com/zmix999/goInception-plus/util/stringutil"
 )
 
 // SetConfigExec executes 'SET CONFIG' statement.

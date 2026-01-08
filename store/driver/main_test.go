@@ -20,11 +20,11 @@ import (
 	"fmt"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/domain"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/session"
-	"gitee.com/zhoujin826/goInception-plus/store/copr"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore"
+	"github.com/zmix999/goInception-plus/domain"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/session"
+	"github.com/zmix999/goInception-plus/store/copr"
+	"github.com/zmix999/goInception-plus/store/mockstore/unistore"
 	"github.com/stretchr/testify/require"
 	"github.com/tikv/client-go/v2/tikv"
 )

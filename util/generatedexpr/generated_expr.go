@@ -18,11 +18,11 @@ import (
 	"fmt"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/parser"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/charset"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/util"
+	"github.com/zmix999/goInception-plus/parser"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/charset"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/util"
 )
 
 // nameResolver is the visitor to resolve table name and column name.

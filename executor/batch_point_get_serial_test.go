@@ -18,7 +18,7 @@ import (
 	"testing"
 
 	"github.com/pingcap/failpoint"
-	"gitee.com/zhoujin826/goInception-plus/testkit"
+	"github.com/zmix999/goInception-plus/testkit"
 	"github.com/stretchr/testify/require"
 )
 
@@ -35,9 +35,9 @@ func TestPointGetForTemporaryTable(t *testing.T) {
 	tk.MustQuery("explain format = 'brief' select * from t1 where id in (1, 2, 3)").
 		Check(testkit.Rows("Batch_Point_Get 3.00 root table:t1 handle:[1 2 3], keep order:false, desc:false"))
 
-	require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/rpcServerBusy", "return(true)"))
+	require.NoError(t, failpoint.Enable("github.com/zmix999/goInception-plus/store/mockstore/unistore/rpcServerBusy", "return(true)"))
 	defer func() {
-		require.NoError(t, failpoint.Disable("gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/rpcServerBusy"))
+		require.NoError(t, failpoint.Disable("github.com/zmix999/goInception-plus/store/mockstore/unistore/rpcServerBusy"))
 	}()
 
 	// Batch point get.

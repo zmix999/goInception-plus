@@ -46,7 +46,7 @@ func NewConstraints(labels []string) (Constraints, error) {
 }
 
 // NewConstraintsFromYaml will transform parse the raw 'array' constraints and call NewConstraints.
-// Refer to https://gitee.com/zhoujin826/goInception-plus/blob/master/docs/design/2020-06-24-placement-rules-in-sql.md.
+// Refer to https://github.com/zmix999/goInception-plus/blob/master/docs/design/2020-06-24-placement-rules-in-sql.md.
 func NewConstraintsFromYaml(c []byte) (Constraints, error) {
 	constraints := []string{}
 	err := yaml.UnmarshalStrict(c, &constraints)

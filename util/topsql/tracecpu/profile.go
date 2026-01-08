@@ -28,10 +28,10 @@ import (
 	"time"
 
 	"github.com/google/pprof/profile"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
-	"gitee.com/zhoujin826/goInception-plus/util"
-	"gitee.com/zhoujin826/goInception-plus/util/hack"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/sessionctx/variable"
+	"github.com/zmix999/goInception-plus/util"
+	"github.com/zmix999/goInception-plus/util/hack"
+	"github.com/zmix999/goInception-plus/util/logutil"
 	"go.uber.org/zap"
 )
 

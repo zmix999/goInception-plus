@@ -18,8 +18,8 @@ import (
 	"context"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/util/sqlexec"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/util/sqlexec"
 )
 
 type clusterInfoItem struct {

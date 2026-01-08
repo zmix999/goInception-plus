@@ -17,7 +17,7 @@ package collate
 import (
 	"bytes"
 
-	"gitee.com/zhoujin826/goInception-plus/util/hack"
+	"github.com/zmix999/goInception-plus/util/hack"
 	"golang.org/x/text/encoding"
 )
 

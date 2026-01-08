@@ -18,10 +18,10 @@ import (
 	"sync"
 
 	"github.com/cznic/mathutil"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/kvcache"
-	"gitee.com/zhoujin826/goInception-plus/util/memory"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/kvcache"
+	"github.com/zmix999/goInception-plus/util/memory"
 )
 
 // applyCache is used in the apply executor. When we get the same value of the outer row.

@@ -21,11 +21,11 @@ import (
 	"github.com/pingcap/badger"
 	"github.com/pingcap/badger/options"
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/config"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/lockstore"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/pd"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/tikv"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/tikv/mvcc"
+	"github.com/zmix999/goInception-plus/store/mockstore/unistore/config"
+	"github.com/zmix999/goInception-plus/store/mockstore/unistore/lockstore"
+	"github.com/zmix999/goInception-plus/store/mockstore/unistore/pd"
+	"github.com/zmix999/goInception-plus/store/mockstore/unistore/tikv"
+	"github.com/zmix999/goInception-plus/store/mockstore/unistore/tikv/mvcc"
 )
 
 const (

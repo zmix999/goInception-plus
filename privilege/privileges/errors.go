@@ -15,8 +15,8 @@
 package privileges
 
 import (
-	mysql "gitee.com/zhoujin826/goInception-plus/errno"
-	"gitee.com/zhoujin826/goInception-plus/util/dbterror"
+	mysql "github.com/zmix999/goInception-plus/errno"
+	"github.com/zmix999/goInception-plus/util/dbterror"
 )
 
 // error definitions.

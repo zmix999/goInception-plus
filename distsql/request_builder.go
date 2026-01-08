@@ -20,18 +20,18 @@ import (
 	"sort"
 	"sync/atomic"
 
-	"gitee.com/zhoujin826/goInception-plus/ddl/placement"
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/stmtctx"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
-	"gitee.com/zhoujin826/goInception-plus/statistics"
-	"gitee.com/zhoujin826/goInception-plus/tablecodec"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/codec"
-	"gitee.com/zhoujin826/goInception-plus/util/memory"
-	"gitee.com/zhoujin826/goInception-plus/util/ranger"
+	"github.com/zmix999/goInception-plus/ddl/placement"
+	"github.com/zmix999/goInception-plus/infoschema"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/sessionctx/stmtctx"
+	"github.com/zmix999/goInception-plus/sessionctx/variable"
+	"github.com/zmix999/goInception-plus/statistics"
+	"github.com/zmix999/goInception-plus/tablecodec"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/codec"
+	"github.com/zmix999/goInception-plus/util/memory"
+	"github.com/zmix999/goInception-plus/util/ranger"
 	"github.com/pingcap/errors"
 	"github.com/pingcap/failpoint"
 	"github.com/pingcap/kvproto/pkg/metapb"
@@ -266,7 +266,7 @@ func (builder *RequestBuilder) SetConcurrency(concurrency int) *RequestBuilder {
 // SetTiDBServerID sets "TiDBServerID" for "kv.Request"
 //
 //	ServerID is a unique id of TiDB instance among the cluster.
-//	See https://gitee.com/zhoujin826/goInception-plus/blob/master/docs/design/2020-06-01-global-kill.md
+//	See https://github.com/zmix999/goInception-plus/blob/master/docs/design/2020-06-01-global-kill.md
 func (builder *RequestBuilder) SetTiDBServerID(serverID uint64) *RequestBuilder {
 	builder.Request.TiDBServerID = serverID
 	return builder

@@ -18,12 +18,12 @@ import (
 	"testing"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/stmtctx"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/mock"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/sessionctx/stmtctx"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/mock"
 	"github.com/stretchr/testify/require"
 )
 

@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/parser"
+	"github.com/zmix999/goInception-plus/parser"
 	"github.com/stretchr/testify/require"
 )
 

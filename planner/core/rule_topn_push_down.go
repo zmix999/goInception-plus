@@ -18,8 +18,8 @@ import (
 	"context"
 
 	"github.com/cznic/mathutil"
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/planner/util"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/planner/util"
 )
 
 // pushDownTopNOptimizer pushes down the topN or limit. In the future we will remove the limit from `requiredProperty` in CBO phase.

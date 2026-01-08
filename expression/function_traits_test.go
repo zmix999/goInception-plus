@@ -16,7 +16,7 @@ package expression
 
 import (
 	. "github.com/pingcap/check"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/ast"
 )
 
 func (s *testEvaluatorSuite) TestUnfoldableFuncs(c *C) {

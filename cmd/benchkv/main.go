@@ -25,9 +25,9 @@ import (
 	"sync"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/store/driver"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/store/driver"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/pingcap/errors"
 	"github.com/pingcap/log"

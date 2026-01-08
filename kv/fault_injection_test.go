@@ -19,7 +19,7 @@ import (
 	"testing"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/parser/terror"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tikv/client-go/v2/tikv"

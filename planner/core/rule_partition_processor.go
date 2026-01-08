@@ -22,20 +22,20 @@ import (
 	"strings"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/ddl"
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/table"
-	"gitee.com/zhoujin826/goInception-plus/table/tables"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/math"
-	"gitee.com/zhoujin826/goInception-plus/util/plancodec"
-	"gitee.com/zhoujin826/goInception-plus/util/ranger"
-	"gitee.com/zhoujin826/goInception-plus/util/set"
+	"github.com/zmix999/goInception-plus/ddl"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/table"
+	"github.com/zmix999/goInception-plus/table/tables"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/math"
+	"github.com/zmix999/goInception-plus/util/plancodec"
+	"github.com/zmix999/goInception-plus/util/ranger"
+	"github.com/zmix999/goInception-plus/util/set"
 )
 
 // FullRange represent used all partitions.
@@ -281,7 +281,7 @@ func (s *partitionProcessor) pruneHashPartition(ctx sessionctx.Context, tbl tabl
 
 // reconstructTableColNames reconstructs FieldsNames according to ds.TblCols.
 // ds.names may not match ds.TblCols since ds.names is pruned while ds.TblCols contains all original columns.
-// please see https://gitee.com/zhoujin826/goInception-plus/issues/22635 for more details.
+// please see https://github.com/zmix999/goInception-plus/issues/22635 for more details.
 func (s *partitionProcessor) reconstructTableColNames(ds *DataSource) ([]*types.FieldName, error) {
 	names := make([]*types.FieldName, 0, len(ds.TblCols))
 	colsInfo := ds.table.FullHiddenColsAndVisibleCols()
@@ -858,7 +858,7 @@ func (s *partitionProcessor) pruneRangePartition(ctx sessionctx.Context, pi *mod
 				// if the type of partition key is Int
 				if pk, ok := partExpr.Expr.(*expression.Column); ok && pk.RetType.EvalType() == types.ETInt {
 					// see if can be removed
-					// see issue #22079: https://gitee.com/zhoujin826/goInception-plus/issues/22079 for details
+					// see issue #22079: https://github.com/zmix999/goInception-plus/issues/22079 for details
 					if start > 0 && pruner.lessThan.data[start-1] == dataForPrune.c && (pruner.lessThan.data[start]-1) == dataForPrune.c {
 						continue
 					}

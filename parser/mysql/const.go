@@ -17,7 +17,7 @@ import (
 	"fmt"
 	"strings"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/format"
+	"github.com/zmix999/goInception-plus/parser/format"
 	"github.com/pingcap/errors"
 )
 

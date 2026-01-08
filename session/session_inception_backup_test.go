@@ -18,7 +18,7 @@ import (
 	"strings"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/config"
 	_ "github.com/go-sql-driver/mysql"
 	. "github.com/pingcap/check"
 	log "github.com/sirupsen/logrus"

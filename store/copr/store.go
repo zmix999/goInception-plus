@@ -21,9 +21,9 @@ import (
 	"time"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/store/driver/backoff"
-	derr "gitee.com/zhoujin826/goInception-plus/store/driver/error"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/store/driver/backoff"
+	derr "github.com/zmix999/goInception-plus/store/driver/error"
 	"github.com/tikv/client-go/v2/config"
 	"github.com/tikv/client-go/v2/tikv"
 	"github.com/tikv/client-go/v2/tikvrpc"

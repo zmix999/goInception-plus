@@ -19,10 +19,10 @@ import (
 	"fmt"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore"
-	"gitee.com/zhoujin826/goInception-plus/util"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/store/mockstore"
+	"github.com/zmix999/goInception-plus/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

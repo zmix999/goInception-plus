@@ -18,9 +18,9 @@ import (
 	"container/list"
 	"fmt"
 
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	plannercore "gitee.com/zhoujin826/goInception-plus/planner/core"
-	"gitee.com/zhoujin826/goInception-plus/planner/property"
+	"github.com/zmix999/goInception-plus/expression"
+	plannercore "github.com/zmix999/goInception-plus/planner/core"
+	"github.com/zmix999/goInception-plus/planner/property"
 )
 
 // EngineType is determined by whether it's above or below `Gather`s.

@@ -18,13 +18,13 @@ import (
 	"context"
 	"errors"
 
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
-	m "gitee.com/zhoujin826/goInception-plus/metrics"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
-	"gitee.com/zhoujin826/goInception-plus/util/sqlexec"
+	"github.com/zmix999/goInception-plus/infoschema"
+	m "github.com/zmix999/goInception-plus/metrics"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/sessionctx/variable"
+	"github.com/zmix999/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/util/sqlexec"
 	"github.com/tikv/client-go/v2/metrics"
 )
 

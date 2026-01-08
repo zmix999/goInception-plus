@@ -19,8 +19,8 @@ import (
 	"testing"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/session"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore"
+	"github.com/zmix999/goInception-plus/session"
+	"github.com/zmix999/goInception-plus/store/mockstore"
 	"github.com/stretchr/testify/require"
 )
 

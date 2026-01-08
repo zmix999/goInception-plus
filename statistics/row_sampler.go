@@ -19,14 +19,14 @@ import (
 	"context"
 	"math/rand"
 
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/stmtctx"
-	"gitee.com/zhoujin826/goInception-plus/tablecodec"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/codec"
-	"gitee.com/zhoujin826/goInception-plus/util/collate"
-	"gitee.com/zhoujin826/goInception-plus/util/sqlexec"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/sessionctx/stmtctx"
+	"github.com/zmix999/goInception-plus/tablecodec"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/codec"
+	"github.com/zmix999/goInception-plus/util/collate"
+	"github.com/zmix999/goInception-plus/util/sqlexec"
 	"github.com/pingcap/tipb/go-tipb"
 )
 

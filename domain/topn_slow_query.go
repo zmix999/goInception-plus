@@ -20,8 +20,8 @@ import (
 	"sync"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/util/execdetails"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/util/execdetails"
 )
 
 type slowQueryHeap struct {

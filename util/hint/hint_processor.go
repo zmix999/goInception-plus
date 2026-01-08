@@ -20,14 +20,14 @@ import (
 	"strings"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/errno"
-	"gitee.com/zhoujin826/goInception-plus/parser"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/format"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/util/dbterror"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/errno"
+	"github.com/zmix999/goInception-plus/parser"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/format"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/util/dbterror"
+	"github.com/zmix999/goInception-plus/util/logutil"
 	"go.uber.org/zap"
 )
 

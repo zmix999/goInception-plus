@@ -17,9 +17,9 @@ package aggregation
 import (
 	"strings"
 
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/sessionctx"
 )
 
 // WindowFuncDesc describes a window function signature, only used in planner.

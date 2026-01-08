@@ -18,10 +18,10 @@ import (
 	"strings"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/collate"
-	"gitee.com/zhoujin826/goInception-plus/util/stringutil"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/collate"
+	"github.com/zmix999/goInception-plus/util/stringutil"
 )
 
 func (b *builtinValuesIntSig) vectorized() bool {

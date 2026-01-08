@@ -21,10 +21,10 @@ import (
 	"testing"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
-	"gitee.com/zhoujin826/goInception-plus/util/topsql/reporter/mock"
-	"gitee.com/zhoujin826/goInception-plus/util/topsql/tracecpu"
+	"github.com/zmix999/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/sessionctx/variable"
+	"github.com/zmix999/goInception-plus/util/topsql/reporter/mock"
+	"github.com/zmix999/goInception-plus/util/topsql/tracecpu"
 	"github.com/pingcap/tipb/go-tipb"
 	"github.com/stretchr/testify/require"
 )

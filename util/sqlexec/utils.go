@@ -22,7 +22,7 @@ import (
 	"time"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/util/hack"
+	"github.com/zmix999/goInception-plus/util/hack"
 )
 
 func reserveBuffer(buf []byte, appendSize int) []byte {

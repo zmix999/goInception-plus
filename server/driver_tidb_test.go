@@ -17,11 +17,11 @@ package server
 import (
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/charset"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/charset"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -44,7 +44,7 @@ func createColumnByTypeAndLen(tp byte, len uint32) *ColumnInfo {
 func TestConvertColumnInfo(t *testing.T) {
 	t.Parallel()
 
-	// Test "mysql.TypeBit", for: https://gitee.com/zhoujin826/goInception-plus/issues/5405.
+	// Test "mysql.TypeBit", for: https://github.com/zmix999/goInception-plus/issues/5405.
 	resultField := ast.ResultField{
 		Column: &model.ColumnInfo{
 			Name:   model.NewCIStr("a"),
@@ -67,7 +67,7 @@ func TestConvertColumnInfo(t *testing.T) {
 	colInfo := convertColumnInfo(&resultField)
 	require.Equal(t, createColumnByTypeAndLen(mysql.TypeBit, 1), colInfo)
 
-	// Test "mysql.TypeTiny", for: https://gitee.com/zhoujin826/goInception-plus/issues/5405.
+	// Test "mysql.TypeTiny", for: https://github.com/zmix999/goInception-plus/issues/5405.
 	resultField = ast.ResultField{
 		Column: &model.ColumnInfo{
 			Name:   model.NewCIStr("a"),

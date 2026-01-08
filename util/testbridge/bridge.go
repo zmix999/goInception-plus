@@ -24,7 +24,7 @@ import (
 // to workaround the go-check flags passed in Makefile.
 //
 // TODO: Remove this function when the migration from go-check to testify[1] is done.
-// [1] https://gitee.com/zhoujin826/goInception-plus/issues/26022
+// [1] https://github.com/zmix999/goInception-plus/issues/26022
 func WorkaroundGoCheckFlags() {
 	if flag.Lookup("check.timeout") == nil {
 		_ = flag.Duration("check.timeout", 0, "WorkaroundGoCheckFlags: check.timeout")

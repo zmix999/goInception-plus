@@ -17,8 +17,8 @@ package variable
 import (
 	"math"
 
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/parser/mysql"
 	"go.uber.org/atomic"
 )
 

@@ -24,15 +24,15 @@ import (
 
 	"github.com/pingcap/errors"
 	"github.com/pingcap/failpoint"
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
-	plannercore "gitee.com/zhoujin826/goInception-plus/planner/core"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/set"
-	"gitee.com/zhoujin826/goInception-plus/util/sqlexec"
+	"github.com/zmix999/goInception-plus/infoschema"
+	plannercore "github.com/zmix999/goInception-plus/planner/core"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/sessionctx/variable"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/set"
+	"github.com/zmix999/goInception-plus/util/sqlexec"
 )
 
 type (

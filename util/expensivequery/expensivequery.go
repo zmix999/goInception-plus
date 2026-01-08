@@ -22,10 +22,10 @@ import (
 	"time"
 
 	"github.com/pingcap/log"
-	"gitee.com/zhoujin826/goInception-plus/parser"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
-	"gitee.com/zhoujin826/goInception-plus/util"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/parser"
+	"github.com/zmix999/goInception-plus/sessionctx/variable"
+	"github.com/zmix999/goInception-plus/util"
+	"github.com/zmix999/goInception-plus/util/logutil"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

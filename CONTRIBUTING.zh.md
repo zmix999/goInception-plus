@@ -2,7 +2,7 @@
 
 本文档约定了一些操作步骤，以方便快速提交PR，并易于合并。
 
-在提交PR前，请先提交一个[Issue](https://gitee.com/zhoujin826/goInception-plus/issues/new/choose)，以方便沟通。
+在提交PR前，请先提交一个[Issue](https://github.com/zmix999/goInception-plus/issues/new/choose)，以方便沟通。
 
 ### Go
 
@@ -29,7 +29,7 @@ export PATH=$PATH:$GOPATH/bin
 
 ### Step 1: Fork项目
 
-1. 打开 https://gitee.com/zhoujin826/goInception-plus
+1. 打开 https://github.com/zmix999/goInception-plus
 2. 点击右上角 `Fork` 按钮，将项目fork到自己的仓库中，等待Fork完成。
 
 ### Step 2: 克隆fork项目到本地
@@ -52,8 +52,8 @@ git clone https://gitee.com/${user}/goInception-plus.git
 # 或者: git clone git@gitee.com/${user}/goInception-plus.git
 
 cd $working_dir/goInception-plus
-git remote add upstream https://gitee.com/zhoujin826/goInception-plus.git
-# 或者: git remote add upstream git@gitee.com/zhoujin826/goInception-plus.git
+git remote add upstream https://github.com/zmix999/goInception-plus.git
+# 或者: git remote add upstream git@github.com/zmix999/goInception-plus.git
 
 # 避免误推送
 git remote set-url --push upstream no_push
@@ -63,7 +63,7 @@ git remote -v
 # 结果应该有四条:
 # origin    git@gitee.com:$(user)/goInception-plus (fetch)
 # origin    git@gitee.com:$(user)/goInception-plus (push)
-# upstream  https://gitee.com/zhoujin826/goInception-plus (fetch)
+# upstream  https://github.com/zmix999/goInception-plus (fetch)
 # upstream  no_push (push)
 ```
 

@@ -20,7 +20,7 @@ import (
 	"sync"
 
 	"github.com/pingcap/kvproto/pkg/pdpb"
-	us "gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/tikv"
+	us "github.com/zmix999/goInception-plus/store/mockstore/unistore/tikv"
 	pd "github.com/tikv/pd/client"
 	"golang.org/x/net/context"
 )

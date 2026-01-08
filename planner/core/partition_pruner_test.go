@@ -20,12 +20,12 @@ import (
 	"sort"
 	"strings"
 
-	"gitee.com/zhoujin826/goInception-plus/domain"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
-	"gitee.com/zhoujin826/goInception-plus/util/testkit"
-	"gitee.com/zhoujin826/goInception-plus/util/testutil"
+	"github.com/zmix999/goInception-plus/domain"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/sessionctx/variable"
+	"github.com/zmix999/goInception-plus/util/testkit"
+	"github.com/zmix999/goInception-plus/util/testutil"
 	. "github.com/pingcap/check"
 )
 

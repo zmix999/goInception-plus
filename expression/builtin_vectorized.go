@@ -18,9 +18,9 @@ import (
 	"sync"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
 )
 
 // columnBufferAllocator is used to allocate and release column buffer in vectorized evaluation.

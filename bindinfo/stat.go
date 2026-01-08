@@ -15,7 +15,7 @@
 package bindinfo
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
+	"github.com/zmix999/goInception-plus/sessionctx/variable"
 )
 
 var (

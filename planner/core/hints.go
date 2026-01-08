@@ -15,11 +15,11 @@
 package core
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	utilhint "gitee.com/zhoujin826/goInception-plus/util/hint"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	utilhint "github.com/zmix999/goInception-plus/util/hint"
 )
 
 // GenHintsFromPhysicalPlan generates hints from physical plan.

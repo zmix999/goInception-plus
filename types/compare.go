@@ -18,7 +18,7 @@ import (
 	"math"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/util/collate"
+	"github.com/zmix999/goInception-plus/util/collate"
 )
 
 // CompareInt64 returns an integer comparing the int64 x to y.

@@ -17,10 +17,10 @@ import (
 	"fmt"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/parser"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/auth"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/auth"
+	"github.com/zmix999/goInception-plus/parser/mysql"
 	"github.com/stretchr/testify/require"
 )
 

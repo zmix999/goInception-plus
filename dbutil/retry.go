@@ -16,7 +16,7 @@ package dbutil
 import (
 	"strings"
 
-	"gitee.com/zhoujin826/goInception-plus/errno"
+	"github.com/zmix999/goInception-plus/errno"
 	"github.com/go-sql-driver/mysql"
 	"github.com/pingcap/errors"
 )

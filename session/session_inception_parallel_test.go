@@ -20,7 +20,7 @@ import (
 	"testing"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/util"
+	"github.com/zmix999/goInception-plus/util"
 	_ "github.com/go-sql-driver/mysql"
 	. "github.com/pingcap/check"
 )

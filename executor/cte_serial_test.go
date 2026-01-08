@@ -21,8 +21,8 @@ import (
 	"testing"
 
 	"github.com/pingcap/failpoint"
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/testkit"
+	"github.com/zmix999/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/testkit"
 	"github.com/stretchr/testify/require"
 )
 
@@ -38,14 +38,14 @@ func TestSpillToDisk(t *testing.T) {
 	tk := testkit.NewTestKit(t, store)
 	tk.MustExec("use test;")
 
-	require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/executor/testCTEStorageSpill", "return(true)"))
+	require.NoError(t, failpoint.Enable("github.com/zmix999/goInception-plus/executor/testCTEStorageSpill", "return(true)"))
 	defer func() {
-		require.NoError(t, failpoint.Disable("gitee.com/zhoujin826/goInception-plus/executor/testCTEStorageSpill"))
+		require.NoError(t, failpoint.Disable("github.com/zmix999/goInception-plus/executor/testCTEStorageSpill"))
 		tk.MustExec("set tidb_mem_quota_query = 1073741824;")
 	}()
-	require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/executor/testSortedRowContainerSpill", "return(true)"))
+	require.NoError(t, failpoint.Enable("github.com/zmix999/goInception-plus/executor/testSortedRowContainerSpill", "return(true)"))
 	defer func() {
-		require.NoError(t, failpoint.Disable("gitee.com/zhoujin826/goInception-plus/executor/testSortedRowContainerSpill"))
+		require.NoError(t, failpoint.Disable("github.com/zmix999/goInception-plus/executor/testSortedRowContainerSpill"))
 	}()
 
 	// Use duplicated rows to test UNION DISTINCT.

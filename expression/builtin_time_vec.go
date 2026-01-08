@@ -22,11 +22,11 @@ import (
 	"time"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/sessionctx/variable"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
 	"github.com/tikv/client-go/v2/oracle"
 )
 
@@ -207,7 +207,7 @@ func (b *builtinSysDateWithoutFspSig) vecEvalTime(input *chunk.Chunk, result *ch
 }
 
 func (b *builtinExtractDatetimeFromStringSig) vectorized() bool {
-	// TODO: to fix https://gitee.com/zhoujin826/goInception-plus/issues/9716 in vectorized evaluation.
+	// TODO: to fix https://github.com/zmix999/goInception-plus/issues/9716 in vectorized evaluation.
 	return false
 }
 

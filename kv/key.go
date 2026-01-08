@@ -21,8 +21,8 @@ import (
 	"strconv"
 	"strings"
 
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/codec"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/codec"
 )
 
 // Key represents high-level Key type.

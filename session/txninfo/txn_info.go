@@ -18,9 +18,9 @@ import (
 	"encoding/json"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/logutil"
 	"github.com/tikv/client-go/v2/oracle"
 	"go.uber.org/zap"
 )

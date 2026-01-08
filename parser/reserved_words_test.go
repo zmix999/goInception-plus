@@ -35,7 +35,7 @@ import (
 	"testing"
 
 	_ "github.com/go-sql-driver/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/ast"
 	requires "github.com/stretchr/testify/require"
 )
 

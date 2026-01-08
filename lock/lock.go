@@ -15,12 +15,12 @@
 package lock
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/table"
-	"gitee.com/zhoujin826/goInception-plus/util"
+	"github.com/zmix999/goInception-plus/infoschema"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/table"
+	"github.com/zmix999/goInception-plus/util"
 )
 
 // Checker uses to check tables lock.

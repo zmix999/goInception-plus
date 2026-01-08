@@ -19,13 +19,13 @@ import (
 
 	"github.com/pingcap/errors"
 	"github.com/pingcap/failpoint"
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/codec"
-	"gitee.com/zhoujin826/goInception-plus/util/cteutil"
-	"gitee.com/zhoujin826/goInception-plus/util/disk"
-	"gitee.com/zhoujin826/goInception-plus/util/memory"
+	"github.com/zmix999/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/codec"
+	"github.com/zmix999/goInception-plus/util/cteutil"
+	"github.com/zmix999/goInception-plus/util/disk"
+	"github.com/zmix999/goInception-plus/util/memory"
 )
 
 var _ Executor = &CTEExec{}

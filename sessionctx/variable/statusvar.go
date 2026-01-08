@@ -19,7 +19,7 @@ import (
 	"crypto/tls"
 	"sync"
 
-	"gitee.com/zhoujin826/goInception-plus/util"
+	"github.com/zmix999/goInception-plus/util"
 )
 
 var statisticsList []Statistics

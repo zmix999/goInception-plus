@@ -18,14 +18,14 @@ import (
 	"fmt"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
-	"gitee.com/zhoujin826/goInception-plus/table"
+	"github.com/zmix999/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/infoschema"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/sessionctx/variable"
+	"github.com/zmix999/goInception-plus/table"
 )
 
 // columnGenerationInDDL is a struct for validating generated columns in DDL.

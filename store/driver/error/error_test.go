@@ -17,7 +17,7 @@ package error
 import (
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/parser/terror"
 	"github.com/pingcap/errors"
 	"github.com/stretchr/testify/assert"
 	tikverr "github.com/tikv/client-go/v2/error"

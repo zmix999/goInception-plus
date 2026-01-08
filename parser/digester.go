@@ -24,7 +24,7 @@ import (
 	"unicode"
 	"unsafe"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/charset"
+	"github.com/zmix999/goInception-plus/parser/charset"
 )
 
 type Digest struct {

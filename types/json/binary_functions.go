@@ -24,8 +24,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/util/hack"
-	"gitee.com/zhoujin826/goInception-plus/util/stringutil"
+	"github.com/zmix999/goInception-plus/util/hack"
+	"github.com/zmix999/goInception-plus/util/stringutil"
 )
 
 // Type returns type of BinaryJSON as string.

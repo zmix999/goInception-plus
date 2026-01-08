@@ -15,12 +15,12 @@
 package executor
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	plannercore "gitee.com/zhoujin826/goInception-plus/planner/core"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/expression"
+	plannercore "github.com/zmix999/goInception-plus/planner/core"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/logutil"
 	"go.uber.org/zap"
 )
 
@@ -232,7 +232,7 @@ func (j *baseJoiner) initDefaultInner(innerTypes []*types.FieldType, defaultInne
 
 func (j *baseJoiner) makeJoinRowToChunk(chk *chunk.Chunk, lhs, rhs chunk.Row, lUsed, rUsed []int) {
 	// Call AppendRow() first to increment the virtual rows.
-	// Fix: https://gitee.com/zhoujin826/goInception-plus/issues/5771
+	// Fix: https://github.com/zmix999/goInception-plus/issues/5771
 	lWide := chk.AppendRowByColIdxs(lhs, lUsed)
 	chk.AppendPartialRowByColIdxs(lWide, rhs, rUsed)
 }

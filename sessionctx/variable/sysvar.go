@@ -26,16 +26,16 @@ import (
 	"sync/atomic"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/charset"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/collate"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
-	"gitee.com/zhoujin826/goInception-plus/util/stmtsummary"
-	"gitee.com/zhoujin826/goInception-plus/util/versioninfo"
+	"github.com/zmix999/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/charset"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/collate"
+	"github.com/zmix999/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/util/stmtsummary"
+	"github.com/zmix999/goInception-plus/util/versioninfo"
 	"github.com/cznic/mathutil"
 	"github.com/pingcap/errors"
 	tikvstore "github.com/tikv/client-go/v2/kv"
@@ -1778,7 +1778,7 @@ var defaultSysVars = []*SysVar{
 	}, SetGlobal: func(s *SessionVars, val string) error {
 		return setTiDBTableValue(s, "tikv_gc_scan_lock_mode", val, "Mode of scanning locks, \"physical\" or \"legacy\"")
 	}},
-	// It's different from tmp_table_size or max_heap_table_size. See https://gitee.com/zhoujin826/goInception-plus/issues/28691.
+	// It's different from tmp_table_size or max_heap_table_size. See https://github.com/zmix999/goInception-plus/issues/28691.
 	{Scope: ScopeGlobal | ScopeSession, Name: TiDBTmpTableMaxSize, Value: strconv.Itoa(DefTiDBTmpTableMaxSize), Type: TypeUnsigned, MinValue: 1 << 20, MaxValue: 1 << 37, SetSession: func(s *SessionVars, val string) error {
 		s.TMPTableSize = tidbOptInt64(val, DefTiDBTmpTableMaxSize)
 		return nil

@@ -16,8 +16,8 @@ package chunk
 
 import (
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/memory"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/memory"
 )
 
 // List holds a slice of chunks, use to append rows with max chunk size properly handled.

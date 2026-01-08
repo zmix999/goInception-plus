@@ -18,13 +18,13 @@ import (
 	"context"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/domain"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/session"
-	"gitee.com/zhoujin826/goInception-plus/table"
-	"gitee.com/zhoujin826/goInception-plus/table/tables"
-	"gitee.com/zhoujin826/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/domain"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/session"
+	"github.com/zmix999/goInception-plus/table"
+	"github.com/zmix999/goInception-plus/table/tables"
+	"github.com/zmix999/goInception-plus/types"
 )
 
 // SessionExecInGoroutine export for testing.

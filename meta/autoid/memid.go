@@ -18,7 +18,7 @@ import (
 	"context"
 	"math"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/parser/model"
 )
 
 // NewAllocatorFromTempTblInfo creates an in-memory allocator from a temporary table info.

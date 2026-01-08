@@ -18,7 +18,7 @@ import (
 	"testing"
 
 	. "github.com/pingcap/check"
-	"gitee.com/zhoujin826/goInception-plus/util/testleak"
+	"github.com/zmix999/goInception-plus/util/testleak"
 )
 
 func TestT(t *testing.T) {

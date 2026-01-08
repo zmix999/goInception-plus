@@ -17,8 +17,8 @@ package types
 import (
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/charset"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/charset"
+	"github.com/zmix999/goInception-plus/parser/mysql"
 	"github.com/stretchr/testify/require"
 )
 

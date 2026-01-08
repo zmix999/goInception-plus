@@ -23,9 +23,9 @@ import (
 	"unsafe"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/domain"
-	"gitee.com/zhoujin826/goInception-plus/util"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/domain"
+	"github.com/zmix999/goInception-plus/util"
+	"github.com/zmix999/goInception-plus/util/logutil"
 	"go.etcd.io/etcd/clientv3"
 	"go.uber.org/zap"
 )

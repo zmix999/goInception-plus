@@ -15,7 +15,7 @@
 package property
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/expression"
 )
 
 // LogicalProperty stands for logical properties such as schema of expression,

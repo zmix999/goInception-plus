@@ -21,13 +21,13 @@ import (
 	"testing"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/charset"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/types/json"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/mock"
+	"github.com/zmix999/goInception-plus/parser/charset"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/types/json"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -1439,7 +1439,7 @@ func TestCastIntAsIntVec(t *testing.T) {
 	}
 }
 
-// for issue https://gitee.com/zhoujin826/goInception-plus/issues/16825
+// for issue https://github.com/zmix999/goInception-plus/issues/16825
 func TestCastStringAsDecimalSigWithUnsignedFlagInUnion(t *testing.T) {
 	t.Parallel()
 

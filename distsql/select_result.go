@@ -25,22 +25,22 @@ import (
 
 	"github.com/pingcap/errors"
 	"github.com/pingcap/failpoint"
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/errno"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/metrics"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/statistics"
-	"gitee.com/zhoujin826/goInception-plus/store/copr"
-	"gitee.com/zhoujin826/goInception-plus/telemetry"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/codec"
-	"gitee.com/zhoujin826/goInception-plus/util/dbterror"
-	"gitee.com/zhoujin826/goInception-plus/util/execdetails"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
-	"gitee.com/zhoujin826/goInception-plus/util/memory"
+	"github.com/zmix999/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/errno"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/metrics"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/statistics"
+	"github.com/zmix999/goInception-plus/store/copr"
+	"github.com/zmix999/goInception-plus/telemetry"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/codec"
+	"github.com/zmix999/goInception-plus/util/dbterror"
+	"github.com/zmix999/goInception-plus/util/execdetails"
+	"github.com/zmix999/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/util/memory"
 	"github.com/pingcap/tipb/go-tipb"
 	tikvmetrics "github.com/tikv/client-go/v2/metrics"
 	"github.com/tikv/client-go/v2/tikv"
@@ -205,7 +205,7 @@ func (r *selectResult) fetchResp(ctx context.Context) error {
 			if !r.durationReported {
 				// final round of fetch
 				// TODO: Add a label to distinguish between success or failure.
-				// https://gitee.com/zhoujin826/goInception-plus/issues/11397
+				// https://github.com/zmix999/goInception-plus/issues/11397
 				metrics.DistSQLQueryHistogram.WithLabelValues(r.label, r.sqlType).Observe(r.fetchDuration.Seconds())
 				r.durationReported = true
 			}

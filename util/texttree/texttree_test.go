@@ -17,7 +17,7 @@ package texttree_test
 import (
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/util/texttree"
+	"github.com/zmix999/goInception-plus/util/texttree"
 	"github.com/stretchr/testify/require"
 )
 

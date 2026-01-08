@@ -18,15 +18,15 @@ import (
 	"fmt"
 	"sync"
 
-	"gitee.com/zhoujin826/goInception-plus/ddl"
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
-	"gitee.com/zhoujin826/goInception-plus/meta/autoid"
-	"gitee.com/zhoujin826/goInception-plus/parser"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/util"
+	"github.com/zmix999/goInception-plus/ddl"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/infoschema"
+	"github.com/zmix999/goInception-plus/meta/autoid"
+	"github.com/zmix999/goInception-plus/parser"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/util"
 )
 
 var once sync.Once
@@ -34,7 +34,7 @@ var once sync.Once
 // Init register the PERFORMANCE_SCHEMA virtual tables.
 // It should be init(), and the ideal usage should be:
 //
-// import _ "gitee.com/zhoujin826/goInception-plus/perfschema"
+// import _ "github.com/zmix999/goInception-plus/perfschema"
 //
 // This function depends on plan/core.init(), which initialize the expression.EvalAstExpr function.
 // The initialize order is a problem if init() is used as the function name.

@@ -15,8 +15,8 @@
 package expression
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/util/chunk"
 )
 
 type columnEvaluator struct {

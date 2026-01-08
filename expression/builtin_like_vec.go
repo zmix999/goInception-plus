@@ -18,7 +18,7 @@ import (
 	"regexp"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/chunk"
 )
 
 func (b *builtinLikeSig) vectorized() bool {

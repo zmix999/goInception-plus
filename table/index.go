@@ -17,11 +17,11 @@ package table
 import (
 	"context"
 
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/stmtctx"
-	"gitee.com/zhoujin826/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/sessionctx/stmtctx"
+	"github.com/zmix999/goInception-plus/types"
 )
 
 // IndexIterator is the interface for iterator of index data on KV store.

@@ -17,7 +17,7 @@ package util
 import (
 	"fmt"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/parser/model"
 )
 
 // Event is an event that a ddl operation happened.

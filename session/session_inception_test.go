@@ -20,9 +20,9 @@ import (
 	"strings"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/session"
-	"gitee.com/zhoujin826/goInception-plus/util/testkit"
+	"github.com/zmix999/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/session"
+	"github.com/zmix999/goInception-plus/util/testkit"
 	_ "github.com/go-sql-driver/mysql"
 	. "github.com/pingcap/check"
 	"golang.org/x/net/context"

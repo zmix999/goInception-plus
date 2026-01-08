@@ -14,12 +14,12 @@
 
 package errno
 
-import "gitee.com/zhoujin826/goInception-plus/parser/mysql"
+import "github.com/zmix999/goInception-plus/parser/mysql"
 
 // MySQLErrName maps error code to MySQL error messages.
 // Note: all ErrMessage to be added should be considered about the log redaction
 // by setting the suitable configuration in the second argument of mysql.Message.
-// See https://gitee.com/zhoujin826/goInception-plus/blob/master/errno/logredaction.md
+// See https://github.com/zmix999/goInception-plus/blob/master/errno/logredaction.md
 var MySQLErrName = map[uint16]*mysql.ErrMessage{
 	ErrHashchk:                                  mysql.Message("hashchk", nil),
 	ErrNisamchk:                                 mysql.Message("isamchk", nil),

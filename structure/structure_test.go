@@ -18,11 +18,11 @@ import (
 	"context"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/structure"
-	"gitee.com/zhoujin826/goInception-plus/testkit"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/structure"
+	"github.com/zmix999/goInception-plus/testkit"
 	"github.com/stretchr/testify/require"
 )
 

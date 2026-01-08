@@ -28,13 +28,13 @@ package parser
 import (
 	"strings"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/parser/opcode"
-	"gitee.com/zhoujin826/goInception-plus/parser/auth"
-	"gitee.com/zhoujin826/goInception-plus/parser/charset"
-	"gitee.com/zhoujin826/goInception-plus/parser/types"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/parser/opcode"
+	"github.com/zmix999/goInception-plus/parser/auth"
+	"github.com/zmix999/goInception-plus/parser/charset"
+	"github.com/zmix999/goInception-plus/parser/types"
 )
 
 %}
@@ -551,7 +551,7 @@ import (
 	role                   "ROLE"
 	rollback               "ROLLBACK"
 	routine                "ROUTINE"
-	row               	   "ROW"
+	row                    "ROW"
 	rowCount               "ROW_COUNT"
 	rowFormat              "ROW_FORMAT"
 	rtree                  "RTREE"
@@ -2195,11 +2195,11 @@ AlterTableSpec:
 |	"ALTER" ColumnKeywordOpt ColumnName "SET" ColumnInvisible
 	{
 		colDef := &ast.ColumnDef{
-			Name:    $3.(*ast.ColumnName),
+			Name: $3.(*ast.ColumnName),
 		}
 		$$ = &ast.AlterTableSpec{
-			Tp:         ast.AlterTableAlterColumnInvisible,
-			NewColumns: []*ast.ColumnDef{colDef},
+			Tp:               ast.AlterTableAlterColumnInvisible,
+			NewColumns:       []*ast.ColumnDef{colDef},
 			ColumnVisibility: $5.(ast.ColumnVisibility),
 		}
 	}
@@ -3414,7 +3414,7 @@ ColumnOption:
 	}
 |	ColumnInvisible
 	{
-		$$ = &ast.ColumnOption{Tp: ast.ColumnOptionInvisible, Visibility: $1.(ast.ColumnVisibility),}
+		$$ = &ast.ColumnOption{Tp: ast.ColumnOptionInvisible, Visibility: $1.(ast.ColumnVisibility)}
 	}
 
 StorageMedia:
@@ -6726,7 +6726,6 @@ SystemSym:
 	"SYSTEM"
 |	"USER"
 
-
 OnConflictClause:
 	"ON" "CONFLICT" "DO" "NOTHING"
 	{
@@ -7944,7 +7943,7 @@ FunctionCallGeneric:
 		} else {
 			tp = ast.FuncCallExprTypeGeneric
 		}
-		
+
 		$$ = &ast.FuncCallExpr{
 			Tp:     tp,
 			Schema: model.NewCIStr($1),

@@ -15,7 +15,7 @@
 package disk
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/util/memory"
+	"github.com/zmix999/goInception-plus/util/memory"
 )
 
 // Tracker is used to track the disk usage during query execution.

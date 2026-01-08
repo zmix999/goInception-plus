@@ -21,15 +21,15 @@ import (
 
 	. "github.com/pingcap/check"
 	"github.com/pingcap/failpoint"
-	"gitee.com/zhoujin826/goInception-plus/parser"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/charset"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/mock"
-	"gitee.com/zhoujin826/goInception-plus/util/testutil"
+	"github.com/zmix999/goInception-plus/parser"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/charset"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/mock"
+	"github.com/zmix999/goInception-plus/util/testutil"
 )
 
 var _ = SerialSuites(&testEvaluatorSerialSuites{})
@@ -41,7 +41,7 @@ func TestT(t *testing.T) {
 	CustomVerboseFlag = true
 	*CustomParallelSuiteFlag = true
 
-	fpname := "gitee.com/zhoujin826/goInception-plus/expression/PanicIfPbCodeUnspecified"
+	fpname := "github.com/zmix999/goInception-plus/expression/PanicIfPbCodeUnspecified"
 	err := failpoint.Enable(fpname, "return(true)")
 	if err != nil {
 		t.Fatalf("enable global failpoint `%s` failed: %v", fpname, err)

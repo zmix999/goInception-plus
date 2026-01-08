@@ -17,9 +17,9 @@
 package expression
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/types/json"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/types/json"
+	"github.com/zmix999/goInception-plus/util/chunk"
 )
 
 func (b *builtinLTRealSig) vecEvalInt(input *chunk.Chunk, result *chunk.Column) error {

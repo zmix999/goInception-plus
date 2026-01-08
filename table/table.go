@@ -21,13 +21,13 @@ package table
 import (
 	"context"
 
-	mysql "gitee.com/zhoujin826/goInception-plus/errno"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/meta/autoid"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/dbterror"
+	mysql "github.com/zmix999/goInception-plus/errno"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/meta/autoid"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/dbterror"
 	"github.com/opentracing/opentracing-go"
 )
 

@@ -15,12 +15,12 @@
 package core
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/planner/property"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/plancodec"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/planner/property"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/plancodec"
 )
 
 // Init initializes LogicalAggregation.

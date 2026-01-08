@@ -18,7 +18,7 @@ import (
 	"github.com/pingcap/badger/y"
 	"github.com/pingcap/errors"
 	"github.com/pingcap/kvproto/pkg/kvrpcpb"
-	"gitee.com/zhoujin826/goInception-plus/util/codec"
+	"github.com/zmix999/goInception-plus/util/codec"
 )
 
 // WriteType defines a write type.

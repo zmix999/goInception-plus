@@ -18,7 +18,7 @@ import (
 	"container/list"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/util/memory"
+	"github.com/zmix999/goInception-plus/util/memory"
 )
 
 // Key is the interface that every key in LRU Cache should implement.
@@ -43,7 +43,7 @@ var (
 
 const (
 	// ProfileName is the function name in heap profile
-	ProfileName = "gitee.com/zhoujin826/goInception-plus/util/kvcache.(*SimpleLRUCache).Put"
+	ProfileName = "github.com/zmix999/goInception-plus/util/kvcache.(*SimpleLRUCache).Put"
 )
 
 func init() {

@@ -23,11 +23,11 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/domain"
-	"gitee.com/zhoujin826/goInception-plus/domain/infosync"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/domain"
+	"github.com/zmix999/goInception-plus/domain/infosync"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/util/logutil"
 	"go.uber.org/zap"
 )
 

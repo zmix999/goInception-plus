@@ -20,7 +20,7 @@ import (
 
 	basictracer "github.com/opentracing/basictracer-go"
 	"github.com/opentracing/opentracing-go"
-	"gitee.com/zhoujin826/goInception-plus/util/tracing"
+	"github.com/zmix999/goInception-plus/util/tracing"
 	"github.com/stretchr/testify/require"
 )
 

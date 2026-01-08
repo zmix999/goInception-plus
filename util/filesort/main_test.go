@@ -17,7 +17,7 @@ package filesort
 import (
 	"math/rand"
 
-	"gitee.com/zhoujin826/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/types"
 )
 
 func nextRow(r *rand.Rand, keySize int, valSize int) (key []types.Datum, val []types.Datum, handle int64) {

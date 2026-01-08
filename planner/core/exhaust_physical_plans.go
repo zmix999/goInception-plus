@@ -22,22 +22,22 @@ import (
 
 	"github.com/pingcap/errors"
 	"github.com/pingcap/failpoint"
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/expression/aggregation"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/planner/property"
-	"gitee.com/zhoujin826/goInception-plus/planner/util"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/statistics"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/collate"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
-	"gitee.com/zhoujin826/goInception-plus/util/plancodec"
-	"gitee.com/zhoujin826/goInception-plus/util/ranger"
-	"gitee.com/zhoujin826/goInception-plus/util/set"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/expression/aggregation"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/planner/property"
+	"github.com/zmix999/goInception-plus/planner/util"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/statistics"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/collate"
+	"github.com/zmix999/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/util/plancodec"
+	"github.com/zmix999/goInception-plus/util/ranger"
+	"github.com/zmix999/goInception-plus/util/set"
 	"go.uber.org/zap"
 )
 
@@ -153,7 +153,7 @@ func (p *LogicalJoin) GetMergeJoin(prop *property.PhysicalProperty, schema *expr
 	leftJoinKeys, rightJoinKeys, isNullEQ, hasNullEQ := p.GetJoinKeys()
 
 	// EnumType/SetType Unsupported: merge join conflicts with index order.
-	// ref: https://gitee.com/zhoujin826/goInception-plus/issues/24473, https://gitee.com/zhoujin826/goInception-plus/issues/25669
+	// ref: https://github.com/zmix999/goInception-plus/issues/24473, https://github.com/zmix999/goInception-plus/issues/25669
 	for _, leftKey := range leftJoinKeys {
 		if leftKey.RetType.Tp == mysql.TypeEnum || leftKey.RetType.Tp == mysql.TypeSet {
 			return nil
@@ -547,7 +547,7 @@ func (p *LogicalJoin) constructIndexMergeJoin(
 		}
 
 		// EnumType/SetType Unsupported: merge join conflicts with index order.
-		// ref: https://gitee.com/zhoujin826/goInception-plus/issues/24473, https://gitee.com/zhoujin826/goInception-plus/issues/25669
+		// ref: https://github.com/zmix999/goInception-plus/issues/24473, https://github.com/zmix999/goInception-plus/issues/25669
 		for _, innerKey := range join.InnerJoinKeys {
 			if innerKey.RetType.Tp == mysql.TypeEnum || innerKey.RetType.Tp == mysql.TypeSet {
 				return nil
@@ -1878,7 +1878,7 @@ func (p *LogicalJoin) tryToGetMppHashJoin(prop *property.PhysicalProperty, useBC
 
 	}
 	if len(p.LeftConditions) != 0 && p.JoinType != LeftOuterJoin {
-		p.SCtx().GetSessionVars().RaiseWarningWhenMPPEnforced("MPP mode may be blocked because there is a join that is not `left join` but has left conditions, which is not supported by mpp now, see gitee.com/zhoujin826/goInception-plus/issues/26090 for more information.")
+		p.SCtx().GetSessionVars().RaiseWarningWhenMPPEnforced("MPP mode may be blocked because there is a join that is not `left join` but has left conditions, which is not supported by mpp now, see github.com/zmix999/goInception-plus/issues/26090 for more information.")
 		return nil
 	}
 	if len(p.RightConditions) != 0 && p.JoinType != RightOuterJoin {

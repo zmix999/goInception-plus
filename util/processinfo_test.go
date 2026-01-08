@@ -17,8 +17,8 @@ package util_test
 import (
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/util"
+	"github.com/zmix999/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/util"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -3,7 +3,7 @@
 ### Install package
 
 
-[goInception package](https://gitee.com/zhoujin826/goInception/releases)
+[goInception package](https://github.com/zmix999/goInception/releases)
 
 
 ### Source code 
@@ -14,7 +14,7 @@
 ```sh
 
 # download source code
-git clone https://gitee.com/zhoujin826/goInception-plus.git
+git clone https://github.com/zmix999/goInception-plus.git
 
 cd goInception
 

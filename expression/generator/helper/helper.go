@@ -14,20 +14,20 @@
 
 package helper
 
-// TypeContext is the template context for each "gitee.com/zhoujin826/goInception-plus/types".EvalType .
+// TypeContext is the template context for each "github.com/zmix999/goInception-plus/types".EvalType .
 type TypeContext struct {
-	// Describe the name of "gitee.com/zhoujin826/goInception-plus/types".ET{{ .ETName }} .
+	// Describe the name of "github.com/zmix999/goInception-plus/types".ET{{ .ETName }} .
 	ETName string
-	// Describe the name of "gitee.com/zhoujin826/goInception-plus/expression".VecExpr.VecEval{{ .TypeName }} .
+	// Describe the name of "github.com/zmix999/goInception-plus/expression".VecExpr.VecEval{{ .TypeName }} .
 	TypeName string
-	// Describe the name of "gitee.com/zhoujin826/goInception-plus/util/chunk".*Column.Append{{ .TypeNameInColumn }},
+	// Describe the name of "github.com/zmix999/goInception-plus/util/chunk".*Column.Append{{ .TypeNameInColumn }},
 	// Resize{{ .TypeNameInColumn }}, Reserve{{ .TypeNameInColumn }}, Get{{ .TypeNameInColumn }} and
 	// {{ .TypeNameInColumn }}s.
 	// If undefined, it's same as TypeName.
 	TypeNameInColumn string
 	// Describe the type name in golang.
 	TypeNameGo string
-	// Same as "gitee.com/zhoujin826/goInception-plus/util/chunk".getFixedLen() .
+	// Same as "github.com/zmix999/goInception-plus/util/chunk".getFixedLen() .
 	Fixed bool
 }
 

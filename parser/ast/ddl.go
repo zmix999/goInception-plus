@@ -14,13 +14,13 @@
 package ast
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/parser/auth"
-	"gitee.com/zhoujin826/goInception-plus/parser/format"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/parser/tidb"
-	"gitee.com/zhoujin826/goInception-plus/parser/types"
+	"github.com/zmix999/goInception-plus/parser/auth"
+	"github.com/zmix999/goInception-plus/parser/format"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/parser/tidb"
+	"github.com/zmix999/goInception-plus/parser/types"
 	"github.com/pingcap/errors"
 )
 

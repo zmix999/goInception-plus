@@ -20,11 +20,11 @@ import (
 	"testing"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/stmtctx"
-	"gitee.com/zhoujin826/goInception-plus/testkit"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/codec"
-	. "gitee.com/zhoujin826/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/sessionctx/stmtctx"
+	"github.com/zmix999/goInception-plus/testkit"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/codec"
+	. "github.com/zmix999/goInception-plus/kv"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

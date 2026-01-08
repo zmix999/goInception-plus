@@ -17,7 +17,7 @@ package parser_test
 import (
 	"testing"
 
-	utilparser "gitee.com/zhoujin826/goInception-plus/util/parser"
+	utilparser "github.com/zmix999/goInception-plus/util/parser"
 	"github.com/stretchr/testify/require"
 )
 

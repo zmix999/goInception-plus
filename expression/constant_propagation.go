@@ -15,14 +15,14 @@
 package expression
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/disjointset"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/disjointset"
+	"github.com/zmix999/goInception-plus/util/logutil"
 	"go.uber.org/zap"
 )
 
@@ -139,8 +139,8 @@ func tryToReplaceCond(ctx sessionctx.Context, src *Column, tgt *Column, cond Exp
 		return false, true, cond
 	}
 	// See
-	//	https://gitee.com/zhoujin826/goInception-plus/issues/15782
-	//  https://gitee.com/zhoujin826/goInception-plus/issues/17817
+	//	https://github.com/zmix999/goInception-plus/issues/15782
+	//  https://github.com/zmix999/goInception-plus/issues/17817
 	// The null sensitive function's result may rely on the original nullable information of the outer side column.
 	// Its args cannot be replaced easily.
 	// A more strict check is that after we replace the arg. We check the nullability of the new expression.

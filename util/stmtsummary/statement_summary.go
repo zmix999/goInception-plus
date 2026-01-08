@@ -27,11 +27,11 @@ import (
 	"time"
 
 	"github.com/pingcap/failpoint"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/stmtctx"
-	"gitee.com/zhoujin826/goInception-plus/util/execdetails"
-	"gitee.com/zhoujin826/goInception-plus/util/hack"
-	"gitee.com/zhoujin826/goInception-plus/util/kvcache"
-	"gitee.com/zhoujin826/goInception-plus/util/plancodec"
+	"github.com/zmix999/goInception-plus/sessionctx/stmtctx"
+	"github.com/zmix999/goInception-plus/util/execdetails"
+	"github.com/zmix999/goInception-plus/util/hack"
+	"github.com/zmix999/goInception-plus/util/kvcache"
+	"github.com/zmix999/goInception-plus/util/plancodec"
 	"github.com/tikv/client-go/v2/util"
 )
 

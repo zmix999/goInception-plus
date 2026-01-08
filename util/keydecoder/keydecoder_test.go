@@ -17,15 +17,15 @@ package keydecoder_test
 import (
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/stmtctx"
-	"gitee.com/zhoujin826/goInception-plus/table"
-	"gitee.com/zhoujin826/goInception-plus/table/tables"
-	"gitee.com/zhoujin826/goInception-plus/testkit"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/codec"
-	. "gitee.com/zhoujin826/goInception-plus/util/keydecoder"
+	"github.com/zmix999/goInception-plus/infoschema"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/sessionctx/stmtctx"
+	"github.com/zmix999/goInception-plus/table"
+	"github.com/zmix999/goInception-plus/table/tables"
+	"github.com/zmix999/goInception-plus/testkit"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/codec"
+	. "github.com/zmix999/goInception-plus/util/keydecoder"
 	"github.com/stretchr/testify/assert"
 )
 

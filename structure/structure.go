@@ -15,9 +15,9 @@
 package structure
 
 import (
-	mysql "gitee.com/zhoujin826/goInception-plus/errno"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/util/dbterror"
+	mysql "github.com/zmix999/goInception-plus/errno"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/util/dbterror"
 )
 
 var (

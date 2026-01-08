@@ -4,7 +4,7 @@
 ## 二进制安装
 
 
-[goInception安装包](https://gitee.com/zhoujin826/goInception-plush/releases)
+[goInception安装包](https://github.com/zmix999/goInception-plush/releases)
 
 
 ## 源码安装
@@ -16,7 +16,7 @@
 ```sh
 
 # 下载源码
-git clone https://gitee.com/zhoujin826/goInception-plus.git
+git clone https://github.com/zmix999/goInception-plus.git
 
 cd goInception-plus
 

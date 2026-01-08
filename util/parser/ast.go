@@ -17,9 +17,9 @@ package parser
 import (
 	"strings"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/format"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/format"
+	"github.com/zmix999/goInception-plus/util/logutil"
 	"go.uber.org/zap"
 )
 
@@ -69,7 +69,7 @@ func findTablePos(s, t string) int {
 }
 
 // SimpleCases captures simple SQL statements and uses string replacement instead of `restore` to improve performance.
-// See https://gitee.com/zhoujin826/goInception-plus/issues/22398.
+// See https://github.com/zmix999/goInception-plus/issues/22398.
 func SimpleCases(node ast.StmtNode, defaultDB, origin string) (s string, ok bool) {
 	if len(origin) == 0 {
 		return "", false

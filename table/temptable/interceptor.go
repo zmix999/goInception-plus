@@ -20,12 +20,12 @@ import (
 	"math"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/store/driver/txn"
-	"gitee.com/zhoujin826/goInception-plus/tablecodec"
+	"github.com/zmix999/goInception-plus/infoschema"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/store/driver/txn"
+	"github.com/zmix999/goInception-plus/tablecodec"
 )
 
 var (

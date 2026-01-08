@@ -18,12 +18,12 @@ import (
 	"fmt"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/parser/auth"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/privilege/privileges"
-	"gitee.com/zhoujin826/goInception-plus/session"
-	"gitee.com/zhoujin826/goInception-plus/util"
+	"github.com/zmix999/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/parser/auth"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/privilege/privileges"
+	"github.com/zmix999/goInception-plus/session"
+	"github.com/zmix999/goInception-plus/util"
 	. "github.com/pingcap/check"
 	"github.com/stretchr/testify/require"
 )

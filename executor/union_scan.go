@@ -19,15 +19,15 @@ import (
 	"fmt"
 	"runtime/trace"
 
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	plannercore "gitee.com/zhoujin826/goInception-plus/planner/core"
-	"gitee.com/zhoujin826/goInception-plus/table"
-	"gitee.com/zhoujin826/goInception-plus/tablecodec"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	plannercore "github.com/zmix999/goInception-plus/planner/core"
+	"github.com/zmix999/goInception-plus/table"
+	"github.com/zmix999/goInception-plus/tablecodec"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
 )
 
 // UnionScanExec merges the rows from dirty table and the rows from distsql request.

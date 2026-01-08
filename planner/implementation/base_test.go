@@ -17,8 +17,8 @@ package implementation
 import (
 	"testing"
 
-	plannercore "gitee.com/zhoujin826/goInception-plus/planner/core"
-	"gitee.com/zhoujin826/goInception-plus/planner/memo"
+	plannercore "github.com/zmix999/goInception-plus/planner/core"
+	"github.com/zmix999/goInception-plus/planner/memo"
 	"github.com/stretchr/testify/require"
 )
 

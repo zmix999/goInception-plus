@@ -19,14 +19,14 @@ import (
 	"math"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/domain"
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
-	"gitee.com/zhoujin826/goInception-plus/parser"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	plannercore "gitee.com/zhoujin826/goInception-plus/planner/core"
-	"gitee.com/zhoujin826/goInception-plus/planner/memo"
-	"gitee.com/zhoujin826/goInception-plus/planner/property"
+	"github.com/zmix999/goInception-plus/domain"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/infoschema"
+	"github.com/zmix999/goInception-plus/parser"
+	"github.com/zmix999/goInception-plus/parser/model"
+	plannercore "github.com/zmix999/goInception-plus/planner/core"
+	"github.com/zmix999/goInception-plus/planner/memo"
+	"github.com/zmix999/goInception-plus/planner/property"
 	"github.com/stretchr/testify/require"
 )
 

@@ -18,9 +18,9 @@ import (
 	"fmt"
 	"sync"
 
-	"gitee.com/zhoujin826/goInception-plus/errno"
-	"gitee.com/zhoujin826/goInception-plus/util/dbterror"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/errno"
+	"github.com/zmix999/goInception-plus/util/dbterror"
+	"github.com/zmix999/goInception-plus/util/logutil"
 	"go.uber.org/zap"
 )
 

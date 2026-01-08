@@ -21,9 +21,9 @@ import (
 	"sync"
 
 	"github.com/pingcap/failpoint"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/parser"
-	"gitee.com/zhoujin826/goInception-plus/util/plancodec"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/parser"
+	"github.com/zmix999/goInception-plus/util/plancodec"
 )
 
 var encoderPool = sync.Pool{

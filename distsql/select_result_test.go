@@ -18,11 +18,11 @@ import (
 	"context"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/stmtctx"
-	"gitee.com/zhoujin826/goInception-plus/store/copr"
-	"gitee.com/zhoujin826/goInception-plus/util/execdetails"
-	"gitee.com/zhoujin826/goInception-plus/util/mock"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/sessionctx/stmtctx"
+	"github.com/zmix999/goInception-plus/store/copr"
+	"github.com/zmix999/goInception-plus/util/execdetails"
+	"github.com/zmix999/goInception-plus/util/mock"
 	"github.com/pingcap/tipb/go-tipb"
 
 	"github.com/stretchr/testify/require"

@@ -20,7 +20,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/mysql"
 	"github.com/pingcap/errors"
 	"github.com/pingcap/log"
 	"go.uber.org/zap"

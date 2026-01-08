@@ -21,11 +21,11 @@ import (
 	"time"
 
 	"github.com/pingcap/failpoint"
-	"gitee.com/zhoujin826/goInception-plus/parser"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
-	"gitee.com/zhoujin826/goInception-plus/util/plancodec"
-	"gitee.com/zhoujin826/goInception-plus/util/topsql/reporter"
-	"gitee.com/zhoujin826/goInception-plus/util/topsql/tracecpu"
+	"github.com/zmix999/goInception-plus/parser"
+	"github.com/zmix999/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/util/plancodec"
+	"github.com/zmix999/goInception-plus/util/topsql/reporter"
+	"github.com/zmix999/goInception-plus/util/topsql/tracecpu"
 	"go.uber.org/zap"
 )
 

@@ -27,8 +27,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/util/hack"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/util/hack"
 )
 
 /*
@@ -436,7 +436,7 @@ func (bj BinaryJSON) HashValue(buf []byte) []byte {
 	case TypeCodeInt64:
 		// Convert to a FLOAT if no precision is lost.
 		// In the future, it will be better to convert to a DECIMAL value instead
-		// See: https://gitee.com/zhoujin826/goInception-plus/issues/9988
+		// See: https://github.com/zmix999/goInception-plus/issues/9988
 		if bj.GetInt64() == int64(float64(bj.GetInt64())) {
 			buf = appendBinaryFloat64(buf, float64(bj.GetInt64()))
 		} else {

@@ -17,7 +17,7 @@
 package expression
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/chunk"
 )
 
 // vecEvalInt evals FIELD(str,str1,str2,str3,...).

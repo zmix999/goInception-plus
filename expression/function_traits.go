@@ -15,8 +15,8 @@
 package expression
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/opcode"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/opcode"
 )
 
 // UnCacheableFunctions stores functions which can not be cached to plan cache.

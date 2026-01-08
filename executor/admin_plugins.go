@@ -17,10 +17,10 @@ package executor
 import (
 	"context"
 
-	"gitee.com/zhoujin826/goInception-plus/domain"
-	"gitee.com/zhoujin826/goInception-plus/planner/core"
-	"gitee.com/zhoujin826/goInception-plus/plugin"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/domain"
+	"github.com/zmix999/goInception-plus/planner/core"
+	"github.com/zmix999/goInception-plus/plugin"
+	"github.com/zmix999/goInception-plus/util/chunk"
 )
 
 // AdminPluginsExec indicates AdminPlugins executor.

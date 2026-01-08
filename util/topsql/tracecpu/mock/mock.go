@@ -19,10 +19,10 @@ import (
 	"sync"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/parser"
-	"gitee.com/zhoujin826/goInception-plus/util/hack"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
-	"gitee.com/zhoujin826/goInception-plus/util/topsql/tracecpu"
+	"github.com/zmix999/goInception-plus/parser"
+	"github.com/zmix999/goInception-plus/util/hack"
+	"github.com/zmix999/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/util/topsql/tracecpu"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 )

@@ -17,7 +17,7 @@ package plugin
 import (
 	"context"
 
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
+	"github.com/zmix999/goInception-plus/sessionctx/variable"
 )
 
 // GeneralEvent presents TiDB generate event.

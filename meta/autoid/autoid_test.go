@@ -22,11 +22,11 @@ import (
 	"testing"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/meta"
-	"gitee.com/zhoujin826/goInception-plus/meta/autoid"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/meta"
+	"github.com/zmix999/goInception-plus/meta/autoid"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/store/mockstore"
 	"github.com/pingcap/errors"
 	"github.com/pingcap/failpoint"
 	"github.com/stretchr/testify/require"
@@ -173,9 +173,9 @@ func TestNextStep(t *testing.T) {
 
 // Fix a computation logic bug in allocator computation.
 func TestAllocComputationIssue(t *testing.T) {
-	require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/meta/autoid/mockAutoIDCustomize", `return(true)`))
+	require.NoError(t, failpoint.Enable("github.com/zmix999/goInception-plus/meta/autoid/mockAutoIDCustomize", `return(true)`))
 	defer func() {
-		require.NoError(t, failpoint.Disable("gitee.com/zhoujin826/goInception-plus/meta/autoid/mockAutoIDCustomize"))
+		require.NoError(t, failpoint.Disable("github.com/zmix999/goInception-plus/meta/autoid/mockAutoIDCustomize"))
 	}()
 
 	store, err := mockstore.NewMockStore()

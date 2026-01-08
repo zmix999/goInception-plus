@@ -17,13 +17,13 @@ package expression
 import (
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/types"
 )
 
 var vecBuiltinMathCases = map[string][]vecExprBenchCase{
-	/* TODO: Because of https://gitee.com/zhoujin826/goInception-plus/issues/5817, we don't enable it now.
+	/* TODO: Because of https://github.com/zmix999/goInception-plus/issues/5817, we don't enable it now.
 	ast.Conv: {
 		{
 			retEvalType:   types.ETString,

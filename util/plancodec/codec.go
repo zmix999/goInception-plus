@@ -24,8 +24,8 @@ import (
 
 	"github.com/golang/snappy"
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/util/texttree"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/util/texttree"
 )
 
 const (

@@ -17,10 +17,10 @@ package core
 import (
 	"context"
 
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/parser/mysql"
 )
 
 type buildKeySolver struct{}
@@ -267,7 +267,7 @@ func (ds *DataSource) BuildKeyInfo(selfSchema *expression.Schema, childSchema []
 	var latestIndexes map[int64]*model.IndexInfo
 	var changed bool
 	var err error
-	// we should check index valid while forUpdateRead, see detail in https://gitee.com/zhoujin826/goInception-plus/pull/22152
+	// we should check index valid while forUpdateRead, see detail in https://github.com/zmix999/goInception-plus/pull/22152
 	if ds.isForUpdateRead {
 		latestIndexes, changed, err = getLatestIndexInfo(ds.ctx, ds.table.Meta().ID, 0)
 		if err != nil {

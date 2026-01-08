@@ -25,7 +25,7 @@ import (
 	"path/filepath"
 	"text/template"
 
-	. "gitee.com/zhoujin826/goInception-plus/expression/generator/helper"
+	. "github.com/zmix999/goInception-plus/expression/generator/helper"
 )
 
 const header = `// Copyright 2019 PingCAP, Inc.
@@ -50,9 +50,9 @@ package expression
 const newLine = "\n"
 
 const builtinCompareImports = `import (
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/types/json"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/types/json"
+	"github.com/zmix999/goInception-plus/util/chunk"
 )
 `
 
@@ -296,8 +296,8 @@ func (b *builtin{{ .compare.CompareName }}{{ .type.TypeName }}Sig) vectorized() 
 const builtinCompareVecTestHeader = `import (
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/types"
 )
 
 var vecGeneratedBuiltinCompareCases = map[string][]vecExprBenchCase{

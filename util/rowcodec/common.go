@@ -20,8 +20,8 @@ import (
 	"unsafe"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/parser/types"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/parser/types"
 )
 
 // CodecVer is the constant number that represent the new row format.

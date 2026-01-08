@@ -20,8 +20,8 @@ import (
 	"sync"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/types"
 )
 
 // stmtSummaryByDigestEvicted contents digests evicted from stmtSummaryByDigestMap

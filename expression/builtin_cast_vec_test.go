@@ -21,12 +21,12 @@ import (
 	"testing"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/types/json"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/mock"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/types/json"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -200,7 +200,7 @@ func genCastRealAsTime() *chunk.Chunk {
 	return input
 }
 
-// for issue https://gitee.com/zhoujin826/goInception-plus/issues/16825
+// for issue https://github.com/zmix999/goInception-plus/issues/16825
 func TestVectorizedCastStringAsDecimalWithUnsignedFlagInUnion(t *testing.T) {
 	t.Parallel()
 

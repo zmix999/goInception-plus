@@ -17,7 +17,7 @@ package session_test
 import (
 	"sync"
 
-	"gitee.com/zhoujin826/goInception-plus/util/testkit"
+	"github.com/zmix999/goInception-plus/util/testkit"
 	. "github.com/pingcap/check"
 )
 

@@ -15,11 +15,11 @@
 package ranger
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/collate"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/collate"
 )
 
 // conditionChecker checks if this condition can be pushed to index planner.
@@ -147,7 +147,7 @@ func (c *conditionChecker) checkLikeFunc(scalar *expression.ScalarFunction) bool
 		}
 		if patternStr[i] == '%' {
 			// We currently do not support using `enum like 'xxx%'` to build range
-			// see https://gitee.com/zhoujin826/goInception-plus/issues/27130 for more details
+			// see https://github.com/zmix999/goInception-plus/issues/27130 for more details
 			if scalar.GetArgs()[0].GetType().Tp == mysql.TypeEnum {
 				return false
 			}
@@ -158,7 +158,7 @@ func (c *conditionChecker) checkLikeFunc(scalar *expression.ScalarFunction) bool
 		}
 		if patternStr[i] == '_' {
 			// We currently do not support using `enum like 'xxx_'` to build range
-			// see https://gitee.com/zhoujin826/goInception-plus/issues/27130 for more details
+			// see https://github.com/zmix999/goInception-plus/issues/27130 for more details
 			if scalar.GetArgs()[0].GetType().Tp == mysql.TypeEnum {
 				return false
 			}

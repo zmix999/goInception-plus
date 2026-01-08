@@ -19,8 +19,8 @@ import (
 	"math/rand"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/parser"
-	"gitee.com/zhoujin826/goInception-plus/util/hack"
+	"github.com/zmix999/goInception-plus/parser"
+	"github.com/zmix999/goInception-plus/util/hack"
 	"github.com/pingcap/tipb/go-tipb"
 	"github.com/stretchr/testify/require"
 )

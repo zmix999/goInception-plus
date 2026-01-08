@@ -17,11 +17,11 @@ package types
 import (
 	"strconv"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/charset"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	ast "gitee.com/zhoujin826/goInception-plus/parser/types"
-	"gitee.com/zhoujin826/goInception-plus/types/json"
-	utilMath "gitee.com/zhoujin826/goInception-plus/util/math"
+	"github.com/zmix999/goInception-plus/parser/charset"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	ast "github.com/zmix999/goInception-plus/parser/types"
+	"github.com/zmix999/goInception-plus/types/json"
+	utilMath "github.com/zmix999/goInception-plus/util/math"
 )
 
 // UnspecifiedLength is unspecified length.

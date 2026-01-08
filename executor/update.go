@@ -20,18 +20,18 @@ import (
 	"fmt"
 	"runtime/trace"
 
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/meta/autoid"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	plannercore "gitee.com/zhoujin826/goInception-plus/planner/core"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
-	"gitee.com/zhoujin826/goInception-plus/table"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/execdetails"
-	"gitee.com/zhoujin826/goInception-plus/util/memory"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/meta/autoid"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	plannercore "github.com/zmix999/goInception-plus/planner/core"
+	"github.com/zmix999/goInception-plus/sessionctx/variable"
+	"github.com/zmix999/goInception-plus/table"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/execdetails"
+	"github.com/zmix999/goInception-plus/util/memory"
 	"github.com/tikv/client-go/v2/txnkv/txnsnapshot"
 )
 
@@ -210,7 +210,7 @@ func (e *UpdateExec) exec(ctx context.Context, schema *expression.Schema, row, n
 // outer join: the outer row can not match any inner rows, and in this scenario
 // the inner handle field is filled with a NULL value.
 //
-// This fixes: https://gitee.com/zhoujin826/goInception-plus/issues/7176.
+// This fixes: https://github.com/zmix999/goInception-plus/issues/7176.
 func (e *UpdateExec) unmatchedOuterRow(tblPos plannercore.TblColPosInfo, waitUpdateRow []types.Datum) bool {
 	firstHandleIdx := tblPos.HandleCols.GetCol(0)
 	return waitUpdateRow[firstHandleIdx.Index].IsNull()

@@ -17,7 +17,7 @@ package telemetry
 import (
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/sessionctx"
 )
 
 type telemetryData struct {

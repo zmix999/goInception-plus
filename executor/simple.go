@@ -22,32 +22,32 @@ import (
 	"syscall"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/distsql"
-	"gitee.com/zhoujin826/goInception-plus/domain"
-	"gitee.com/zhoujin826/goInception-plus/errno"
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/metrics"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/auth"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/planner/core"
-	plannercore "gitee.com/zhoujin826/goInception-plus/planner/core"
-	"gitee.com/zhoujin826/goInception-plus/plugin"
-	"gitee.com/zhoujin826/goInception-plus/privilege"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
-	"gitee.com/zhoujin826/goInception-plus/util"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/collate"
-	"gitee.com/zhoujin826/goInception-plus/util/hack"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
-	"gitee.com/zhoujin826/goInception-plus/util/sem"
-	"gitee.com/zhoujin826/goInception-plus/util/sqlexec"
-	"gitee.com/zhoujin826/goInception-plus/util/timeutil"
+	"github.com/zmix999/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/distsql"
+	"github.com/zmix999/goInception-plus/domain"
+	"github.com/zmix999/goInception-plus/errno"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/infoschema"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/metrics"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/auth"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/planner/core"
+	plannercore "github.com/zmix999/goInception-plus/planner/core"
+	"github.com/zmix999/goInception-plus/plugin"
+	"github.com/zmix999/goInception-plus/privilege"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/sessionctx/variable"
+	"github.com/zmix999/goInception-plus/util"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/collate"
+	"github.com/zmix999/goInception-plus/util/hack"
+	"github.com/zmix999/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/util/sem"
+	"github.com/zmix999/goInception-plus/util/sqlexec"
+	"github.com/zmix999/goInception-plus/util/timeutil"
 	"github.com/ngaut/pools"
 	"github.com/pingcap/errors"
 	"github.com/pingcap/tipb/go-tipb"
@@ -71,7 +71,7 @@ type SimpleExec struct {
 	Statement ast.StmtNode
 	// IsFromRemote indicates whether the statement IS FROM REMOTE TiDB instance in cluster,
 	//   and executing in coprocessor.
-	//   Used for `global kill`. See https://gitee.com/zhoujin826/goInception-plus/blob/master/docs/design/2020-06-01-global-kill.md.
+	//   Used for `global kill`. See https://github.com/zmix999/goInception-plus/blob/master/docs/design/2020-06-01-global-kill.md.
 	IsFromRemote bool
 	done         bool
 	is           infoschema.InfoSchema
@@ -1590,7 +1590,7 @@ func (e *SimpleExec) executeShutdown(s *ast.ShutdownStmt) error {
 	return nil
 }
 
-// #14239 - https://gitee.com/zhoujin826/goInception-plus/issues/14239
+// #14239 - https://github.com/zmix999/goInception-plus/issues/14239
 // Need repair 'shutdown' command behavior.
 // Response of TiDB is different to MySQL.
 // This function need to run with async model, otherwise it will block main coroutine

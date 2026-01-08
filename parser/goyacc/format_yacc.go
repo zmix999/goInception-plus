@@ -23,7 +23,7 @@ import (
 	"regexp"
 	"strings"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/format"
+	"github.com/zmix999/goInception-plus/parser/format"
 	parser "github.com/cznic/parser/yacc"
 	"github.com/cznic/strutil"
 	"github.com/pingcap/errors"

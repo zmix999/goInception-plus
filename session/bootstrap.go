@@ -27,24 +27,24 @@ import (
 	"strings"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/bindinfo"
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/ddl"
-	"gitee.com/zhoujin826/goInception-plus/domain"
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
-	"gitee.com/zhoujin826/goInception-plus/parser"
-	"gitee.com/zhoujin826/goInception-plus/parser/auth"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/planner/core"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
-	utilparser "gitee.com/zhoujin826/goInception-plus/util/parser"
-	"gitee.com/zhoujin826/goInception-plus/util/sqlexec"
-	"gitee.com/zhoujin826/goInception-plus/util/timeutil"
+	"github.com/zmix999/goInception-plus/bindinfo"
+	"github.com/zmix999/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/ddl"
+	"github.com/zmix999/goInception-plus/domain"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/infoschema"
+	"github.com/zmix999/goInception-plus/parser"
+	"github.com/zmix999/goInception-plus/parser/auth"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/planner/core"
+	"github.com/zmix999/goInception-plus/sessionctx/variable"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/logutil"
+	utilparser "github.com/zmix999/goInception-plus/util/parser"
+	"github.com/zmix999/goInception-plus/util/sqlexec"
+	"github.com/zmix999/goInception-plus/util/timeutil"
 	"github.com/pingcap/errors"
 	"go.uber.org/zap"
 )
@@ -451,7 +451,7 @@ const (
 	version38 = 38
 	// version39 will be redone in version46 so it's skipped here.
 	// version40 is the version that introduce new collation in TiDB,
-	// see https://gitee.com/zhoujin826/goInception-plus/pull/14574 for more details.
+	// see https://github.com/zmix999/goInception-plus/pull/14574 for more details.
 	version40 = 40
 	version41 = 41
 	// version42 add storeType and reason column in expr_pushdown_blacklist

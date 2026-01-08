@@ -17,9 +17,9 @@ package mock
 import (
 	"context"
 
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/util/memory"
-	"gitee.com/zhoujin826/goInception-plus/util/trxevents"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/util/memory"
+	"github.com/zmix999/goInception-plus/util/trxevents"
 )
 
 // Client implement kv.Client interface, mocked from "CopClient" defined in

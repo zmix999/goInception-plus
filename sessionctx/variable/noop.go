@@ -202,7 +202,7 @@ var noopSysVars = []*SysVar{
 	{Scope: ScopeGlobal, Name: "innodb_purge_rseg_truncate_frequency", Value: ""},
 	{Scope: ScopeGlobal | ScopeSession, Name: SQLAutoIsNull, Value: Off, Type: TypeBool, IsHintUpdatable: true, Validation: func(vars *SessionVars, normalizedValue string, originalValue string, scope ScopeFlag) (string, error) {
 		// checkSQLAutoIsNull requires TiDBEnableNoopFuncs != OFF for the same scope otherwise an error will be returned.
-		// See also https://gitee.com/zhoujin826/goInception-plus/issues/28230
+		// See also https://github.com/zmix999/goInception-plus/issues/28230
 		errMsg := ErrFunctionsNoopImpl.GenWithStackByArgs("sql_auto_is_null")
 		if TiDBOptOn(normalizedValue) {
 			if scope == ScopeSession && vars.NoopFuncsMode != OnInt {
@@ -404,7 +404,7 @@ var noopSysVars = []*SysVar{
 	{Scope: ScopeGlobal | ScopeSession, Name: "sql_log_off", Value: "0"},
 	// In MySQL, the default value of `explicit_defaults_for_timestamp` is `0`.
 	// But In TiDB, it's set to `1` to be consistent with TiDB timestamp behavior.
-	// See: https://gitee.com/zhoujin826/goInception-plus/pull/6068 for details
+	// See: https://github.com/zmix999/goInception-plus/pull/6068 for details
 	{Scope: ScopeNone, Name: "explicit_defaults_for_timestamp", Value: On, Type: TypeBool},
 	{Scope: ScopeNone, Name: "performance_schema_events_waits_history_size", Value: "10"},
 	{Scope: ScopeGlobal, Name: "log_syslog_tag", Value: ""},

@@ -17,12 +17,12 @@ package core
 import (
 	"context"
 
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/expression/aggregation"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/expression/aggregation"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/types"
 )
 
 type aggregationPushDownSolver struct {
@@ -266,7 +266,7 @@ func (a *aggregationPushDownSolver) checkAnyCountAndSum(aggFuncs []*aggregation.
 }
 
 // TODO:
-//   1. https://gitee.com/zhoujin826/goInception-plus/issues/16355, push avg & distinct functions across join
+//   1. https://github.com/zmix999/goInception-plus/issues/16355, push avg & distinct functions across join
 //   2. remove this method and use splitPartialAgg instead for clean code.
 func (a *aggregationPushDownSolver) makeNewAgg(ctx sessionctx.Context, aggFuncs []*aggregation.AggFuncDesc, gbyCols []*expression.Column, aggHints aggHintInfo, blockOffset int) (*LogicalAggregation, error) {
 	agg := LogicalAggregation{

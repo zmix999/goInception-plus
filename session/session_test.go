@@ -28,31 +28,31 @@ import (
 	"sync/atomic"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/domain"
-	"gitee.com/zhoujin826/goInception-plus/errno"
-	"gitee.com/zhoujin826/goInception-plus/executor"
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/meta/autoid"
-	"gitee.com/zhoujin826/goInception-plus/parser"
-	"gitee.com/zhoujin826/goInception-plus/parser/format"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/session"
-	"gitee.com/zhoujin826/goInception-plus/session/txninfo"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
-	"gitee.com/zhoujin826/goInception-plus/store/driver"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore"
-	"gitee.com/zhoujin826/goInception-plus/table/tables"
-	"gitee.com/zhoujin826/goInception-plus/tablecodec"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/sqlexec"
-	"gitee.com/zhoujin826/goInception-plus/util/testkit"
-	"gitee.com/zhoujin826/goInception-plus/util/testleak"
-	"gitee.com/zhoujin826/goInception-plus/util/testutil"
+	"github.com/zmix999/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/domain"
+	"github.com/zmix999/goInception-plus/errno"
+	"github.com/zmix999/goInception-plus/executor"
+	"github.com/zmix999/goInception-plus/infoschema"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/meta/autoid"
+	"github.com/zmix999/goInception-plus/parser"
+	"github.com/zmix999/goInception-plus/parser/format"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/session"
+	"github.com/zmix999/goInception-plus/session/txninfo"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/sessionctx/variable"
+	"github.com/zmix999/goInception-plus/store/driver"
+	"github.com/zmix999/goInception-plus/store/mockstore"
+	"github.com/zmix999/goInception-plus/table/tables"
+	"github.com/zmix999/goInception-plus/tablecodec"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/sqlexec"
+	"github.com/zmix999/goInception-plus/util/testkit"
+	"github.com/zmix999/goInception-plus/util/testleak"
+	"github.com/zmix999/goInception-plus/util/testutil"
 	"github.com/docker/go-units"
 	. "github.com/pingcap/check"
 	"github.com/pingcap/errors"
@@ -1171,7 +1171,7 @@ func (s *testSessionSuite) TestAutoIncrementID(c *C) {
 }
 
 func (s *testSessionSuite) TestAutoIncrementWithRetry(c *C) {
-	// test for https://gitee.com/zhoujin826/goInception-plus/issues/827
+	// test for https://github.com/zmix999/goInception-plus/issues/827
 
 	tk := testkit.NewTestKitWithInit(c, s.store)
 	tk1 := testkit.NewTestKitWithInit(c, s.store)
@@ -1442,7 +1442,7 @@ func (s *testSessionSuite) TestResultField(c *C) {
 }
 
 func (s *testSessionSuite) TestResultType(c *C) {
-	// Testcase for https://gitee.com/zhoujin826/goInception-plus/issues/325
+	// Testcase for https://github.com/zmix999/goInception-plus/issues/325
 	tk := testkit.NewTestKitWithInit(c, s.store)
 	rs, err := tk.Exec(`select cast(null as char(30))`)
 	c.Assert(err, IsNil)
@@ -1603,7 +1603,7 @@ func (s *testSessionSuite3) TestISColumns(c *C) {
 }
 
 func (s *testSessionSuite2) TestRetry(c *C) {
-	// For https://gitee.com/zhoujin826/goInception-plus/issues/571
+	// For https://github.com/zmix999/goInception-plus/issues/571
 	tk := testkit.NewTestKitWithInit(c, s.store)
 
 	tk.MustExec("begin")
@@ -1676,7 +1676,7 @@ func (s *testSessionSuite3) TestDecimal(c *C) {
 func (s *testSessionSuite2) TestParser(c *C) {
 	tk := testkit.NewTestKitWithInit(c, s.store)
 
-	// test for https://gitee.com/zhoujin826/goInception-plus/pull/177
+	// test for https://github.com/zmix999/goInception-plus/pull/177
 	tk.MustExec("CREATE TABLE `t1` ( `a` char(3) NOT NULL default '', `b` char(3) NOT NULL default '', `c` char(3) NOT NULL default '', PRIMARY KEY  (`a`,`b`,`c`)) ENGINE=InnoDB;")
 	tk.MustExec("CREATE TABLE `t2` ( `a` char(3) NOT NULL default '', `b` char(3) NOT NULL default '', `c` char(3) NOT NULL default '', PRIMARY KEY  (`a`,`b`,`c`)) ENGINE=InnoDB;")
 	tk.MustExec(`INSERT INTO t1 VALUES (1,1,1);`)
@@ -1691,7 +1691,7 @@ func (s *testSessionSuite2) TestParser(c *C) {
 func (s *testSessionSuite3) TestOnDuplicate(c *C) {
 	tk := testkit.NewTestKitWithInit(c, s.store)
 
-	// test for https://gitee.com/zhoujin826/goInception-plus/pull/454
+	// test for https://github.com/zmix999/goInception-plus/pull/454
 	tk.MustExec("drop table if exists t")
 	tk.MustExec("drop table if exists t1")
 	tk.MustExec("create table t1 (c1 int, c2 int, c3 int);")
@@ -1704,7 +1704,7 @@ func (s *testSessionSuite3) TestOnDuplicate(c *C) {
 func (s *testSessionSuite2) TestReplace(c *C) {
 	tk := testkit.NewTestKitWithInit(c, s.store)
 
-	// test for https://gitee.com/zhoujin826/goInception-plus/pull/456
+	// test for https://github.com/zmix999/goInception-plus/pull/456
 	tk.MustExec("drop table if exists t")
 	tk.MustExec("drop table if exists t1")
 	tk.MustExec("create table t1 (c1 int, c2 int, c3 int);")
@@ -1715,7 +1715,7 @@ func (s *testSessionSuite2) TestReplace(c *C) {
 }
 
 func (s *testSessionSuite3) TestDelete(c *C) {
-	// test for https://gitee.com/zhoujin826/goInception-plus/pull/1135
+	// test for https://github.com/zmix999/goInception-plus/pull/1135
 
 	tk := testkit.NewTestKitWithInit(c, s.store)
 	tk1 := testkit.NewTestKit(c, s.store)
@@ -1786,7 +1786,7 @@ func (s *testSessionSuite2) TestResetCtx(c *C) {
 }
 
 func (s *testSessionSuite3) TestUnique(c *C) {
-	// test for https://gitee.com/zhoujin826/goInception-plus/pull/461
+	// test for https://github.com/zmix999/goInception-plus/pull/461
 
 	tk := testkit.NewTestKitWithInit(c, s.store)
 	tk1 := testkit.NewTestKitWithInit(c, s.store)
@@ -1813,7 +1813,7 @@ func (s *testSessionSuite3) TestUnique(c *C) {
 	c.Assert(terror.ErrorEqual(err, kv.ErrKeyExists), IsTrue, Commentf("err %v", err))
 	c.Assert(err.Error(), Equals, "previous statement: insert into test(id, val) values(2, 2);: [kv:1062]Duplicate entry '2' for key 'val'")
 
-	// Test for https://gitee.com/zhoujin826/goInception-plus/issues/463
+	// Test for https://github.com/zmix999/goInception-plus/issues/463
 	tk.MustExec("drop table test;")
 	tk.MustExec(`CREATE TABLE test (
 			id int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -1854,7 +1854,7 @@ func (s *testSessionSuite3) TestUnique(c *C) {
 }
 
 func (s *testSessionSuite2) TestSet(c *C) {
-	// Test for https://gitee.com/zhoujin826/goInception-plus/issues/1114
+	// Test for https://github.com/zmix999/goInception-plus/issues/1114
 
 	tk := testkit.NewTestKitWithInit(c, s.store)
 	tk.MustExec("set @tmp = 0")

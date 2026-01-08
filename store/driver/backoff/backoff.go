@@ -17,8 +17,8 @@ package backoff
 import (
 	"context"
 
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	derr "gitee.com/zhoujin826/goInception-plus/store/driver/error"
+	"github.com/zmix999/goInception-plus/kv"
+	derr "github.com/zmix999/goInception-plus/store/driver/error"
 	"github.com/tikv/client-go/v2/tikv"
 )
 

@@ -17,9 +17,9 @@ package cascades
 import (
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/planner/memo"
-	"gitee.com/zhoujin826/goInception-plus/planner/property"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/planner/memo"
+	"github.com/zmix999/goInception-plus/planner/property"
 	"github.com/stretchr/testify/require"
 )
 

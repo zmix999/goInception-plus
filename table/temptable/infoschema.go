@@ -15,8 +15,8 @@
 package temptable
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/infoschema"
+	"github.com/zmix999/goInception-plus/sessionctx"
 )
 
 // AttachLocalTemporaryTableInfoSchema attach local temporary table information schema to is

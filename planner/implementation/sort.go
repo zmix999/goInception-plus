@@ -17,8 +17,8 @@ package implementation
 import (
 	"math"
 
-	plannercore "gitee.com/zhoujin826/goInception-plus/planner/core"
-	"gitee.com/zhoujin826/goInception-plus/planner/memo"
+	plannercore "github.com/zmix999/goInception-plus/planner/core"
+	"github.com/zmix999/goInception-plus/planner/memo"
 )
 
 // SortImpl implementation of PhysicalSort.

@@ -19,7 +19,7 @@ import (
 	"reflect"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/types"
 	"github.com/stretchr/testify/require"
 )
 

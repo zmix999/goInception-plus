@@ -18,8 +18,8 @@ import (
 	"strconv"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/util/collate"
-	"gitee.com/zhoujin826/goInception-plus/util/stringutil"
+	"github.com/zmix999/goInception-plus/util/collate"
+	"github.com/zmix999/goInception-plus/util/stringutil"
 )
 
 // Enum is for MySQL enum type.

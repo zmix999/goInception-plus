@@ -18,7 +18,7 @@
 package session
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/mysql"
 )
 
 // 数据库类型

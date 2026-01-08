@@ -17,7 +17,7 @@ package property
 import (
 	"fmt"
 
-	"gitee.com/zhoujin826/goInception-plus/statistics"
+	"github.com/zmix999/goInception-plus/statistics"
 )
 
 // GroupNDV stores the NDV of a group of columns.

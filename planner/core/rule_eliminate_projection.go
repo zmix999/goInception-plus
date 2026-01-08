@@ -17,9 +17,9 @@ package core
 import (
 	"context"
 
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/parser/mysql"
 )
 
 // canProjectionBeEliminatedLoose checks whether a projection can be eliminated,

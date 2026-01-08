@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/ast"
 	"github.com/lib/pq"
 	pgDriver "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"

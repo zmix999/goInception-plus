@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"strings"
 
-	"gitee.com/zhoujin826/goInception-plus/util/plancodec"
+	"github.com/zmix999/goInception-plus/util/plancodec"
 )
 
 // ToString explains a Plan, returns description string.
@@ -31,7 +31,7 @@ func ToString(p Plan) string {
 func needIncludeChildrenString(plan Plan) bool {
 	switch x := plan.(type) {
 	case *LogicalUnionAll, *PhysicalUnionAll, *LogicalPartitionUnionAll:
-		// after https://gitee.com/zhoujin826/goInception-plus/pull/25218, the union may contain less than 2 children,
+		// after https://github.com/zmix999/goInception-plus/pull/25218, the union may contain less than 2 children,
 		// but we still wants to include its child plan's information when calling `toString` on union.
 		return true
 	case LogicalPlan:

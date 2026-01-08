@@ -22,8 +22,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/util/hack"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/util/hack"
 )
 
 // ErrSyntax indicates that a value does not have the right syntax for the target type.

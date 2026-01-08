@@ -17,12 +17,12 @@ package implementation
 import (
 	"math"
 
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	plannercore "gitee.com/zhoujin826/goInception-plus/planner/core"
-	"gitee.com/zhoujin826/goInception-plus/planner/memo"
-	"gitee.com/zhoujin826/goInception-plus/statistics"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/parser/model"
+	plannercore "github.com/zmix999/goInception-plus/planner/core"
+	"github.com/zmix999/goInception-plus/planner/memo"
+	"github.com/zmix999/goInception-plus/statistics"
 )
 
 // TableDualImpl implementation of PhysicalTableDual.

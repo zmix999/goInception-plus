@@ -18,11 +18,11 @@ import (
 	"fmt"
 	"math"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	math2 "gitee.com/zhoujin826/goInception-plus/util/math"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	math2 "github.com/zmix999/goInception-plus/util/math"
 )
 
 func (b *builtinArithmeticMultiplyRealSig) vectorized() bool {

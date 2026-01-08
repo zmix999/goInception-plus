@@ -29,25 +29,25 @@ import (
 	"sync/atomic"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/meta/autoid"
-	"gitee.com/zhoujin826/goInception-plus/metrics"
-	"gitee.com/zhoujin826/goInception-plus/parser"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/auth"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/stmtctx"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/collate"
-	"gitee.com/zhoujin826/goInception-plus/util/execdetails"
-	"gitee.com/zhoujin826/goInception-plus/util/rowcodec"
-	"gitee.com/zhoujin826/goInception-plus/util/stringutil"
-	"gitee.com/zhoujin826/goInception-plus/util/tableutil"
-	"gitee.com/zhoujin826/goInception-plus/util/timeutil"
+	"github.com/zmix999/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/meta/autoid"
+	"github.com/zmix999/goInception-plus/metrics"
+	"github.com/zmix999/goInception-plus/parser"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/auth"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/sessionctx/stmtctx"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/collate"
+	"github.com/zmix999/goInception-plus/util/execdetails"
+	"github.com/zmix999/goInception-plus/util/rowcodec"
+	"github.com/zmix999/goInception-plus/util/stringutil"
+	"github.com/zmix999/goInception-plus/util/tableutil"
+	"github.com/zmix999/goInception-plus/util/timeutil"
 	"github.com/pingcap/errors"
 	pumpcli "github.com/pingcap/tidb-tools/tidb-binlog/pump_client"
 	tikvstore "github.com/tikv/client-go/v2/kv"
@@ -513,7 +513,7 @@ type SessionVars struct {
 	CurrentDB string
 
 	// CurrentDBChanged indicates if the CurrentDB has been updated, and if it is we should print it into
-	// the slow log to make it be compatible with MySQL, https://gitee.com/zhoujin826/goInception-plus/issues/17846.
+	// the slow log to make it be compatible with MySQL, https://github.com/zmix999/goInception-plus/issues/17846.
 	CurrentDBChanged bool
 
 	// StrictSQLMode indicates if the session is in strict mode.
@@ -638,7 +638,7 @@ type SessionVars struct {
 	// See http://dev.mysql.com/doc/refman/5.7/en/miscellaneous-functions.html#function_values
 	CurrInsertValues chunk.Row
 
-	// In https://gitee.com/zhoujin826/goInception-plus/issues/14164, we can see that MySQL can enter the column that is not in the insert's SELECT's output.
+	// In https://github.com/zmix999/goInception-plus/issues/14164, we can see that MySQL can enter the column that is not in the insert's SELECT's output.
 	// We store the extra columns in this variable.
 	CurrInsertBatchExtraCols [][]types.Datum
 
@@ -925,7 +925,7 @@ type SessionVars struct {
 	// see https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_cte_max_recursion_depth
 	CTEMaxRecursionDepth int
 
-	// The temporary table size threshold, which is different from MySQL. See https://gitee.com/zhoujin826/goInception-plus/issues/28691.
+	// The temporary table size threshold, which is different from MySQL. See https://github.com/zmix999/goInception-plus/issues/28691.
 	TMPTableSize int64
 
 	// EnableStableResultMode if stabilize query results.

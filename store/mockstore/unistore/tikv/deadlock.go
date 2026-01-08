@@ -25,8 +25,8 @@ import (
 
 	deadlockPb "github.com/pingcap/kvproto/pkg/deadlock"
 	"github.com/pingcap/log"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/pd"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/util/lockwaiter"
+	"github.com/zmix999/goInception-plus/store/mockstore/unistore/pd"
+	"github.com/zmix999/goInception-plus/store/mockstore/unistore/util/lockwaiter"
 )
 
 // Follower will send detection rpc to Leader

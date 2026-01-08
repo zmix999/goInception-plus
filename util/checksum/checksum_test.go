@@ -20,7 +20,7 @@ import (
 	"strings"
 	"testing"
 
-	encrypt2 "gitee.com/zhoujin826/goInception-plus/util/encrypt"
+	encrypt2 "github.com/zmix999/goInception-plus/util/encrypt"
 	"github.com/stretchr/testify/require"
 )
 

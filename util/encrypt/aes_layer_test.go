@@ -20,7 +20,7 @@ import (
 	"os"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/util/checksum"
+	"github.com/zmix999/goInception-plus/util/checksum"
 	"github.com/stretchr/testify/require"
 )
 

@@ -18,10 +18,10 @@ import (
 	"strings"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/parser"
-	. "gitee.com/zhoujin826/goInception-plus/parser/ast"
-	. "gitee.com/zhoujin826/goInception-plus/parser/format"
-	"gitee.com/zhoujin826/goInception-plus/parser/test_driver"
+	"github.com/zmix999/goInception-plus/parser"
+	. "github.com/zmix999/goInception-plus/parser/ast"
+	. "github.com/zmix999/goInception-plus/parser/format"
+	"github.com/zmix999/goInception-plus/parser/test_driver"
 	"github.com/stretchr/testify/require"
 )
 

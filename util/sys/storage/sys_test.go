@@ -17,7 +17,7 @@ package storage_test
 import (
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/util/sys/storage"
+	"github.com/zmix999/goInception-plus/util/sys/storage"
 	"github.com/stretchr/testify/require"
 )
 

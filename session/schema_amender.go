@@ -21,21 +21,21 @@ import (
 	"fmt"
 	"reflect"
 
-	"gitee.com/zhoujin826/goInception-plus/ddl"
-	"gitee.com/zhoujin826/goInception-plus/executor"
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/table"
-	"gitee.com/zhoujin826/goInception-plus/table/tables"
-	"gitee.com/zhoujin826/goInception-plus/tablecodec"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
-	"gitee.com/zhoujin826/goInception-plus/util/rowcodec"
+	"github.com/zmix999/goInception-plus/ddl"
+	"github.com/zmix999/goInception-plus/executor"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/infoschema"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/table"
+	"github.com/zmix999/goInception-plus/table/tables"
+	"github.com/zmix999/goInception-plus/tablecodec"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/util/rowcodec"
 	"github.com/pingcap/errors"
 	"github.com/pingcap/kvproto/pkg/kvrpcpb"
 	"github.com/tikv/client-go/v2/tikv"
@@ -207,7 +207,7 @@ func (a *amendCollector) collectModifyColAmendOps(tblAtStart, tblAtCommit table.
 		} else {
 			// If the column could not be found in the original schema, it could not be decided if this column
 			// is newly added or modified from an original column.Report error to solve the issue
-			// https://gitee.com/zhoujin826/goInception-plus/issues/21470. This change will make amend fail for adding column
+			// https://github.com/zmix999/goInception-plus/issues/21470. This change will make amend fail for adding column
 			// and modifying columns at the same time.
 			// In addition, amended operations are not currently supported and it goes to this logic when "modify/change column" needs reorg data.
 			return nil, errors.Errorf("column=%v id=%v is not found for table=%v checking column modify",

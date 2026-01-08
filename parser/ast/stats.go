@@ -14,8 +14,8 @@
 package ast
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/parser/format"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/parser/format"
+	"github.com/zmix999/goInception-plus/parser/model"
 	"github.com/pingcap/errors"
 )
 

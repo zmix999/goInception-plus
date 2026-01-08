@@ -21,16 +21,16 @@ import (
 	"sync/atomic"
 	"unsafe"
 
-	mysql "gitee.com/zhoujin826/goInception-plus/errno"
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/planner/util"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/codec"
-	"gitee.com/zhoujin826/goInception-plus/util/collate"
-	"gitee.com/zhoujin826/goInception-plus/util/dbterror"
-	"gitee.com/zhoujin826/goInception-plus/util/set"
+	mysql "github.com/zmix999/goInception-plus/errno"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/planner/util"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/codec"
+	"github.com/zmix999/goInception-plus/util/collate"
+	"github.com/zmix999/goInception-plus/util/dbterror"
+	"github.com/zmix999/goInception-plus/util/set"
 )
 
 const (

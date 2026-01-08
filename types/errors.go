@@ -15,9 +15,9 @@
 package types
 
 import (
-	mysql "gitee.com/zhoujin826/goInception-plus/errno"
-	parser_types "gitee.com/zhoujin826/goInception-plus/parser/types"
-	"gitee.com/zhoujin826/goInception-plus/util/dbterror"
+	mysql "github.com/zmix999/goInception-plus/errno"
+	parser_types "github.com/zmix999/goInception-plus/parser/types"
+	"github.com/zmix999/goInception-plus/util/dbterror"
 )
 
 // const strings for ErrWrongValue

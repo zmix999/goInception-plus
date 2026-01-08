@@ -18,8 +18,8 @@ import (
 	"bytes"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/util/codec"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/util/codec"
 )
 
 // TypeFlag is for data structure meta/data flag.

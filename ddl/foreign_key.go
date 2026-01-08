@@ -15,9 +15,9 @@
 package ddl
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
-	"gitee.com/zhoujin826/goInception-plus/meta"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/infoschema"
+	"github.com/zmix999/goInception-plus/meta"
+	"github.com/zmix999/goInception-plus/parser/model"
 	"github.com/pingcap/errors"
 )
 

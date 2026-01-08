@@ -24,7 +24,7 @@ import (
 	"path/filepath"
 	"text/template"
 
-	. "gitee.com/zhoujin826/goInception-plus/expression/generator/helper"
+	. "github.com/zmix999/goInception-plus/expression/generator/helper"
 )
 
 const header = `// Copyright 2019 PingCAP, Inc.
@@ -48,8 +48,8 @@ package expression
 import (
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
 )
 
 // NOTE: Control expressions optionally evaluate some branches depending on conditions, but vectorization executes all
@@ -492,8 +492,8 @@ import (
 	"math/rand"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/types"
 )
 
 var defaultControlIntGener = &controlIntGener{zeroRation: 0.3, defaultGener: *newDefaultGener(0.3, types.ETInt)}
@@ -558,17 +558,17 @@ func BenchmarkVectorizedBuiltin{{.Category}}FuncGenerated(b *testing.B) {
 `))
 
 type typeContext struct {
-	// Describe the name of "gitee.com/zhoujin826/goInception-plus/types".ET{{ .ETName }}
+	// Describe the name of "github.com/zmix999/goInception-plus/types".ET{{ .ETName }}
 	ETName string
-	// Describe the name of "gitee.com/zhoujin826/goInception-plus/expression".VecExpr.VecEval{{ .TypeName }}
+	// Describe the name of "github.com/zmix999/goInception-plus/expression".VecExpr.VecEval{{ .TypeName }}
 	// If undefined, it's same as ETName.
 	TypeName string
-	// Describe the name of "gitee.com/zhoujin826/goInception-plus/util/chunk".*Column.Append{{ .TypeNameInColumn }},
+	// Describe the name of "github.com/zmix999/goInception-plus/util/chunk".*Column.Append{{ .TypeNameInColumn }},
 	// Resize{{ .TypeNameInColumn }}, Reserve{{ .TypeNameInColumn }}, Get{{ .TypeNameInColumn }} and
 	// {{ .TypeNameInColumn }}s.
 	// If undefined, it's same as TypeName.
 	TypeNameInColumn string
-	// Same as "gitee.com/zhoujin826/goInception-plus/util/chunk".getFixedLen()
+	// Same as "github.com/zmix999/goInception-plus/util/chunk".getFixedLen()
 	Fixed bool
 }
 

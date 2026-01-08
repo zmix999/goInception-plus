@@ -32,13 +32,13 @@ import (
 	"testing"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/errno"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	tmysql "gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/session"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
-	"gitee.com/zhoujin826/goInception-plus/util/versioninfo"
+	"github.com/zmix999/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/errno"
+	"github.com/zmix999/goInception-plus/kv"
+	tmysql "github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/session"
+	"github.com/zmix999/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/util/versioninfo"
 	"github.com/go-sql-driver/mysql"
 	. "github.com/pingcap/check"
 	"github.com/pingcap/errors"
@@ -1280,12 +1280,12 @@ func (cli *testServerClient) runTestLoadData(c *C, server *Server) {
 		dbt.Check(rows.Next(), IsFalse, Commentf("unexpected data"))
 
 		// fail error processing test
-		dbt.Assert(failpoint.Enable("gitee.com/zhoujin826/goInception-plus/executor/commitOneTaskErr", "return"), IsNil)
+		dbt.Assert(failpoint.Enable("github.com/zmix999/goInception-plus/executor/commitOneTaskErr", "return"), IsNil)
 		_, err1 = dbt.db.Exec(`load data local infile '/tmp/load_data_test.csv' into table pn FIELDS TERMINATED BY ','`)
 		mysqlErr, ok := err1.(*mysql.MySQLError)
 		dbt.Assert(ok, IsTrue)
 		dbt.Assert(mysqlErr.Message, Equals, "mock commit one task error")
-		dbt.Assert(failpoint.Disable("gitee.com/zhoujin826/goInception-plus/executor/commitOneTaskErr"), IsNil)
+		dbt.Assert(failpoint.Disable("github.com/zmix999/goInception-plus/executor/commitOneTaskErr"), IsNil)
 
 		dbt.mustExec("drop table if exists pn")
 	})

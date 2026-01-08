@@ -53,7 +53,7 @@ function build_importer()
     importer="./importer"
     echo "building importer binary: $importer"
     rm -rf $importer
-    GO111MODULE=on go build -o $importer gitee.com/zhoujin826/goInception-plus/cmd/importer
+    GO111MODULE=on go build -o $importer github.com/zmix999/goInception-plus/cmd/importer
 }
 
 function build_tidb_server()
@@ -61,7 +61,7 @@ function build_tidb_server()
     tidb_server="./explaintest_tidb-server"
     echo "building tidb-server binary: $tidb_server"
     rm -rf $tidb_server
-    GO111MODULE=on go build -race -o $tidb_server gitee.com/zhoujin826/goInception-plus/tidb-server
+    GO111MODULE=on go build -race -o $tidb_server github.com/zmix999/goInception-plus/tidb-server
 }
 
 function build_explain_test()

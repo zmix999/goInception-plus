@@ -18,9 +18,9 @@ import (
 	"bytes"
 	"strconv"
 
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	derr "gitee.com/zhoujin826/goInception-plus/store/driver/error"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/kv"
+	derr "github.com/zmix999/goInception-plus/store/driver/error"
+	"github.com/zmix999/goInception-plus/util/logutil"
 	"github.com/cznic/mathutil"
 	"github.com/pingcap/log"
 	"github.com/tikv/client-go/v2/metrics"

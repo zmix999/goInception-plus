@@ -17,10 +17,10 @@ package statistics
 import (
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/stmtctx"
-	"gitee.com/zhoujin826/goInception-plus/testkit/testdata"
-	"gitee.com/zhoujin826/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/sessionctx/stmtctx"
+	"github.com/zmix999/goInception-plus/testkit/testdata"
+	"github.com/zmix999/goInception-plus/types"
 	"github.com/stretchr/testify/require"
 )
 

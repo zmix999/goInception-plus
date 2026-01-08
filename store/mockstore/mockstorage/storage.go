@@ -19,9 +19,9 @@ import (
 	"crypto/tls"
 
 	deadlockpb "github.com/pingcap/kvproto/pkg/deadlock"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/store/copr"
-	driver "gitee.com/zhoujin826/goInception-plus/store/driver/txn"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/store/copr"
+	driver "github.com/zmix999/goInception-plus/store/driver/txn"
 	"github.com/tikv/client-go/v2/config"
 	"github.com/tikv/client-go/v2/tikv"
 )

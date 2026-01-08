@@ -21,18 +21,18 @@ import (
 	"testing"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/charset"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/stmtctx"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
-	"gitee.com/zhoujin826/goInception-plus/testkit/trequire"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/mock"
-	"gitee.com/zhoujin826/goInception-plus/util/timeutil"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/charset"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/sessionctx/stmtctx"
+	"github.com/zmix999/goInception-plus/sessionctx/variable"
+	"github.com/zmix999/goInception-plus/testkit/trequire"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/mock"
+	"github.com/zmix999/goInception-plus/util/timeutil"
 	"github.com/pingcap/errors"
 	"github.com/stretchr/testify/require"
 )
@@ -605,7 +605,7 @@ func TestDayOfYear(t *testing.T) {
 func TestDateFormat(t *testing.T) {
 	t.Parallel()
 	ctx := createContext(t)
-	// Test case for https://gitee.com/zhoujin826/goInception-plus/issues/2908
+	// Test case for https://github.com/zmix999/goInception-plus/issues/2908
 	// SELECT DATE_FORMAT(null,'%Y-%M-%D')
 	args := []types.Datum{types.NewDatum(nil), types.NewStringDatum("%Y-%M-%D")}
 	fc := funcs[ast.DateFormat]
@@ -1813,7 +1813,7 @@ func TestUnixTimestamp(t *testing.T) {
 	require.GreaterOrEqual(t, d.GetInt64()-time.Now().Unix(), int64(-1))
 	require.LessOrEqual(t, d.GetInt64()-time.Now().Unix(), int64(1))
 
-	// https://gitee.com/zhoujin826/goInception-plus/issues/2496
+	// https://github.com/zmix999/goInception-plus/issues/2496
 	// Test UNIX_TIMESTAMP(NOW()).
 	resetStmtContext(ctx)
 	now, isNull, err := evalNowWithFsp(ctx, 0)
@@ -1831,7 +1831,7 @@ func TestUnixTimestamp(t *testing.T) {
 	require.GreaterOrEqual(t, val-time.Now().Unix(), int64(-1))
 	require.LessOrEqual(t, val-time.Now().Unix(), int64(1))
 
-	// https://gitee.com/zhoujin826/goInception-plus/issues/2852
+	// https://github.com/zmix999/goInception-plus/issues/2852
 	// Test UNIX_TIMESTAMP(NULL).
 	args = []types.Datum{types.NewDatum(nil)}
 	resetStmtContext(ctx)

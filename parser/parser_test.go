@@ -19,15 +19,15 @@ import (
 	"strings"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/parser"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/charset"
-	. "gitee.com/zhoujin826/goInception-plus/parser/format"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/opcode"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/parser/test_driver"
+	"github.com/zmix999/goInception-plus/parser"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/charset"
+	. "github.com/zmix999/goInception-plus/parser/format"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/opcode"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/parser/test_driver"
 	"github.com/pingcap/errors"
 	"github.com/stretchr/testify/require"
 )
@@ -120,7 +120,7 @@ func TestSimple(t *testing.T) {
 
 	// Testcase for /*! xx */
 	// See http://dev.mysql.com/doc/refman/5.7/en/comments.html
-	// Fix: https://gitee.com/zhoujin826/goInception-plus/issues/971
+	// Fix: https://github.com/zmix999/goInception-plus/issues/971
 	src = "/*!40101 SET character_set_client = utf8 */;"
 	stmts, _, err = p.Parse(src, "", "")
 	require.NoError(t, err)
@@ -864,13 +864,13 @@ func TestDMLStmt(t *testing.T) {
 		{"select 1 as a from dual where 1 < any (select 2) order by a", true, "SELECT 1 AS `a` FROM DUAL WHERE 1<ANY (SELECT 2) ORDER BY `a`"},
 		{"select 1 order by 1", true, "SELECT 1 ORDER BY 1"},
 
-		// for https://gitee.com/zhoujin826/goInception-plus/issues/320
+		// for https://github.com/zmix999/goInception-plus/issues/320
 		{`(select 1);`, true, "(SELECT 1)"},
 
-		//https://gitee.com/zhoujin826/goInception-plus/issues/14297
+		//https://github.com/zmix999/goInception-plus/issues/14297
 		{"select 1 where 1=1", true, "SELECT 1 FROM DUAL WHERE 1=1"},
 
-		//https://gitee.com/zhoujin826/goInception-plus/issues/24496
+		//https://github.com/zmix999/goInception-plus/issues/24496
 		{"select 1 group by 1", true, "SELECT 1 GROUP BY 1"},
 		{"select 1 from dual group by 1", true, "SELECT 1 GROUP BY 1"},
 
@@ -878,7 +878,7 @@ func TestDMLStmt(t *testing.T) {
 		{"select min(b) b from (select min(t.b) b from t where t.a = '');", true, "SELECT MIN(`b`) AS `b` FROM (SELECT MIN(`t`.`b`) AS `b` FROM `t` WHERE `t`.`a`=_UTF8MB4'')"},
 		{"select min(b) b from (select min(t.b) b from t where t.a = '') as t1;", true, "SELECT MIN(`b`) AS `b` FROM (SELECT MIN(`t`.`b`) AS `b` FROM `t` WHERE `t`.`a`=_UTF8MB4'') AS `t1`"},
 
-		// for https://gitee.com/zhoujin826/goInception-plus/issues/1050
+		// for https://github.com/zmix999/goInception-plus/issues/1050
 		{`SELECT /*!40001 SQL_NO_CACHE */ * FROM test WHERE 1 limit 0, 2000;`, true, "SELECT SQL_NO_CACHE * FROM `test` WHERE 1 LIMIT 0,2000"},
 
 		{`ANALYZE TABLE t`, true, "ANALYZE TABLE `t`"},
@@ -2954,7 +2954,7 @@ func TestDDL(t *testing.T) {
 		{"ALTER TABLE t PARTITION p ATTRIBUTES=default", true, "ALTER TABLE `t` PARTITION `p` ATTRIBUTES=DEFAULT"},
 		{"ALTER TABLE t PARTITION p ATTRIBUTES=DeFaUlT", true, "ALTER TABLE `t` PARTITION `p` ATTRIBUTES=DEFAULT"},
 		{"ALTER TABLE t PARTITION p ATTRIBUTES", false, ""},
-		// For https://gitee.com/zhoujin826/goInception-plus/issues/26778
+		// For https://github.com/zmix999/goInception-plus/issues/26778
 		{"CREATE TABLE t1 (attributes int);", true, "CREATE TABLE `t1` (`attributes` INT)"},
 
 		// For create index statement

@@ -17,7 +17,7 @@ package kv_test
 import (
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/kv"
 	"github.com/stretchr/testify/assert"
 )
 

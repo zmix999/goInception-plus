@@ -18,12 +18,12 @@ import (
 	"testing"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/domain"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/session"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore"
-	"gitee.com/zhoujin826/goInception-plus/testkit"
-	"gitee.com/zhoujin826/goInception-plus/util/profile"
+	"github.com/zmix999/goInception-plus/domain"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/session"
+	"github.com/zmix999/goInception-plus/store/mockstore"
+	"github.com/zmix999/goInception-plus/testkit"
+	"github.com/zmix999/goInception-plus/util/profile"
 	"github.com/stretchr/testify/require"
 )
 

@@ -1,4 +1,4 @@
-module gitee.com/zhoujin826/goInception-plus/parser
+module github.com/zmix999/goInception-plus/parser
 
 require (
 	github.com/cznic/golex v0.0.0-20181122101858-9c343928389c // indirect

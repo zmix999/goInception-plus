@@ -22,7 +22,7 @@ import (
 	"sync/atomic"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/config"
 )
 
 const (

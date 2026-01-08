@@ -18,11 +18,11 @@ import (
 	"strings"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/errno"
-	"gitee.com/zhoujin826/goInception-plus/testkit"
+	"github.com/zmix999/goInception-plus/errno"
+	"github.com/zmix999/goInception-plus/testkit"
 )
 
-// TestSelectBindingOnGlobalTempTableProhibited covers https://gitee.com/zhoujin826/goInception-plus/issues/26377
+// TestSelectBindingOnGlobalTempTableProhibited covers https://github.com/zmix999/goInception-plus/issues/26377
 func TestSelectBindingOnGlobalTempTableProhibited(t *testing.T) {
 	store, clean := testkit.CreateMockStore(t)
 	defer clean()
@@ -56,7 +56,7 @@ func TestSelectBindingOnGlobalTempTableProhibited(t *testing.T) {
 	}
 }
 
-// TestDMLBindingOnGlobalTempTableProhibited covers https://gitee.com/zhoujin826/goInception-plus/issues/27422
+// TestDMLBindingOnGlobalTempTableProhibited covers https://github.com/zmix999/goInception-plus/issues/27422
 func TestDMLBindingOnGlobalTempTableProhibited(t *testing.T) {
 	store, clean := testkit.CreateMockStore(t)
 	defer clean()

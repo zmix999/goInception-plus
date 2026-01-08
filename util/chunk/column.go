@@ -21,9 +21,9 @@ import (
 	"time"
 	"unsafe"
 
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/types/json"
-	"gitee.com/zhoujin826/goInception-plus/util/hack"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/types/json"
+	"github.com/zmix999/goInception-plus/util/hack"
 )
 
 // AppendDuration appends a duration value into this Column.

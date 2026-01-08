@@ -23,8 +23,8 @@ import (
 	"github.com/pingcap/kvproto/pkg/metapb"
 	"github.com/stretchr/testify/require"
 
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/util/logutil"
 )
 
 func TestHex(t *testing.T) {

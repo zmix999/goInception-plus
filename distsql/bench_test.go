@@ -18,8 +18,8 @@ import (
 	"context"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/util/benchdaily"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/benchdaily"
+	"github.com/zmix999/goInception-plus/util/chunk"
 )
 
 func BenchmarkSelectResponseChunk_BigResponse(b *testing.B) {

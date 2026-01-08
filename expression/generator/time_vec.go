@@ -24,7 +24,7 @@ import (
 	"path/filepath"
 	"text/template"
 
-	. "gitee.com/zhoujin826/goInception-plus/expression/generator/helper"
+	. "github.com/zmix999/goInception-plus/expression/generator/helper"
 )
 
 var addOrSubTime = template.Must(template.New("").Parse(`
@@ -48,10 +48,10 @@ var addOrSubTime = template.Must(template.New("").Parse(`
 package expression
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
 )
 {{ end }}
 {{ define "SetNull" }}{{if .Output.Fixed}}result.SetNull(i, true){{else}}result.AppendNull(){{end}} // fixed: {{.Output.Fixed }}{{ end }}
@@ -660,9 +660,9 @@ import (
 	"math"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/types"
 )
 
 type gener struct {

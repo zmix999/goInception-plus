@@ -18,7 +18,7 @@ import (
 	"time"
 
 	"github.com/pingcap/log"
-	"gitee.com/zhoujin826/goInception-plus/util/kvcache"
+	"github.com/zmix999/goInception-plus/util/kvcache"
 	"go.uber.org/zap"
 )
 

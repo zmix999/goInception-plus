@@ -20,8 +20,8 @@ import (
 	"sort"
 
 	"github.com/google/pprof/profile"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/texttree"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/texttree"
 )
 
 type flamegraphNode struct {

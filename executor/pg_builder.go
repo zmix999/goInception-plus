@@ -2,9 +2,9 @@ package executor
 
 import (
 	"github.com/pingcap/kvproto/pkg/diagnosticspb"
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
-	plannercore "gitee.com/zhoujin826/goInception-plus/planner/core"
-	"gitee.com/zhoujin826/goInception-plus/util"
+	"github.com/zmix999/goInception-plus/infoschema"
+	plannercore "github.com/zmix999/goInception-plus/planner/core"
+	"github.com/zmix999/goInception-plus/util"
 	"strings"
 )
 

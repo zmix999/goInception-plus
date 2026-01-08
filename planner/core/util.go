@@ -19,13 +19,13 @@ import (
 	"sort"
 	"strings"
 
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/ranger"
-	"gitee.com/zhoujin826/goInception-plus/util/set"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/ranger"
+	"github.com/zmix999/goInception-plus/util/set"
 )
 
 // AggregateFuncExtractor visits Expr tree.
@@ -256,7 +256,7 @@ func BuildPhysicalJoinSchema(joinType JoinType, join PhysicalPlan) *expression.S
 // GetStatsInfo gets the statistics info from a physical plan tree.
 func GetStatsInfo(i interface{}) map[string]uint64 {
 	if i == nil {
-		// it's a workaround for https://gitee.com/zhoujin826/goInception-plus/issues/17419
+		// it's a workaround for https://github.com/zmix999/goInception-plus/issues/17419
 		// To entirely fix this, uncomment the assertion in TestPreparedIssue17419
 		return nil
 	}

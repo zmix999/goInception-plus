@@ -14,7 +14,7 @@
 package ast
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/parser/format"
+	"github.com/zmix999/goInception-plus/parser/format"
 )
 
 var _ StmtNode = &IndexAdviseStmt{}

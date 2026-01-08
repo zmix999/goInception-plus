@@ -16,8 +16,8 @@ package core
 
 import (
 	. "github.com/pingcap/check"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/types"
 )
 
 // LogicalOptimize exports the `logicalOptimize` function for test packages and

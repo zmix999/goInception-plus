@@ -16,9 +16,9 @@ package ddl
 
 import (
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
-	"gitee.com/zhoujin826/goInception-plus/meta"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/infoschema"
+	"github.com/zmix999/goInception-plus/meta"
+	"github.com/zmix999/goInception-plus/parser/model"
 )
 
 func onLockTables(t *meta.Meta, job *model.Job) (ver int64, err error) {

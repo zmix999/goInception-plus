@@ -19,15 +19,15 @@ import (
 	"strconv"
 
 	"github.com/cznic/mathutil"
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/expression/aggregation"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/expression/aggregation"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/sessionctx/variable"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/logutil"
 	"go.uber.org/zap"
 )
 
@@ -205,7 +205,7 @@ func buildCount(aggFuncDesc *aggregation.AggFuncDesc, ordinal int) AggFunc {
 			// TODO: because Time and JSON does not have `hashcode()` or similar method
 			// so they're in exception for now.
 			// TODO: add hashCode method for all evaluate types (Decimal, Time, Duration, JSON).
-			// https://gitee.com/zhoujin826/goInception-plus/issues/15857
+			// https://github.com/zmix999/goInception-plus/issues/15857
 			switch aggFuncDesc.Args[0].GetType().EvalType() {
 			case types.ETInt:
 				return &countOriginalWithDistinct4Int{baseCount{base}}

@@ -15,7 +15,7 @@
 package memo
 
 import (
-	plannercore "gitee.com/zhoujin826/goInception-plus/planner/core"
+	plannercore "github.com/zmix999/goInception-plus/planner/core"
 )
 
 // Implementation defines the interface for cost of physical plan.

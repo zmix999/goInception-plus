@@ -1,6 +1,6 @@
 package core
 
-import "gitee.com/zhoujin826/goInception-plus/parser/ast"
+import "github.com/zmix999/goInception-plus/parser/ast"
 
 // SetParamType set the parameter type in ParamMarkerExpr from PointGetPlan
 // todo PointGetPlan计划中获取参数类型

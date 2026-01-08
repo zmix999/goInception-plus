@@ -17,9 +17,9 @@ package kv
 import (
 	"strings"
 
-	mysql "gitee.com/zhoujin826/goInception-plus/errno"
-	pmysql "gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/util/dbterror"
+	mysql "github.com/zmix999/goInception-plus/errno"
+	pmysql "github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/util/dbterror"
 )
 
 // TxnRetryableMark is used to uniform the commit error messages which could retry the transaction.

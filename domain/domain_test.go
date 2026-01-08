@@ -22,16 +22,16 @@ import (
 	"testing"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/meta"
-	"gitee.com/zhoujin826/goInception-plus/metrics"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/session/txninfo"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore"
-	"gitee.com/zhoujin826/goInception-plus/util"
-	"gitee.com/zhoujin826/goInception-plus/util/mock"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/meta"
+	"github.com/zmix999/goInception-plus/metrics"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/session/txninfo"
+	"github.com/zmix999/goInception-plus/sessionctx/variable"
+	"github.com/zmix999/goInception-plus/store/mockstore"
+	"github.com/zmix999/goInception-plus/util"
+	"github.com/zmix999/goInception-plus/util/mock"
 	"github.com/ngaut/pools"
 	"github.com/pingcap/errors"
 	"github.com/pingcap/failpoint"
@@ -134,7 +134,7 @@ func SubTestDomain(t *testing.T) {
 	_, res := dom.SchemaValidator.Check(ts, schemaVer, nil)
 	require.Equal(t, ResultSucc, res)
 
-	require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/domain/ErrorMockReloadFailed", `return(true)`))
+	require.NoError(t, failpoint.Enable("github.com/zmix999/goInception-plus/domain/ErrorMockReloadFailed", `return(true)`))
 
 	err = dom.Reload()
 	require.Error(t, err)
@@ -148,7 +148,7 @@ func SubTestDomain(t *testing.T) {
 	_, res = dom.SchemaValidator.Check(ts, schemaVer, nil)
 	require.Equal(t, ResultUnknown, res)
 
-	require.NoError(t, failpoint.Disable("gitee.com/zhoujin826/goInception-plus/domain/ErrorMockReloadFailed"))
+	require.NoError(t, failpoint.Disable("github.com/zmix999/goInception-plus/domain/ErrorMockReloadFailed"))
 	err = dom.Reload()
 	require.NoError(t, err)
 

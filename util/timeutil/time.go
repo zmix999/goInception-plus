@@ -23,7 +23,7 @@ import (
 	"syscall"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/util/logutil"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 )

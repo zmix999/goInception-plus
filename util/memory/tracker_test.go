@@ -23,8 +23,8 @@ import (
 	"testing"
 
 	"github.com/cznic/mathutil"
-	"gitee.com/zhoujin826/goInception-plus/errno"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/errno"
+	"github.com/zmix999/goInception-plus/parser/terror"
 	"github.com/stretchr/testify/require"
 )
 

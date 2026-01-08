@@ -15,9 +15,9 @@
 package executor
 
 import (
-	mysql "gitee.com/zhoujin826/goInception-plus/errno"
-	parser_mysql "gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/util/dbterror"
+	mysql "github.com/zmix999/goInception-plus/errno"
+	parser_mysql "github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/util/dbterror"
 )
 
 // Error instances.

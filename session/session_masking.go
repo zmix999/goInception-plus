@@ -11,9 +11,9 @@ import (
 
 	"golang.org/x/net/context"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/util/sqlexec"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/util/sqlexec"
 	json "github.com/CorgiMan/json2"
 	log "github.com/sirupsen/logrus"
 )

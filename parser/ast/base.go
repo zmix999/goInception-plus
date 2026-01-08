@@ -14,7 +14,7 @@
 package ast
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/parser/types"
+	"github.com/zmix999/goInception-plus/parser/types"
 )
 
 // node is the struct implements Node interface except for Accept method.

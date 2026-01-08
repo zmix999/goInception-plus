@@ -18,14 +18,14 @@ import (
 	"math"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/stmtctx"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/collate"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/sessionctx/stmtctx"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/collate"
 )
 
 // detachColumnCNFConditions detaches the condition for calculating range from the other conditions.
@@ -290,7 +290,7 @@ func (d *rangeDetacher) detachCNFCondAndBuildRangeForIndex(conditions []expressi
 	// Though ranges are built from equal/in conditions, some range may not be a single point after UnionRanges in buildCNFIndexRange.
 	// In order to prepare for the following appendRanges2PointRanges, we set d.mergeConsecutive to false and call buildCNFIndexRange
 	// again to get pointRanges, in which each range must be a single point. If we use ranges rather than pointRanges when calling
-	// appendRanges2PointRanges, wrong ranges would be calculated as issue https://gitee.com/zhoujin826/goInception-plus/issues/26029 describes.
+	// appendRanges2PointRanges, wrong ranges would be calculated as issue https://github.com/zmix999/goInception-plus/issues/26029 describes.
 	mergeConsecutive := d.mergeConsecutive
 	d.mergeConsecutive = false
 	pointRanges, err := d.buildCNFIndexRange(tpSlice, eqOrInCount, accessConds)

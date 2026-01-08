@@ -17,8 +17,8 @@ package core
 import (
 	"math/bits"
 
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/parser/ast"
 )
 
 type joinReorderDPSolver struct {

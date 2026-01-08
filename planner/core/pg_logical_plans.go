@@ -1,6 +1,6 @@
 package core
 
-import "gitee.com/zhoujin826/goInception-plus/parser/ast"
+import "github.com/zmix999/goInception-plus/parser/ast"
 
 // SetParamType todo 设置参数类型
 func (p *LogicalJoin) SetParamType(paramExprs *[]ast.ParamMarkerExpr) (err error) {

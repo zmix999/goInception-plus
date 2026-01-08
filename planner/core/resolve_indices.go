@@ -15,8 +15,8 @@
 package core
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/util/disjointset"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/util/disjointset"
 )
 
 // ResolveIndices implements Plan interface.

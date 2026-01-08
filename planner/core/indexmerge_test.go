@@ -17,13 +17,13 @@ package core
 import (
 	"context"
 
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
-	"gitee.com/zhoujin826/goInception-plus/parser"
-	"gitee.com/zhoujin826/goInception-plus/planner/util"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/util/hint"
-	"gitee.com/zhoujin826/goInception-plus/util/testleak"
-	"gitee.com/zhoujin826/goInception-plus/util/testutil"
+	"github.com/zmix999/goInception-plus/infoschema"
+	"github.com/zmix999/goInception-plus/parser"
+	"github.com/zmix999/goInception-plus/planner/util"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/util/hint"
+	"github.com/zmix999/goInception-plus/util/testleak"
+	"github.com/zmix999/goInception-plus/util/testutil"
 	. "github.com/pingcap/check"
 )
 

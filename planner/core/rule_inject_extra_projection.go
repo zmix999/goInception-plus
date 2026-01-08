@@ -15,12 +15,12 @@
 package core
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/expression/aggregation"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/planner/util"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/expression/aggregation"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/planner/util"
+	"github.com/zmix999/goInception-plus/sessionctx"
 )
 
 // InjectExtraProjection is used to extract the expressions of specific

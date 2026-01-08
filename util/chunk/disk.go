@@ -21,13 +21,13 @@ import (
 	"sync"
 
 	errors2 "github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/checksum"
-	"gitee.com/zhoujin826/goInception-plus/util/disk"
-	"gitee.com/zhoujin826/goInception-plus/util/encrypt"
-	"gitee.com/zhoujin826/goInception-plus/util/memory"
+	"github.com/zmix999/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/checksum"
+	"github.com/zmix999/goInception-plus/util/disk"
+	"github.com/zmix999/goInception-plus/util/encrypt"
+	"github.com/zmix999/goInception-plus/util/memory"
 )
 
 // ListInDisk represents a slice of chunks storing in temporary disk.

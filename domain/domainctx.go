@@ -15,7 +15,7 @@
 package domain
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/sessionctx"
 )
 
 // domainKeyType is a dummy type to avoid naming collision in context.

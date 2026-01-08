@@ -15,7 +15,7 @@
 package kv
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/config"
 	"github.com/tikv/client-go/v2/oracle"
 )
 

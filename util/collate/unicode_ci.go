@@ -15,7 +15,7 @@
 package collate
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/util/stringutil"
+	"github.com/zmix999/goInception-plus/util/stringutil"
 )
 
 const (

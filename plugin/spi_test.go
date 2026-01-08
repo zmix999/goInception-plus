@@ -18,8 +18,8 @@ import (
 	"context"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/plugin"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/variable"
+	"github.com/zmix999/goInception-plus/plugin"
+	"github.com/zmix999/goInception-plus/sessionctx/variable"
 	"github.com/stretchr/testify/require"
 )
 

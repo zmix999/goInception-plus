@@ -17,9 +17,9 @@ package executor
 import (
 	"context"
 
-	"gitee.com/zhoujin826/goInception-plus/domain"
-	"gitee.com/zhoujin826/goInception-plus/telemetry"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/domain"
+	"github.com/zmix999/goInception-plus/telemetry"
+	"github.com/zmix999/goInception-plus/util/chunk"
 )
 
 // AdminShowTelemetryExec is an executor for ADMIN SHOW TELEMETRY.

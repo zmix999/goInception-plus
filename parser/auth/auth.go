@@ -16,7 +16,7 @@ package auth
 import (
 	"fmt"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/format"
+	"github.com/zmix999/goInception-plus/parser/format"
 )
 
 // UserIdentity represents username and hostname.

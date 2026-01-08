@@ -16,7 +16,7 @@ package resourcegrouptag
 
 import (
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/parser"
+	"github.com/zmix999/goInception-plus/parser"
 	"github.com/pingcap/tipb/go-tipb"
 )
 

@@ -17,8 +17,8 @@ package table
 import (
 	"testing"
 
-	mysql "gitee.com/zhoujin826/goInception-plus/errno"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
+	mysql "github.com/zmix999/goInception-plus/errno"
+	"github.com/zmix999/goInception-plus/parser/terror"
 	"github.com/stretchr/testify/require"
 )
 

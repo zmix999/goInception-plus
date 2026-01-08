@@ -22,12 +22,12 @@ import (
 	"io"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/parser/charset"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/opcode"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	ast "gitee.com/zhoujin826/goInception-plus/parser/types"
-	"gitee.com/zhoujin826/goInception-plus/util/collate"
+	"github.com/zmix999/goInception-plus/parser/charset"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/opcode"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	ast "github.com/zmix999/goInception-plus/parser/types"
+	"github.com/zmix999/goInception-plus/util/collate"
 )
 
 // IsTypeBlob returns a boolean indicating whether the tp is a blob type.

@@ -19,9 +19,9 @@ import (
 	"strings"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore"
+	"github.com/zmix999/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/store/mockstore/unistore"
 	"github.com/tikv/client-go/v2/testutils"
 	"github.com/tikv/client-go/v2/tikv"
 	pd "github.com/tikv/pd/client"

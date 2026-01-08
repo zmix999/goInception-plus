@@ -15,8 +15,8 @@
 package dbterror
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/errno"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/errno"
+	"github.com/zmix999/goInception-plus/parser/terror"
 )
 
 // ErrClass represents a class of errors.

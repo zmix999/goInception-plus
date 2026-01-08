@@ -16,7 +16,7 @@ package opcode
 import (
 	"io"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/format"
+	"github.com/zmix999/goInception-plus/parser/format"
 )
 
 // Op is opcode type.

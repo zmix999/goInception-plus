@@ -20,9 +20,9 @@ import (
 	"strings"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/auth"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/types"
+	"github.com/zmix999/goInception-plus/parser/auth"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/types"
 	"github.com/pingcap/errors"
 )
 
@@ -252,7 +252,7 @@ const (
 	// TableInfoVersion4 indicates that the auto_increment allocator in TiDB has been separated from
 	// _tidb_rowid allocator. This version is introduced to preserve the compatibility of old tables:
 	// the tables with version < TableInfoVersion4 still use a single allocator for auto_increment and _tidb_rowid.
-	// Also see https://gitee.com/zhoujin826/goInception-plus/issues/982.
+	// Also see https://github.com/zmix999/goInception-plus/issues/982.
 	TableInfoVersion4 = uint16(4)
 
 	// CurrLatestTableInfoVersion means the latest table info in the current TiDB.
@@ -1126,7 +1126,7 @@ func NewCIStr(s string) (cs CIStr) {
 
 // UnmarshalJSON implements the user defined unmarshal method.
 // CIStr can be unmarshaled from a single string, so PartitionDefinition.Name
-// in this change https://gitee.com/zhoujin826/goInception-plus/pull/6460/files would be
+// in this change https://github.com/zmix999/goInception-plus/pull/6460/files would be
 // compatible during TiDB upgrading.
 func (cis *CIStr) UnmarshalJSON(b []byte) error {
 	type T CIStr

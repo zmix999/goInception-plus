@@ -18,7 +18,7 @@ import (
 	"os"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/util/testbridge"
+	"github.com/zmix999/goInception-plus/util/testbridge"
 )
 
 func TestMain(m *testing.M) {

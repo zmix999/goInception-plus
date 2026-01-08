@@ -20,8 +20,8 @@ package types
 import (
 	"strings"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/terror"
 )
 
 // IsTypeBlob returns a boolean indicating whether the tp is a blob type.

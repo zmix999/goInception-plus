@@ -15,8 +15,8 @@
 package core
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/util/plancodec"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/util/plancodec"
 )
 
 // IsTiFlashContained returns whether the plan contains TiFlash related executors.

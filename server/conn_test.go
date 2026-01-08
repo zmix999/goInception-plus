@@ -21,10 +21,10 @@ import (
 	"encoding/binary"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/session"
-	"gitee.com/zhoujin826/goInception-plus/testkit"
-	"gitee.com/zhoujin826/goInception-plus/util/arena"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/session"
+	"github.com/zmix999/goInception-plus/testkit"
+	"github.com/zmix999/goInception-plus/util/arena"
 	"github.com/stretchr/testify/require"
 )
 
@@ -304,7 +304,7 @@ func mapBelong(m1, m2 map[string]string) bool {
 	return true
 }
 
-// For issue https://gitee.com/zhoujin826/goInception-plus/issues/25069
+// For issue https://github.com/zmix999/goInception-plus/issues/25069
 func TestShowErrors(t *testing.T) {
 	t.Parallel()
 

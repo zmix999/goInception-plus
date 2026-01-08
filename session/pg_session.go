@@ -2,11 +2,11 @@ package session
 
 import (
 	"context"
-	"gitee.com/zhoujin826/goInception-plus/domain"
-	"gitee.com/zhoujin826/goInception-plus/executor"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/auth"
-	"gitee.com/zhoujin826/goInception-plus/privilege"
+	"github.com/zmix999/goInception-plus/domain"
+	"github.com/zmix999/goInception-plus/executor"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/auth"
+	"github.com/zmix999/goInception-plus/privilege"
 )
 
 // PrepareStmt is used for executing prepare statement in binary protocol

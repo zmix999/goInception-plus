@@ -18,9 +18,9 @@ import (
 	"bytes"
 	"sort"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/types/json"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/types/json"
 )
 
 // CompareFunc is a function to compare the two values in Row, the two columns must have the same type.

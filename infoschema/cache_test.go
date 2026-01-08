@@ -17,7 +17,7 @@ package infoschema_test
 import (
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
+	"github.com/zmix999/goInception-plus/infoschema"
 	"github.com/stretchr/testify/require"
 )
 

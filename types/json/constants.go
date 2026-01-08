@@ -18,8 +18,8 @@ import (
 	"encoding/binary"
 	"unicode/utf8"
 
-	mysql "gitee.com/zhoujin826/goInception-plus/errno"
-	"gitee.com/zhoujin826/goInception-plus/util/dbterror"
+	mysql "github.com/zmix999/goInception-plus/errno"
+	"github.com/zmix999/goInception-plus/util/dbterror"
 )
 
 // TypeCode indicates JSON type.

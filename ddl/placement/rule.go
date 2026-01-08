@@ -64,7 +64,7 @@ func NewRule(role PeerRoleType, replicas uint64, cnst Constraints) *Rule {
 
 // NewRules constructs []*Rule from a yaml-compatible representation of
 // 'array' or 'dict' constraints.
-// Refer to https://gitee.com/zhoujin826/goInception-plus/blob/master/docs/design/2020-06-24-placement-rules-in-sql.md.
+// Refer to https://github.com/zmix999/goInception-plus/blob/master/docs/design/2020-06-24-placement-rules-in-sql.md.
 func NewRules(role PeerRoleType, replicas uint64, cnstr string) ([]*Rule, error) {
 	rules := []*Rule{}
 

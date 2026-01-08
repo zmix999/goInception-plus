@@ -20,7 +20,7 @@ import (
 	"time"
 	"unsafe"
 
-	"gitee.com/zhoujin826/goInception-plus/util/kvcache"
+	"github.com/zmix999/goInception-plus/util/kvcache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

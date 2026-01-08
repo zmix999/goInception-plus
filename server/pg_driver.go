@@ -2,8 +2,8 @@ package server
 
 import (
 	"context"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
 )
 
 // PreparedStatement is the interface to use a prepared statement.

@@ -17,7 +17,7 @@ package bindinfo_test
 import (
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/testkit"
+	"github.com/zmix999/goInception-plus/testkit"
 	"github.com/pingcap/failpoint"
 	"github.com/stretchr/testify/require"
 )
@@ -31,9 +31,9 @@ func TestOptimizeOnlyOnce(t *testing.T) {
 	tk.MustExec("drop table if exists t")
 	tk.MustExec("create table t(a int, b int, index idxa(a))")
 	tk.MustExec("create global binding for select * from t using select * from t use index(idxa)")
-	require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/planner/checkOptimizeCountOne", "return"))
+	require.NoError(t, failpoint.Enable("github.com/zmix999/goInception-plus/planner/checkOptimizeCountOne", "return"))
 	defer func() {
-		require.NoError(t, failpoint.Disable("gitee.com/zhoujin826/goInception-plus/planner/checkOptimizeCountOne"))
+		require.NoError(t, failpoint.Disable("github.com/zmix999/goInception-plus/planner/checkOptimizeCountOne"))
 	}()
 	tk.MustQuery("select * from t").Check(testkit.Rows())
 }

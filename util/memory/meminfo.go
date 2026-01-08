@@ -21,7 +21,7 @@ import (
 	"sync"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/parser/terror"
 	"github.com/shirou/gopsutil/mem"
 )
 

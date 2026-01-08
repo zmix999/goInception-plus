@@ -19,11 +19,11 @@ import (
 	"encoding/json"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/domain"
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/statistics/handle"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/domain"
+	"github.com/zmix999/goInception-plus/infoschema"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/statistics/handle"
+	"github.com/zmix999/goInception-plus/util/chunk"
 )
 
 var _ Executor = &LoadStatsExec{}

@@ -26,24 +26,24 @@ import (
 	"strings"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/errno"
-	"gitee.com/zhoujin826/goInception-plus/executor"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/parser/auth"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/planner/core"
-	"gitee.com/zhoujin826/goInception-plus/privilege"
-	"gitee.com/zhoujin826/goInception-plus/privilege/privileges"
-	"gitee.com/zhoujin826/goInception-plus/session"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore"
-	"gitee.com/zhoujin826/goInception-plus/testkit"
-	"gitee.com/zhoujin826/goInception-plus/util"
-	"gitee.com/zhoujin826/goInception-plus/util/sem"
-	"gitee.com/zhoujin826/goInception-plus/util/sqlexec"
-	"gitee.com/zhoujin826/goInception-plus/util/testutil"
+	"github.com/zmix999/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/errno"
+	"github.com/zmix999/goInception-plus/executor"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/parser/auth"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/planner/core"
+	"github.com/zmix999/goInception-plus/privilege"
+	"github.com/zmix999/goInception-plus/privilege/privileges"
+	"github.com/zmix999/goInception-plus/session"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/store/mockstore"
+	"github.com/zmix999/goInception-plus/testkit"
+	"github.com/zmix999/goInception-plus/util"
+	"github.com/zmix999/goInception-plus/util/sem"
+	"github.com/zmix999/goInception-plus/util/sqlexec"
+	"github.com/zmix999/goInception-plus/util/testutil"
 	"github.com/stretchr/testify/require"
 )
 
@@ -1121,7 +1121,7 @@ func TestRevokePrivileges(t *testing.T) {
 	mustExec(t, se, "REVOKE SELECT ON mysql.* FROM 'withoutgrant'")
 	mustExec(t, se, "REVOKE ALL ON mysql.* FROM withoutgrant")
 
-	// For issue https://gitee.com/zhoujin826/goInception-plus/issues/23850
+	// For issue https://github.com/zmix999/goInception-plus/issues/23850
 	mustExec(t, se, "CREATE USER u4")
 	mustExec(t, se, "GRANT ALL ON *.* TO u4 WITH GRANT OPTION")
 	require.True(t, se.MysqlAuth(&auth.UserIdentity{Username: "u4", Hostname: "localhost", AuthUsername: "u4", AuthHostname: "%"}, nil, nil))
@@ -2219,7 +2219,7 @@ func TestSecurityEnhancedModeSysVars(t *testing.T) {
 }
 
 // TestViewDefiner tests that default roles are correctly applied in the algorithm definer
-// See: https://gitee.com/zhoujin826/goInception-plus/issues/24414
+// See: https://github.com/zmix999/goInception-plus/issues/24414
 func TestViewDefiner(t *testing.T) {
 	save := config.GetGlobalConfig()
 	config.UpdateGlobal(func(c *config.Config) { c.Security.SkipGrantTable = false })
@@ -2419,7 +2419,7 @@ func TestInfoSchemaUserPrivileges(t *testing.T) {
 	tk.MustQuery(`SELECT * FROM information_schema.user_privileges WHERE grantee = "'isselectonmysqluser'@'%'"`).Check(testkit.Rows("'isselectonmysqluser'@'%' def USAGE NO"))
 }
 
-// Issues https://gitee.com/zhoujin826/goInception-plus/issues/25972 and https://gitee.com/zhoujin826/goInception-plus/issues/26451
+// Issues https://github.com/zmix999/goInception-plus/issues/25972 and https://github.com/zmix999/goInception-plus/issues/26451
 func TestGrantOptionAndRevoke(t *testing.T) {
 	save := config.GetGlobalConfig()
 	config.UpdateGlobal(func(c *config.Config) { c.Security.SkipGrantTable = false })
@@ -2595,7 +2595,7 @@ func TestDashboardClientDynamicPriv(t *testing.T) {
 	))
 }
 
-// https://gitee.com/zhoujin826/goInception-plus/issues/27213
+// https://github.com/zmix999/goInception-plus/issues/27213
 func TestShowGrantsWithRolesAndDynamicPrivs(t *testing.T) {
 	save := config.GetGlobalConfig()
 	config.UpdateGlobal(func(c *config.Config) { c.Security.SkipGrantTable = false })
@@ -2720,7 +2720,7 @@ func TestGrantLockTables(t *testing.T) {
 	tk.MustExec("DROP DATABASE lock_tables_db")
 }
 
-// https://gitee.com/zhoujin826/goInception-plus/issues/27560
+// https://github.com/zmix999/goInception-plus/issues/27560
 func TestShowGrantsForCurrentUserUsingRole(t *testing.T) {
 	save := config.GetGlobalConfig()
 	config.UpdateGlobal(func(c *config.Config) { c.Security.SkipGrantTable = false })

@@ -14,7 +14,7 @@
 
 package collate
 
-import "gitee.com/zhoujin826/goInception-plus/util/stringutil"
+import "github.com/zmix999/goInception-plus/util/stringutil"
 
 type gbkChineseCICollator struct {
 }

@@ -17,15 +17,15 @@ import (
 	"fmt"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/parser"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/charset"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	. "gitee.com/zhoujin826/goInception-plus/parser/types"
+	"github.com/zmix999/goInception-plus/parser"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/charset"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	. "github.com/zmix999/goInception-plus/parser/types"
 	"github.com/stretchr/testify/require"
 
 	// import parser_driver
-	_ "gitee.com/zhoujin826/goInception-plus/parser/test_driver"
+	_ "github.com/zmix999/goInception-plus/parser/test_driver"
 )
 
 func TestFieldType(t *testing.T) {

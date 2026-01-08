@@ -19,8 +19,8 @@ import (
 	"sync"
 
 	"github.com/pingcap/failpoint"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/binloginfo"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/sessionctx/binloginfo"
+	"github.com/zmix999/goInception-plus/util/logutil"
 	"github.com/pingcap/tipb/go-binlog"
 	"github.com/tikv/client-go/v2/tikv"
 	"go.uber.org/zap"

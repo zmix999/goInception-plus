@@ -20,8 +20,8 @@ import (
 	"testing"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/store/mockstore"
 	"github.com/stretchr/testify/require"
 )
 

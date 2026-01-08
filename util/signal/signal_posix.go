@@ -22,7 +22,7 @@ import (
 	"runtime"
 	"syscall"
 
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/util/logutil"
 	"go.uber.org/zap"
 )
 

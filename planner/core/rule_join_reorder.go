@@ -17,8 +17,8 @@ package core
 import (
 	"context"
 
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/sessionctx"
 )
 
 // extractJoinGroup extracts all the join nodes connected with continuous

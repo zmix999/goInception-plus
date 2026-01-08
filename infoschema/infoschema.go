@@ -18,12 +18,12 @@ import (
 	"sort"
 	"sync"
 
-	"gitee.com/zhoujin826/goInception-plus/ddl/placement"
-	"gitee.com/zhoujin826/goInception-plus/meta/autoid"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/table"
-	"gitee.com/zhoujin826/goInception-plus/util"
+	"github.com/zmix999/goInception-plus/ddl/placement"
+	"github.com/zmix999/goInception-plus/meta/autoid"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/table"
+	"github.com/zmix999/goInception-plus/util"
 )
 
 // InfoSchema is the interface used to retrieve the schema information.

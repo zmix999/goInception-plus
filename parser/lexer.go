@@ -21,9 +21,9 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/charset"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	tidbfeature "gitee.com/zhoujin826/goInception-plus/parser/tidb"
+	"github.com/zmix999/goInception-plus/parser/charset"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	tidbfeature "github.com/zmix999/goInception-plus/parser/tidb"
 )
 
 var _ = yyLexer(&Scanner{})

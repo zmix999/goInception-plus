@@ -15,7 +15,7 @@
 package memo
 
 import (
-	plannercore "gitee.com/zhoujin826/goInception-plus/planner/core"
+	plannercore "github.com/zmix999/goInception-plus/planner/core"
 )
 
 // Operand is the node of a pattern tree, it represents a logical expression operator.

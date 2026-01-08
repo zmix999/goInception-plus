@@ -26,38 +26,38 @@ import (
 	"time"
 	"unsafe"
 
-	"gitee.com/zhoujin826/goInception-plus/distsql"
-	"gitee.com/zhoujin826/goInception-plus/domain"
-	"gitee.com/zhoujin826/goInception-plus/executor/aggfuncs"
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/expression/aggregation"
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/metrics"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	plannercore "gitee.com/zhoujin826/goInception-plus/planner/core"
-	plannerutil "gitee.com/zhoujin826/goInception-plus/planner/util"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/stmtctx"
-	"gitee.com/zhoujin826/goInception-plus/statistics"
-	"gitee.com/zhoujin826/goInception-plus/store/helper"
-	"gitee.com/zhoujin826/goInception-plus/table"
-	"gitee.com/zhoujin826/goInception-plus/table/tables"
-	"gitee.com/zhoujin826/goInception-plus/table/temptable"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util"
-	"gitee.com/zhoujin826/goInception-plus/util/admin"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/cteutil"
-	"gitee.com/zhoujin826/goInception-plus/util/dbterror"
-	"gitee.com/zhoujin826/goInception-plus/util/execdetails"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
-	"gitee.com/zhoujin826/goInception-plus/util/memory"
-	"gitee.com/zhoujin826/goInception-plus/util/ranger"
-	"gitee.com/zhoujin826/goInception-plus/util/rowcodec"
-	"gitee.com/zhoujin826/goInception-plus/util/timeutil"
+	"github.com/zmix999/goInception-plus/distsql"
+	"github.com/zmix999/goInception-plus/domain"
+	"github.com/zmix999/goInception-plus/executor/aggfuncs"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/expression/aggregation"
+	"github.com/zmix999/goInception-plus/infoschema"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/metrics"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	plannercore "github.com/zmix999/goInception-plus/planner/core"
+	plannerutil "github.com/zmix999/goInception-plus/planner/util"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/sessionctx/stmtctx"
+	"github.com/zmix999/goInception-plus/statistics"
+	"github.com/zmix999/goInception-plus/store/helper"
+	"github.com/zmix999/goInception-plus/table"
+	"github.com/zmix999/goInception-plus/table/tables"
+	"github.com/zmix999/goInception-plus/table/temptable"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util"
+	"github.com/zmix999/goInception-plus/util/admin"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/cteutil"
+	"github.com/zmix999/goInception-plus/util/dbterror"
+	"github.com/zmix999/goInception-plus/util/execdetails"
+	"github.com/zmix999/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/util/memory"
+	"github.com/zmix999/goInception-plus/util/ranger"
+	"github.com/zmix999/goInception-plus/util/rowcodec"
+	"github.com/zmix999/goInception-plus/util/timeutil"
 	"github.com/cznic/mathutil"
 	"github.com/pingcap/errors"
 	"github.com/pingcap/failpoint"
@@ -2306,7 +2306,7 @@ func (b *executorBuilder) getAdjustedSampleRate(sctx sessionctx.Context, tid int
 	if statsTbl.Count == 0 && !hasPD {
 		return 1
 	}
-	// we have issue https://gitee.com/zhoujin826/goInception-plus/issues/29216.
+	// we have issue https://github.com/zmix999/goInception-plus/issues/29216.
 	// To do a workaround for this issue, we check the approxiCount from the pd side to do a comparison.
 	// If the count from the stats_meta is extremely smaller than the approximate count from the pd,
 	// we think that we meet this issue and use the approximate count to calculate the sample rate.
@@ -2705,7 +2705,7 @@ func (b *executorBuilder) buildIndexLookUpJoin(v *plannercore.PhysicalIndexJoin)
 		innerTypes[i] = col.RetType.Clone()
 		// The `innerTypes` would be called for `Datum.ConvertTo` when converting the columns from outer table
 		// to build hash map or construct lookup keys. So we need to modify its Flen otherwise there would be
-		// truncate error. See issue https://gitee.com/zhoujin826/goInception-plus/issues/21232 for example.
+		// truncate error. See issue https://github.com/zmix999/goInception-plus/issues/21232 for example.
 		if innerTypes[i].EvalType() == types.ETString {
 			innerTypes[i].Flen = types.UnspecifiedLength
 		}
@@ -2828,7 +2828,7 @@ func (b *executorBuilder) buildIndexLookUpMergeJoin(v *plannercore.PhysicalIndex
 		innerTypes[i] = col.RetType.Clone()
 		// The `innerTypes` would be called for `Datum.ConvertTo` when converting the columns from outer table
 		// to build hash map or construct lookup keys. So we need to modify its Flen otherwise there would be
-		// truncate error. See issue https://gitee.com/zhoujin826/goInception-plus/issues/21232 for example.
+		// truncate error. See issue https://github.com/zmix999/goInception-plus/issues/21232 for example.
 		if innerTypes[i].EvalType() == types.ETString {
 			innerTypes[i].Flen = types.UnspecifiedLength
 		}

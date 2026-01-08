@@ -35,19 +35,19 @@ LINUX     := "Linux"
 MAC       := "Darwin"
 PACKAGE_LIST  := go list ./...| grep -vE "vendor"
 PACKAGES  := $$($(PACKAGE_LIST))
-PACKAGE_DIRECTORIES := $(PACKAGE_LIST) | sed 's|gitee.com/zhoujin826/$(PROJECT)/||'
+PACKAGE_DIRECTORIES := $(PACKAGE_LIST) | sed 's|github.com/zmix999/$(PROJECT)/||'
 FILES     := $$(find $$($(PACKAGE_DIRECTORIES)) -name "*.go")
 
 GOFAIL_ENABLE  := $$(find $$PWD/ -type d | grep -vE "(\.git|vendor)" | xargs gofail enable)
 GOFAIL_DISABLE := $$(find $$PWD/ -type d | grep -vE "(\.git|vendor)" | xargs gofail disable)
 
-LDFLAGS += -X "gitee.com/zhoujin826/goInception-plus/parser/mysql.TiDBReleaseVersion=$(shell git describe --tags --dirty)"
-LDFLAGS += -X "gitee.com/zhoujin826/goInception-plus/util/versioninfo.TiDBBuildTS=$(shell date '+%Y-%m-%d %H:%M:%S')"
-LDFLAGS += -X "gitee.com/zhoujin826/goInception-plus/util/versioninfo.TiDBGitHash=$(shell git rev-parse HEAD)"
-LDFLAGS += -X "gitee.com/zhoujin826/goInception-plus/util/versioninfo.TiDBGitBranch=$(shell git rev-parse --abbrev-ref HEAD)"
-LDFLAGS += -X "gitee.com/zhoujin826/goInception-plus/util/printer.buildVersion=$(shell go version)"
+LDFLAGS += -X "github.com/zmix999/goInception-plus/parser/mysql.TiDBReleaseVersion=$(shell git describe --tags --dirty)"
+LDFLAGS += -X "github.com/zmix999/goInception-plus/util/versioninfo.TiDBBuildTS=$(shell date '+%Y-%m-%d %H:%M:%S')"
+LDFLAGS += -X "github.com/zmix999/goInception-plus/util/versioninfo.TiDBGitHash=$(shell git rev-parse HEAD)"
+LDFLAGS += -X "github.com/zmix999/goInception-plus/util/versioninfo.TiDBGitBranch=$(shell git rev-parse --abbrev-ref HEAD)"
+LDFLAGS += -X "github.com/zmix999/goInception-plus/util/printer.buildVersion=$(shell go version)"
 
-TEST_LDFLAGS =  -X "gitee.com/zhoujin826/goInception-plus/config.checkBeforeDropLDFlag=1"
+TEST_LDFLAGS =  -X "github.com/zmix999/goInception-plus/config.checkBeforeDropLDFlag=1"
 
 CHECK_LDFLAGS += $(LDFLAGS) ${TEST_LDFLAGS}
 
@@ -216,7 +216,7 @@ ifeq ("$(TRAVIS_COVERAGE)", "1")
 	@export log_level=error; \
 	go install github.com/go-playground/overalls@7df9f728c018
 	# go get github.com/mattn/goveralls
-	# $(OVERALLS) -project=gitee.com/zhoujin826/goInception-plus -covermode=count -ignore='.git,vendor,cmd,docs,LICENSES' || { $(GOFAIL_DISABLE); exit 1; }
+	# $(OVERALLS) -project=github.com/zmix999/goInception-plus -covermode=count -ignore='.git,vendor,cmd,docs,LICENSES' || { $(GOFAIL_DISABLE); exit 1; }
 	# $(GOVERALLS) -service=$(GOVERALLS_SERVICE) -coverprofile=overalls.coverprofile || { $(GOFAIL_DISABLE); exit 1; }
 
 	$(OVERALLS) -project=$(GOVERALLS_PROJECT) -covermode=count -ignore='.git,vendor,cmd,docs,LICENSES' -concurrency=1 -- -short || { $(GOFAIL_DISABLE); exit 1; }
@@ -225,7 +225,7 @@ else
 ifeq ("$(API)", "1")
 	@echo "Running in native mode (API)."
 	@export log_level=error;
-	$(GOTEST) -timeout 30m -ldflags '$(TEST_LDFLAGS)' gitee.com/zhoujin826/goInception-plus/session -api
+	$(GOTEST) -timeout 30m -ldflags '$(TEST_LDFLAGS)' github.com/zmix999/goInception-plus/session -api
 else
 	@echo "Running in native mode."
 	@export log_level=error;
@@ -239,7 +239,7 @@ endif
 testapi: parserlib
 	@echo "Running in native mode (API)."
 	@export log_level=error;
-	$(GOTEST) -timeout 30m -ldflags '$(TEST_LDFLAGS)' gitee.com/zhoujin826/goInception-plus/session -api
+	$(GOTEST) -timeout 30m -ldflags '$(TEST_LDFLAGS)' github.com/zmix999/goInception-plus/session -api
 
 
 race: parserlib

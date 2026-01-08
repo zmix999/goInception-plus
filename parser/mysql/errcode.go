@@ -968,5 +968,5 @@ const (
 	ErrWarnOptimizerHintInvalidInteger  = 8065
 
 	// Stop adding error code here!
-	// They are moved to gitee.com/zhoujin826/goInception-plus/errno
+	// They are moved to github.com/zmix999/goInception-plus/errno
 )

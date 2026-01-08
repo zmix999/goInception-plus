@@ -15,8 +15,8 @@
 package aggfuncs
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/util/chunk"
 )
 
 // percentRank calculates the percentage of partition values less than the value in the current row, excluding the highest value.

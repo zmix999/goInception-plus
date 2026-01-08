@@ -24,7 +24,7 @@ import (
 	"strings"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/stmtctx"
+	"github.com/zmix999/goInception-plus/sessionctx/stmtctx"
 )
 
 // BinaryLiteral is the internal type for storing bit / hex literal type.

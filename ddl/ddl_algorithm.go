@@ -17,7 +17,7 @@ package ddl
 import (
 	"fmt"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/ast"
 )
 
 // AlterAlgorithm is used to store supported alter algorithm.

@@ -15,7 +15,7 @@
 package core
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/ast"
 )
 
 // Trace represents a trace plan.

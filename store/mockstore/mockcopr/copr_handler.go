@@ -19,7 +19,7 @@ import (
 
 	"github.com/pingcap/errors"
 	"github.com/pingcap/kvproto/pkg/coprocessor"
-	"gitee.com/zhoujin826/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/kv"
 	"github.com/pingcap/tipb/go-tipb"
 	"github.com/tikv/client-go/v2/testutils"
 )

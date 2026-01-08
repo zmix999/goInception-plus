@@ -18,8 +18,8 @@ import (
 	"encoding/binary"
 	"reflect"
 
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	plannercore "gitee.com/zhoujin826/goInception-plus/planner/core"
+	"github.com/zmix999/goInception-plus/expression"
+	plannercore "github.com/zmix999/goInception-plus/planner/core"
 )
 
 // GroupExpr is used to store all the logically equivalent expressions which

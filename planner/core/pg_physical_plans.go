@@ -1,9 +1,9 @@
 package core
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	driver "gitee.com/zhoujin826/goInception-plus/types/parser_driver"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	driver "github.com/zmix999/goInception-plus/types/parser_driver"
 )
 
 // SetParamType 从tableReader计划中获取参数类型

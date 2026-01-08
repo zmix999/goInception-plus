@@ -9,8 +9,8 @@ import (
 	"sync"
 	"unicode/utf8"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/mysql"
 	"github.com/go-mysql-org/go-mysql/replication"
 	mysqlDriver "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"

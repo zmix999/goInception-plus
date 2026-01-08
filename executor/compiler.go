@@ -18,15 +18,15 @@ import (
 	"context"
 	"fmt"
 
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/metrics"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/planner"
-	plannercore "gitee.com/zhoujin826/goInception-plus/planner/core"
+	"github.com/zmix999/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/metrics"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/planner"
+	plannercore "github.com/zmix999/goInception-plus/planner/core"
 	"github.com/opentracing/opentracing-go"
 	"github.com/pingcap/failpoint"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/sessionctx"
 )
 
 var (

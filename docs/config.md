@@ -7,7 +7,7 @@ goInception-plus run by `./goInception-plus -config=config/config.toml`, this do
 
 `config.toml` contains general config such as `host` and `port`, and group config block such as `[inc]` and `[log]` etc.
 
-Demo(the demo blow just shows the structure of config file, [see details](https://gitee.com/zhoujin826/goInception-plus/tree/master/config/config.toml.default))
+Demo(the demo blow just shows the structure of config file, [see details](https://github.com/zmix999/goInception-plus/tree/master/config/config.toml.default))
 
 ```toml
 

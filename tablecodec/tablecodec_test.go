@@ -21,13 +21,13 @@ import (
 	"time"
 
 	"github.com/pingcap/failpoint"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx/stmtctx"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/codec"
-	"gitee.com/zhoujin826/goInception-plus/util/rowcodec"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/sessionctx/stmtctx"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/codec"
+	"github.com/zmix999/goInception-plus/util/rowcodec"
 	"github.com/stretchr/testify/require"
 )
 
@@ -46,7 +46,7 @@ func TestTableCodec(t *testing.T) {
 	require.Equal(t, int64(2), h.IntValue())
 }
 
-// https://gitee.com/zhoujin826/goInception-plus/issues/27687.
+// https://github.com/zmix999/goInception-plus/issues/27687.
 func TestTableCodecInvalid(t *testing.T) {
 	tableID := int64(100)
 	buf := make([]byte, 0, 11)
@@ -392,9 +392,9 @@ func TestCutKey(t *testing.T) {
 }
 
 func TestDecodeBadDecical(t *testing.T) {
-	require.NoError(t, failpoint.Enable("gitee.com/zhoujin826/goInception-plus/util/codec/errorInDecodeDecimal", `return(true)`))
+	require.NoError(t, failpoint.Enable("github.com/zmix999/goInception-plus/util/codec/errorInDecodeDecimal", `return(true)`))
 	defer func() {
-		require.NoError(t, failpoint.Disable("gitee.com/zhoujin826/goInception-plus/util/codec/errorInDecodeDecimal"))
+		require.NoError(t, failpoint.Disable("github.com/zmix999/goInception-plus/util/codec/errorInDecodeDecimal"))
 	}()
 	dec := types.NewDecFromStringForTest("0.111")
 	b, err := codec.EncodeDecimal(nil, dec, 0, 0)

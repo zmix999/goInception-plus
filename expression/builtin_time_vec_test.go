@@ -19,11 +19,11 @@ import (
 	"math/rand"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/mock"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -178,7 +178,7 @@ var vecBuiltinTimeCases = map[string][]vecExprBenchCase{
 	ast.SecToTime: {
 		{retEvalType: types.ETDuration, childrenTypes: []types.EvalType{types.ETReal}},
 	},
-	// This test case may fail due to the issue: https://gitee.com/zhoujin826/goInception-plus/issues/13638.
+	// This test case may fail due to the issue: https://github.com/zmix999/goInception-plus/issues/13638.
 	// We remove this case to stabilize CI, and will reopen this when we fix the issue above.
 	// ast.TimestampAdd: {
 	// 	{
@@ -531,7 +531,7 @@ var vecBuiltinTimeCases = map[string][]vecExprBenchCase{
 	ast.LastDay: {
 		{retEvalType: types.ETDatetime, childrenTypes: []types.EvalType{types.ETDatetime}},
 	},
-	/* TODO: to fix https://gitee.com/zhoujin826/goInception-plus/issues/9716 in vectorized evaluation.
+	/* TODO: to fix https://github.com/zmix999/goInception-plus/issues/9716 in vectorized evaluation.
 	ast.Extract: {
 		{retEvalType: types.ETInt, childrenTypes: []types.EvalType{types.ETString, types.ETDatetime}, geners: []dataGenerator{newDateTimeUnitStrGener(), nil}},
 		{retEvalType: types.ETInt, childrenTypes: []types.EvalType{types.ETString, types.ETDuration},

@@ -16,8 +16,8 @@ package server
 import (
 	"fmt"
 	"github.com/jackc/pgproto3/v2"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/terror"
 	"strings"
 )
 

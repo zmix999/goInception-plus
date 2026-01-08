@@ -25,7 +25,7 @@ import (
 	"path/filepath"
 	"text/template"
 
-	. "gitee.com/zhoujin826/goInception-plus/expression/generator/helper"
+	. "github.com/zmix999/goInception-plus/expression/generator/helper"
 )
 
 const header = `// Copyright 2021 PingCAP, Inc.
@@ -50,7 +50,7 @@ package expression
 const newLine = "\n"
 
 const builtinStringImports = `import (
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/chunk"
 )
 `
 
@@ -116,8 +116,8 @@ var builtinStringVecTestTpl = template.Must(template.New("").Parse(`
 import (
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/types"
 )
 
 var vecGeneratedBuiltinStringCases = map[string][]vecExprBenchCase{

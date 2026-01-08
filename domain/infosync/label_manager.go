@@ -21,8 +21,8 @@ import (
 	"path"
 	"sync"
 
-	"gitee.com/zhoujin826/goInception-plus/ddl/label"
-	"gitee.com/zhoujin826/goInception-plus/util/pdapi"
+	"github.com/zmix999/goInception-plus/ddl/label"
+	"github.com/zmix999/goInception-plus/util/pdapi"
 )
 
 // LabelRuleManager manages label rules

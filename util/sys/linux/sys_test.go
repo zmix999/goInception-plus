@@ -16,7 +16,7 @@ package linux_test
 import (
 	"testing"
 
-	. "gitee.com/zhoujin826/goInception-plus/util/sys/linux"
+	. "github.com/zmix999/goInception-plus/util/sys/linux"
 	"github.com/stretchr/testify/require"
 )
 

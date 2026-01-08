@@ -17,7 +17,7 @@ package chunk
 import (
 	"sync"
 
-	"gitee.com/zhoujin826/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/types"
 )
 
 // Pool is the Column pool.

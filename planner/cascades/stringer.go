@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"strings"
 
-	"gitee.com/zhoujin826/goInception-plus/planner/memo"
+	"github.com/zmix999/goInception-plus/planner/memo"
 )
 
 // ToString stringifies a Group Tree.

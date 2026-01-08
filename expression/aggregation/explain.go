@@ -18,7 +18,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/ast"
 )
 
 // ExplainAggFunc generates explain information for a aggregation function.

@@ -69,7 +69,7 @@ Thanks for your contributions!
 
 ### Step 1: Fork in the cloud
 
-1. Visit https://gitee.com/zhoujin826/goInception-plus
+1. Visit https://github.com/zmix999/goInception-plus
 2. On the top right of the page, click the `Fork` button (top right) to create
    a cloud-based fork of the repository.
 
@@ -108,7 +108,7 @@ git remote set-url --push upstream no_push
 # It should look like:
 # origin    git@gitee.com:$(user)/goInception-plus.git (fetch)
 # origin    git@gitee.com:$(user)/goInception-plus.git (push)
-# upstream  https://gitee.com/zhoujin826/goInception-plus.git (fetch)
+# upstream  https://github.com/zmix999/goInception-plus.git (fetch)
 # upstream  no_push (push)
 git remote -v
 ```

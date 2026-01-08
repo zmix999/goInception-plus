@@ -23,16 +23,16 @@ import (
 	"testing"
 	"time"
 
-	"gitee.com/zhoujin826/goInception-plus/config"
-	"gitee.com/zhoujin826/goInception-plus/domain"
-	"gitee.com/zhoujin826/goInception-plus/executor"
-	"gitee.com/zhoujin826/goInception-plus/infoschema"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/benchdaily"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
-	"gitee.com/zhoujin826/goInception-plus/util/sqlexec"
+	"github.com/zmix999/goInception-plus/config"
+	"github.com/zmix999/goInception-plus/domain"
+	"github.com/zmix999/goInception-plus/executor"
+	"github.com/zmix999/goInception-plus/infoschema"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/store/mockstore"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/benchdaily"
+	"github.com/zmix999/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/util/sqlexec"
 	"github.com/pingcap/log"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -1696,7 +1696,7 @@ func BenchmarkInsertIntoSelect(b *testing.B) {
 }
 
 func BenchmarkCompileExecutePreparedStmt(b *testing.B) {
-	// See issue https://gitee.com/zhoujin826/goInception-plus/issues/27633
+	// See issue https://github.com/zmix999/goInception-plus/issues/27633
 	se, do, st := prepareBenchSession()
 	defer func() {
 		se.Close()

@@ -17,10 +17,10 @@ package generatedexpr
 import (
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/ast"
 	"github.com/stretchr/testify/require"
 
-	_ "gitee.com/zhoujin826/goInception-plus/types/parser_driver"
+	_ "github.com/zmix999/goInception-plus/types/parser_driver"
 )
 
 func TestParseExpression(t *testing.T) {

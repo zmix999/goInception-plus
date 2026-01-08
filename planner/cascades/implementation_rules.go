@@ -17,11 +17,11 @@ package cascades
 import (
 	"math"
 
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	plannercore "gitee.com/zhoujin826/goInception-plus/planner/core"
-	impl "gitee.com/zhoujin826/goInception-plus/planner/implementation"
-	"gitee.com/zhoujin826/goInception-plus/planner/memo"
-	"gitee.com/zhoujin826/goInception-plus/planner/property"
+	"github.com/zmix999/goInception-plus/expression"
+	plannercore "github.com/zmix999/goInception-plus/planner/core"
+	impl "github.com/zmix999/goInception-plus/planner/implementation"
+	"github.com/zmix999/goInception-plus/planner/memo"
+	"github.com/zmix999/goInception-plus/planner/property"
 )
 
 // ImplementationRule defines the interface for implementation rules.

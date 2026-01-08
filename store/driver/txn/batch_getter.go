@@ -18,7 +18,7 @@ import (
 	"context"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/kv"
 )
 
 // BatchBufferGetter is the interface for BatchGet.

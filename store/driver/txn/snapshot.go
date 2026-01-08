@@ -19,9 +19,9 @@ import (
 	"unsafe"
 
 	"github.com/pingcap/kvproto/pkg/metapb"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	derr "gitee.com/zhoujin826/goInception-plus/store/driver/error"
-	"gitee.com/zhoujin826/goInception-plus/store/driver/options"
+	"github.com/zmix999/goInception-plus/kv"
+	derr "github.com/zmix999/goInception-plus/store/driver/error"
+	"github.com/zmix999/goInception-plus/store/driver/options"
 	"github.com/tikv/client-go/v2/txnkv/txnsnapshot"
 	"github.com/tikv/client-go/v2/txnkv/txnutil"
 )

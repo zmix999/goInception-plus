@@ -17,11 +17,11 @@ package cascades
 import (
 	"math"
 
-	plannercore "gitee.com/zhoujin826/goInception-plus/planner/core"
-	"gitee.com/zhoujin826/goInception-plus/planner/implementation"
-	"gitee.com/zhoujin826/goInception-plus/planner/memo"
-	"gitee.com/zhoujin826/goInception-plus/planner/property"
-	"gitee.com/zhoujin826/goInception-plus/planner/util"
+	plannercore "github.com/zmix999/goInception-plus/planner/core"
+	"github.com/zmix999/goInception-plus/planner/implementation"
+	"github.com/zmix999/goInception-plus/planner/memo"
+	"github.com/zmix999/goInception-plus/planner/property"
+	"github.com/zmix999/goInception-plus/planner/util"
 )
 
 // Enforcer defines the interface for enforcer rules.

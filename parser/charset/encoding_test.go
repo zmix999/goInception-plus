@@ -17,7 +17,7 @@ import (
 	"fmt"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/charset"
+	"github.com/zmix999/goInception-plus/parser/charset"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/text/transform"
 )

@@ -18,8 +18,8 @@ import (
 	"os"
 
 	"github.com/pingcap/errors"
-	usconf "gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/config"
-	ussvr "gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/server"
+	usconf "github.com/zmix999/goInception-plus/store/mockstore/unistore/config"
+	ussvr "github.com/zmix999/goInception-plus/store/mockstore/unistore/server"
 	pd "github.com/tikv/pd/client"
 )
 

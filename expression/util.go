@@ -25,17 +25,17 @@ import (
 
 	"github.com/pingcap/errors"
 	"github.com/pingcap/failpoint"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/parser/opcode"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	driver "gitee.com/zhoujin826/goInception-plus/types/parser_driver"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/collate"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
-	"gitee.com/zhoujin826/goInception-plus/util/sqlexec"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/parser/opcode"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/types"
+	driver "github.com/zmix999/goInception-plus/types/parser_driver"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/collate"
+	"github.com/zmix999/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/util/sqlexec"
 	"go.uber.org/zap"
 	"golang.org/x/tools/container/intsets"
 )
@@ -229,7 +229,7 @@ func ColumnSubstituteImpl(expr Expression, schema *Schema, newExprs []Expression
 			newFunc := v.Clone().(*ScalarFunction)
 			substituted, newFunc.GetArgs()[0] = ColumnSubstituteImpl(newFunc.GetArgs()[0], schema, newExprs)
 			if substituted {
-				// Workaround for issue https://gitee.com/zhoujin826/goInception-plus/issues/28804
+				// Workaround for issue https://github.com/zmix999/goInception-plus/issues/28804
 				e := NewFunctionInternal(v.GetCtx(), v.FuncName.L, v.RetType, newFunc.GetArgs()...)
 				e.SetCoercibility(v.Coercibility())
 				return true, e

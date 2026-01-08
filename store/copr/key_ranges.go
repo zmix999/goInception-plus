@@ -20,7 +20,7 @@ import (
 	"sort"
 
 	"github.com/pingcap/kvproto/pkg/coprocessor"
-	"gitee.com/zhoujin826/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/kv"
 )
 
 // KeyRanges is like []kv.KeyRange, but may has extra elements at head/tail.

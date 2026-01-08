@@ -24,7 +24,7 @@ import (
 	"runtime"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/util/logutil"
 	"github.com/BurntSushi/toml"
 	zaplog "github.com/pingcap/log"
 	"github.com/stretchr/testify/require"

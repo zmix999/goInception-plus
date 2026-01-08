@@ -19,15 +19,15 @@ import (
 	"time"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/metrics"
-	"gitee.com/zhoujin826/goInception-plus/parser/terror"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/statistics"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/codec"
-	"gitee.com/zhoujin826/goInception-plus/util/dbterror"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/metrics"
+	"github.com/zmix999/goInception-plus/parser/terror"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/statistics"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/codec"
+	"github.com/zmix999/goInception-plus/util/dbterror"
 	"github.com/pingcap/tipb/go-tipb"
 )
 
@@ -81,7 +81,7 @@ func (r *streamResult) readDataFromResponse(ctx context.Context, resp kv.Respons
 	if resultSubset == nil {
 		if !r.durationReported {
 			// TODO: Add a label to distinguish between success or failure.
-			// https://gitee.com/zhoujin826/goInception-plus/issues/11397
+			// https://github.com/zmix999/goInception-plus/issues/11397
 			metrics.DistSQLQueryHistogram.WithLabelValues(r.label, r.sqlType).Observe(r.fetchDuration.Seconds())
 			r.durationReported = true
 		}

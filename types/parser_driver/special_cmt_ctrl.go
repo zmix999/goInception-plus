@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/tidb"
+	"github.com/zmix999/goInception-plus/parser/tidb"
 )
 
 // SpecialCommentVersionPrefix is the prefix of TiDB executable comments.

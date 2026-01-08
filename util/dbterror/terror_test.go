@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/errno"
+	"github.com/zmix999/goInception-plus/errno"
 	"github.com/pingcap/errors"
 	"github.com/stretchr/testify/require"
 )

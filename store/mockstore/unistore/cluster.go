@@ -20,8 +20,8 @@ import (
 	"time"
 
 	"github.com/pingcap/kvproto/pkg/metapb"
-	us "gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/tikv"
-	"gitee.com/zhoujin826/goInception-plus/util/codec"
+	us "github.com/zmix999/goInception-plus/store/mockstore/unistore/tikv"
+	"github.com/zmix999/goInception-plus/util/codec"
 	"github.com/tikv/client-go/v2/testutils"
 )
 

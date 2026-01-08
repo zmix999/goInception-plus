@@ -17,8 +17,8 @@ package expression
 import (
 	"testing"
 
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/types"
 )
 
 var vecBuiltinLikeCases = map[string][]vecExprBenchCase{

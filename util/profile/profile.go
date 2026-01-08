@@ -24,8 +24,8 @@ import (
 
 	"github.com/google/pprof/profile"
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/types"
-	"gitee.com/zhoujin826/goInception-plus/util/texttree"
+	"github.com/zmix999/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/util/texttree"
 )
 
 // CPUProfileInterval represents the duration of sampling CPU

@@ -23,13 +23,13 @@ import (
 
 	"github.com/pingcap/errors"
 	"github.com/pingcap/failpoint"
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/util"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
-	"gitee.com/zhoujin826/goInception-plus/util/execdetails"
-	"gitee.com/zhoujin826/goInception-plus/util/logutil"
-	"gitee.com/zhoujin826/goInception-plus/util/memory"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/util"
+	"github.com/zmix999/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/util/execdetails"
+	"github.com/zmix999/goInception-plus/util/logutil"
+	"github.com/zmix999/goInception-plus/util/memory"
 	"go.uber.org/zap"
 )
 
@@ -297,7 +297,7 @@ func (e *ProjectionExec) drainOutputCh(ch chan *projectionOutput) {
 
 // Close implements the Executor Close interface.
 func (e *ProjectionExec) Close() error {
-	// if e.baseExecutor.Open returns error, e.childResult will be nil, see https://gitee.com/zhoujin826/goInception-plus/issues/24210
+	// if e.baseExecutor.Open returns error, e.childResult will be nil, see https://github.com/zmix999/goInception-plus/issues/24210
 	// for more information
 	if e.isUnparallelExec() && e.childResult != nil {
 		e.memTracker.Consume(-e.childResult.MemoryUsage())

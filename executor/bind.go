@@ -18,11 +18,11 @@ import (
 	"context"
 
 	"github.com/pingcap/errors"
-	"gitee.com/zhoujin826/goInception-plus/bindinfo"
-	"gitee.com/zhoujin826/goInception-plus/domain"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	plannercore "gitee.com/zhoujin826/goInception-plus/planner/core"
-	"gitee.com/zhoujin826/goInception-plus/util/chunk"
+	"github.com/zmix999/goInception-plus/bindinfo"
+	"github.com/zmix999/goInception-plus/domain"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	plannercore "github.com/zmix999/goInception-plus/planner/core"
+	"github.com/zmix999/goInception-plus/util/chunk"
 )
 
 // SQLBindExec represents a bind executor.

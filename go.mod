@@ -1,4 +1,4 @@
-module gitee.com/zhoujin826/goInception-plus
+module github.com/zmix999/goInception-plus
 
 go 1.22.1
 
@@ -88,7 +88,6 @@ require (
 )
 
 require (
-	gitee.com/zhoujin826/goInception-plus/parser v0.0.0-20260106085925-0f9fb49952d3
 	github.com/CorgiMan/json2 v0.0.0-20150213135156-e72957aba209
 	github.com/HdrHistogram/hdrhistogram-go v1.1.0 // indirect
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
@@ -154,6 +153,7 @@ require (
 	github.com/tklauser/numcpus v0.2.1 // indirect
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20201229170055-e5319fda7802 // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
+	github.com/zmix999/goInception-plus/parser v0.0.0-00010101000000-000000000000
 	go.etcd.io/bbolt v1.3.7 // indirect
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 // indirect
 	golang.org/x/time v0.5.0 // indirect
@@ -177,6 +177,8 @@ replace google.golang.org/api => google.golang.org/api v0.54.0
 replace vitess.io/vitess => github.com/vitessio/vitess v0.19.1
 
 replace github.com/aws/aws-sdk-go => github.com/aws/aws-sdk-go v1.35.3
+
+replace github.com/zmix999/goInception-plus/parser => ./parser
 
 // fix potential security issue(CVE-2020-26160) introduced by indirect dependency.
 replace github.com/dgrijalva/jwt-go => github.com/form3tech-oss/jwt-go v3.2.6-0.20210809144907-32ab6a8243d7+incompatible

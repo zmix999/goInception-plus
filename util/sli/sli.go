@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/pingcap/failpoint"
-	"gitee.com/zhoujin826/goInception-plus/metrics"
+	"github.com/zmix999/goInception-plus/metrics"
 )
 
 // TxnWriteThroughputSLI uses to report transaction write throughput metrics for SLI.

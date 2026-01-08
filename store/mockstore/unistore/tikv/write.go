@@ -24,9 +24,9 @@ import (
 	"github.com/pingcap/badger"
 	"github.com/pingcap/badger/y"
 	"github.com/pingcap/kvproto/pkg/kvrpcpb"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/lockstore"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/tikv/dbreader"
-	"gitee.com/zhoujin826/goInception-plus/store/mockstore/unistore/tikv/mvcc"
+	"github.com/zmix999/goInception-plus/store/mockstore/unistore/lockstore"
+	"github.com/zmix999/goInception-plus/store/mockstore/unistore/tikv/dbreader"
+	"github.com/zmix999/goInception-plus/store/mockstore/unistore/tikv/mvcc"
 )
 
 const (

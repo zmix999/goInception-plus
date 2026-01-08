@@ -17,12 +17,12 @@ package core
 import (
 	"context"
 
-	"gitee.com/zhoujin826/goInception-plus/expression"
-	"gitee.com/zhoujin826/goInception-plus/kv"
-	"gitee.com/zhoujin826/goInception-plus/parser/ast"
-	"gitee.com/zhoujin826/goInception-plus/parser/mysql"
-	"gitee.com/zhoujin826/goInception-plus/sessionctx"
-	"gitee.com/zhoujin826/goInception-plus/types"
+	"github.com/zmix999/goInception-plus/expression"
+	"github.com/zmix999/goInception-plus/kv"
+	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/sessionctx"
+	"github.com/zmix999/goInception-plus/types"
 )
 
 type ppdSolver struct{}
@@ -488,7 +488,7 @@ func DeriveOtherConditions(
 			// For LeftOuterSemiJoin and AntiLeftOuterSemiJoin, we can actually generate
 			// `col is not null` according to expressions in `OtherConditions` now, but we
 			// are putting column equal condition converted from `in (subq)` into
-			// `OtherConditions`(@sa https://gitee.com/zhoujin826/goInception-plus/pull/9051), then it would
+			// `OtherConditions`(@sa https://github.com/zmix999/goInception-plus/pull/9051), then it would
 			// cause wrong results, so we disable this optimization for outer semi joins now.
 			// TODO enable this optimization for outer semi joins later by checking whether
 			// condition in `OtherConditions` is converted from `in (subq)`.

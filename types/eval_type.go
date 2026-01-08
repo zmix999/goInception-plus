@@ -14,7 +14,7 @@
 
 package types
 
-import ast "gitee.com/zhoujin826/goInception-plus/parser/types"
+import ast "github.com/zmix999/goInception-plus/parser/types"
 
 // EvalType indicates the specified types that arguments and result of a built-in function should be.
 type EvalType = ast.EvalType

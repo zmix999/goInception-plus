@@ -15,8 +15,8 @@
 package tableutil
 
 import (
-	"gitee.com/zhoujin826/goInception-plus/meta/autoid"
-	"gitee.com/zhoujin826/goInception-plus/parser/model"
+	"github.com/zmix999/goInception-plus/meta/autoid"
+	"github.com/zmix999/goInception-plus/parser/model"
 )
 
 // TempTable is used to store transaction-specific or session-specific information for global / local temporary tables.

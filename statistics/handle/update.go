@@ -26,9 +26,9 @@ import (
 
 	"github.com/pingcap/errors"
 	"github.com/pingcap/log"
+	"github.com/tikv/client-go/v2/oracle"
 	"github.com/zmix999/goInception-plus/infoschema"
 	"github.com/zmix999/goInception-plus/kv"
-	"github.com/zmix999/goInception-plus/metrics"
 	"github.com/zmix999/goInception-plus/parser/model"
 	"github.com/zmix999/goInception-plus/parser/mysql"
 	"github.com/zmix999/goInception-plus/parser/terror"
@@ -42,7 +42,6 @@ import (
 	"github.com/zmix999/goInception-plus/util/ranger"
 	"github.com/zmix999/goInception-plus/util/sqlexec"
 	"github.com/zmix999/goInception-plus/util/timeutil"
-	"github.com/tikv/client-go/v2/oracle"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 )
@@ -185,8 +184,6 @@ func (s *SessionStatsCollector) StoreQueryFeedback(feedback interface{}, h *Hand
 	if !(rate >= minErrRate && (q.Actual() >= minScanCnt || q.Expected >= minScanCnt)) {
 		return nil
 	}
-	metrics.SignificantFeedbackCounter.Inc()
-	metrics.StatsInaccuracyRate.Observe(rate)
 	if log.GetLevel() == zap.DebugLevel {
 		h.logDetailedInfo(q)
 	}
@@ -566,11 +563,6 @@ func (h *Handle) DumpFeedbackToKV(fb *statistics.QueryFeedback) error {
 	h.mu.Lock()
 	_, err = h.mu.ctx.(sqlexec.SQLExecutor).ExecuteInternal(context.TODO(), sql, fb.PhysicalID, fb.Hist.ID, isIndex, vals)
 	h.mu.Unlock()
-	if err != nil {
-		metrics.DumpFeedbackCounter.WithLabelValues(metrics.LblError).Inc()
-	} else {
-		metrics.DumpFeedbackCounter.WithLabelValues(metrics.LblOK).Inc()
-	}
 	return errors.Trace(err)
 }
 
@@ -828,7 +820,6 @@ func (h *Handle) dumpStatsUpdateToKV(tableID, isIndex int64, q *statistics.Query
 	hist = statistics.UpdateHistogram(hist, q, int(statsVersion))
 	// feedback for partition is not ready.
 	err := h.SaveStatsToStorage(tableID, -1, int(isIndex), hist, cms, topN, fms, int(statsVersion), 0, false, false)
-	metrics.UpdateStatsCounter.WithLabelValues(metrics.RetLabel(err)).Inc()
 	return errors.Trace(err)
 }
 
@@ -858,11 +849,11 @@ func TableAnalyzed(tbl *statistics.Table) bool {
 }
 
 // NeedAnalyzeTable checks if we need to analyze the table:
-// 1. If the table has never been analyzed, we need to analyze it when it has
-//    not been modified for a while.
-// 2. If the table had been analyzed before, we need to analyze it when
-//    "tbl.ModifyCount/tbl.Count > autoAnalyzeRatio" and the current time is
-//    between `start` and `end`.
+//  1. If the table has never been analyzed, we need to analyze it when it has
+//     not been modified for a while.
+//  2. If the table had been analyzed before, we need to analyze it when
+//     "tbl.ModifyCount/tbl.Count > autoAnalyzeRatio" and the current time is
+//     between `start` and `end`.
 func NeedAnalyzeTable(tbl *statistics.Table, limit time.Duration, autoAnalyzeRatio float64) (bool, string) {
 	analyzed := TableAnalyzed(tbl)
 	if !analyzed {
@@ -1082,16 +1073,12 @@ func (h *Handle) execAutoAnalyze(statsVer int, sql string, params ...interface{}
 	startTime := time.Now()
 	_, _, err := h.execRestrictedSQLWithStatsVer(context.Background(), statsVer, sql, params...)
 	dur := time.Since(startTime)
-	metrics.AutoAnalyzeHistogram.Observe(dur.Seconds())
 	if err != nil {
 		escaped, err1 := sqlexec.EscapeSQL(sql, params...)
 		if err1 != nil {
 			escaped = ""
 		}
 		logutil.BgLogger().Error("[stats] auto analyze failed", zap.String("sql", escaped), zap.Duration("cost_time", dur), zap.Error(err))
-		metrics.AutoAnalyzeCounter.WithLabelValues("failed").Inc()
-	} else {
-		metrics.AutoAnalyzeCounter.WithLabelValues("succ").Inc()
 	}
 }
 

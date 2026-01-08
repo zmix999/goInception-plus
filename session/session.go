@@ -546,16 +546,13 @@ func (s *session) StoreQueryFeedback(feedback interface{}) {
 		do, err := GetDomain(s.store)
 		if err != nil {
 			logutil.BgLogger().Debug("domain not found", zap.Error(err))
-			metrics.StoreQueryFeedbackCounter.WithLabelValues(metrics.LblError).Inc()
 			return
 		}
 		err = s.statsCollector.StoreQueryFeedback(feedback, do.StatsHandle())
 		if err != nil {
 			logutil.BgLogger().Debug("store query feedback", zap.Error(err))
-			metrics.StoreQueryFeedbackCounter.WithLabelValues(metrics.LblError).Inc()
 			return
 		}
-		metrics.StoreQueryFeedbackCounter.WithLabelValues(metrics.LblOK).Inc()
 	}
 }
 

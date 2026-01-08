@@ -33,7 +33,6 @@ import (
 	"github.com/zmix999/goInception-plus/expression/aggregation"
 	"github.com/zmix999/goInception-plus/infoschema"
 	"github.com/zmix999/goInception-plus/kv"
-	"github.com/zmix999/goInception-plus/metrics"
 	"github.com/zmix999/goInception-plus/parser"
 	"github.com/zmix999/goInception-plus/parser/ast"
 	"github.com/zmix999/goInception-plus/parser/format"
@@ -3764,11 +3763,6 @@ func (ds *DataSource) addExtraPIDColumn(info *extraPIDInfo) {
 	info.TblIDs = append(info.TblIDs, ds.TableInfo().ID)
 }
 
-var (
-	pseudoEstimationNotAvailable = metrics.PseudoEstimation.WithLabelValues("nodata")
-	pseudoEstimationOutdate      = metrics.PseudoEstimation.WithLabelValues("outdate")
-)
-
 // getStatsTable gets statistics information for a table specified by "tableID".
 // A pseudo statistics table is returned in any of the following scenario:
 // 1. tidb-server started and statistics handle has not been initialized.
@@ -3791,7 +3785,6 @@ func getStatsTable(ctx sessionctx.Context, tblInfo *model.TableInfo, pid int64) 
 
 	// 2. table row count from statistics is zero.
 	if statsTbl.Count == 0 {
-		pseudoEstimationNotAvailable.Inc()
 		return statistics.PseudoTable(tblInfo)
 	}
 
@@ -3801,7 +3794,6 @@ func getStatsTable(ctx sessionctx.Context, tblInfo *model.TableInfo, pid int64) 
 			tbl := *statsTbl
 			tbl.Pseudo = true
 			statsTbl = &tbl
-			pseudoEstimationOutdate.Inc()
 		}
 	}
 	return statsTbl

@@ -51,7 +51,6 @@ require (
 	github.com/tikv/pd v1.1.0-beta.0.20211104095303-69c86d05d379
 	github.com/twmb/murmur3 v1.1.3
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
-	github.com/wangjohn/quickselect v0.0.0-20161129230411-ed8402a42d5f
 	go.etcd.io/etcd v0.5.0-alpha.5.0.20210512015243-d19fbe541bf9
 	go.uber.org/atomic v1.11.0
 	go.uber.org/automaxprocs v1.5.1

@@ -20,7 +20,6 @@ import (
 
 	"github.com/cznic/mathutil"
 	"github.com/pingcap/errors"
-	"github.com/zmix999/goInception-plus/ddl/util"
 	"github.com/zmix999/goInception-plus/infoschema"
 	"github.com/zmix999/goInception-plus/meta"
 	"github.com/zmix999/goInception-plus/parser/ast"
@@ -62,7 +61,6 @@ func onCreateSequence(d *ddlCtx, t *meta.Meta, job *model.Job) (ver int64, _ err
 		}
 		// Finish this job.
 		job.FinishTableJob(model.JobStateDone, model.StatePublic, ver, tbInfo)
-		asyncNotifyEvent(d, &util.Event{Tp: model.ActionCreateSequence, TableInfo: tbInfo})
 		return ver, nil
 	default:
 		return ver, ErrInvalidDDLState.GenWithStackByArgs("sequence", tbInfo.State)

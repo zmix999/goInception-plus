@@ -18,7 +18,6 @@ import (
 	"context"
 
 	"github.com/pingcap/errors"
-	"github.com/zmix999/goInception-plus/ddl/util"
 	"github.com/zmix999/goInception-plus/infoschema"
 	"github.com/zmix999/goInception-plus/parser/ast"
 	"github.com/zmix999/goInception-plus/parser/model"
@@ -28,40 +27,6 @@ import (
 	"github.com/zmix999/goInception-plus/types"
 	"github.com/zmix999/goInception-plus/util/sqlexec"
 )
-
-// HandleDDLEvent begins to process a ddl task.
-func (h *Handle) HandleDDLEvent(t *util.Event) error {
-	switch t.Tp {
-	case model.ActionCreateTable, model.ActionTruncateTable:
-		ids := h.getInitStateTableIDs(t.TableInfo)
-		for _, id := range ids {
-			if err := h.insertTableStats2KV(t.TableInfo, id); err != nil {
-				return err
-			}
-		}
-	case model.ActionAddColumn, model.ActionAddColumns, model.ActionModifyColumn:
-		ids := h.getInitStateTableIDs(t.TableInfo)
-		for _, id := range ids {
-			if err := h.insertColStats2KV(id, t.ColumnInfos); err != nil {
-				return err
-			}
-		}
-	case model.ActionAddTablePartition, model.ActionTruncateTablePartition:
-		for _, def := range t.PartInfo.Definitions {
-			if err := h.insertTableStats2KV(t.TableInfo, def.ID); err != nil {
-				return err
-			}
-		}
-	case model.ActionDropTablePartition:
-		pruneMode := h.CurrentPruneMode()
-		if pruneMode == variable.Dynamic && t.PartInfo != nil {
-			if err := h.updateGlobalStats(t.TableInfo); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
 
 // analyzeOptionDefault saves the default values of NumBuckets and NumTopN.
 // These values will be used in dynamic mode when we drop table partition and then need to merge global-stats.
@@ -166,11 +131,6 @@ func (h *Handle) getInitStateTableIDs(tblInfo *model.TableInfo) (ids []int64) {
 		ids = append(ids, tblInfo.ID)
 	}
 	return ids
-}
-
-// DDLEventCh returns ddl events channel in handle.
-func (h *Handle) DDLEventCh() chan *util.Event {
-	return h.ddlEventCh
 }
 
 // insertTableStats2KV inserts a record standing for a new table to stats_meta and inserts some records standing for the

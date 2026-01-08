@@ -28,7 +28,7 @@ import (
 	"github.com/ngaut/pools"
 	"github.com/pingcap/errors"
 	"github.com/pingcap/failpoint"
-	"github.com/zmix999/goInception-plus/ddl/util"
+	"github.com/tikv/client-go/v2/oracle"
 	"github.com/zmix999/goInception-plus/infoschema"
 	"github.com/zmix999/goInception-plus/parser/ast"
 	"github.com/zmix999/goInception-plus/parser/model"
@@ -43,7 +43,6 @@ import (
 	"github.com/zmix999/goInception-plus/util/logutil"
 	"github.com/zmix999/goInception-plus/util/memory"
 	"github.com/zmix999/goInception-plus/util/sqlexec"
-	"github.com/tikv/client-go/v2/oracle"
 	atomic2 "go.uber.org/atomic"
 	"go.uber.org/zap"
 )
@@ -93,9 +92,6 @@ type Handle struct {
 
 	pool sessionPool
 
-	// ddlEventCh is a channel to notify a ddl operation has happened.
-	// It is sent only by owner or the drop stats executor, and read by stats handle.
-	ddlEventCh chan *util.Event
 	// listHead contains all the stats collector required by session.
 	listHead *SessionStatsCollector
 	// globalMap contains all the delta map from collectors when we dump them to KV.
@@ -164,9 +160,6 @@ func (h *Handle) Clear() {
 	h.statsCache.Store(statsCache{tables: make(map[int64]*statistics.Table)})
 	h.statsCache.memTracker = memory.NewTracker(memory.LabelForStatsCache, -1)
 	h.statsCache.Unlock()
-	for len(h.ddlEventCh) > 0 {
-		<-h.ddlEventCh
-	}
 	h.feedback = statistics.NewQueryFeedbackMap()
 	h.mu.ctx.GetSessionVars().InitChunkSize = 1
 	h.mu.ctx.GetSessionVars().MaxChunkSize = 1
@@ -186,7 +179,6 @@ type sessionPool interface {
 // NewHandle creates a Handle for update stats.
 func NewHandle(ctx sessionctx.Context, lease time.Duration, pool sessionPool) (*Handle, error) {
 	handle := &Handle{
-		ddlEventCh:       make(chan *util.Event, 100),
 		listHead:         &SessionStatsCollector{mapper: make(tableDeltaMap), rateMap: make(errorRateDeltaMap)},
 		globalMap:        make(tableDeltaMap),
 		feedback:         statistics.NewQueryFeedbackMap(),
@@ -547,8 +539,8 @@ func (sc statsCache) copy() statsCache {
 	return newCache
 }
 
-//initMemoryUsage calc total memory usage of statsCache and set statsCache.memUsage
-//should be called after the tables and their stats are initilazed
+// initMemoryUsage calc total memory usage of statsCache and set statsCache.memUsage
+// should be called after the tables and their stats are initilazed
 func (sc statsCache) initMemoryUsage() {
 	sum := int64(0)
 	for _, tb := range sc.tables {
@@ -669,12 +661,6 @@ func (h *Handle) SetLastUpdateVersion(version uint64) {
 
 // FlushStats flushes the cached stats update into store.
 func (h *Handle) FlushStats() {
-	for len(h.ddlEventCh) > 0 {
-		e := <-h.ddlEventCh
-		if err := h.HandleDDLEvent(e); err != nil {
-			logutil.BgLogger().Error("[stats] handle ddl event fail", zap.Error(err))
-		}
-	}
 	if err := h.DumpStatsDeltaToKV(DumpAll); err != nil {
 		logutil.BgLogger().Error("[stats] dump stats delta fail", zap.Error(err))
 	}

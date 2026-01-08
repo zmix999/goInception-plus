@@ -45,7 +45,6 @@ import (
 	"github.com/zmix999/goInception-plus/sessionctx/variable"
 	"github.com/zmix999/goInception-plus/statistics/handle"
 	"github.com/zmix999/goInception-plus/table"
-	goutil "github.com/zmix999/goInception-plus/util"
 	"github.com/zmix999/goInception-plus/util/admin"
 	"github.com/zmix999/goInception-plus/util/logutil"
 	"go.etcd.io/etcd/clientv3"
@@ -204,12 +203,10 @@ type ddlCtx struct {
 	ownerManager owner.Manager
 	schemaSyncer util.SchemaSyncer
 	ddlJobDoneCh chan struct{}
-	ddlEventCh   chan<- *util.Event
 	lease        time.Duration        // lease is schema lease.
 	binlogCli    *pumpcli.PumpsClient // binlogCli is used for Binlog.
 	infoCache    *infoschema.InfoCache
 	statsHandle  *handle.Handle
-	tableLockCkr util.DeadTableLockChecker
 	etcdCli      *clientv3.Client
 
 	// hook may be modified.
@@ -232,31 +229,6 @@ func (dc *ddlCtx) isOwner() bool {
 // RegisterStatsHandle registers statistics handle and its corresponding even channel for ddl.
 func (d *ddl) RegisterStatsHandle(h *handle.Handle) {
 	d.ddlCtx.statsHandle = h
-	d.ddlEventCh = h.DDLEventCh()
-}
-
-// asyncNotifyEvent will notify the ddl event to outside world, say statistic handle. When the channel is full, we may
-// give up notify and log it.
-func asyncNotifyEvent(d *ddlCtx, e *util.Event) {
-	if d.ddlEventCh != nil {
-		if d.lease == 0 {
-			// If lease is 0, it's always used in test.
-			select {
-			case d.ddlEventCh <- e:
-			default:
-			}
-			return
-		}
-		for i := 0; i < 10; i++ {
-			select {
-			case d.ddlEventCh <- e:
-				return
-			default:
-				logutil.BgLogger().Warn("[ddl] fail to notify DDL event", zap.String("event", e.String()))
-				time.Sleep(time.Microsecond * 10)
-			}
-		}
-	}
 }
 
 // NewDDL creates a new DDL.
@@ -275,7 +247,6 @@ func newDDL(ctx context.Context, options ...Option) *ddl {
 	id := uuid.New().String()
 	var manager owner.Manager
 	var syncer util.SchemaSyncer
-	var deadLockCkr util.DeadTableLockChecker
 	if etcdCli := opt.EtcdCli; etcdCli == nil {
 		// The etcdCli is nil if the store is localstore which is only used for testing.
 		// So we use mockOwnerManager and MockSchemaSyncer.
@@ -284,7 +255,6 @@ func newDDL(ctx context.Context, options ...Option) *ddl {
 	} else {
 		manager = owner.NewOwnerManager(ctx, etcdCli, ddlPrompt, id, DDLOwnerKey)
 		syncer = util.NewSchemaSyncer(ctx, etcdCli, id, manager)
-		deadLockCkr = util.NewDeadTableLockChecker(etcdCli)
 	}
 
 	// TODO: make store and infoCache explicit arguments
@@ -305,8 +275,8 @@ func newDDL(ctx context.Context, options ...Option) *ddl {
 		schemaSyncer: syncer,
 		binlogCli:    binloginfo.GetPumpsClient(),
 		infoCache:    opt.InfoCache,
-		tableLockCkr: deadLockCkr,
-		etcdCli:      opt.EtcdCli,
+
+		etcdCli: opt.EtcdCli,
 	}
 	ddlCtx.mu.hook = opt.Hook
 	ddlCtx.mu.interceptor = &BaseInterceptor{}
@@ -376,10 +346,6 @@ func (d *ddl) Start(ctxPool *pools.ResourcePool) error {
 		}
 
 		go d.schemaSyncer.StartCleanWork()
-		if config.TableLockEnabled() {
-			d.wg.Add(1)
-			go d.startCleanDeadTableLock()
-		}
 		metrics.DDLCounter.WithLabelValues(metrics.StartCleanWork).Inc()
 	}
 
@@ -661,37 +627,6 @@ func (d *ddl) SetHook(h Callback) {
 	defer d.mu.Unlock()
 
 	d.mu.hook = h
-}
-
-func (d *ddl) startCleanDeadTableLock() {
-	defer func() {
-		goutil.Recover(metrics.LabelDDL, "startCleanDeadTableLock", nil, false)
-		d.wg.Done()
-	}()
-
-	ticker := time.NewTicker(time.Second * 10)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ticker.C:
-			if !d.ownerManager.IsOwner() {
-				continue
-			}
-			deadLockTables, err := d.tableLockCkr.GetDeadLockedTables(d.ctx, d.infoCache.GetLatest().AllSchemas())
-			if err != nil {
-				logutil.BgLogger().Info("[ddl] get dead table lock failed.", zap.Error(err))
-				continue
-			}
-			for se, tables := range deadLockTables {
-				err := d.CleanDeadTableLock(tables, se)
-				if err != nil {
-					logutil.BgLogger().Info("[ddl] clean dead table lock failed.", zap.Error(err))
-				}
-			}
-		case <-d.ctx.Done():
-			return
-		}
-	}
 }
 
 // RecoverInfo contains information needed by DDL.RecoverTable.

@@ -23,8 +23,10 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/pingcap/errors"
+	"github.com/pingcap/failpoint"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/zmix999/goInception-plus/config"
-	ddlutil "github.com/zmix999/goInception-plus/ddl/util"
 	"github.com/zmix999/goInception-plus/infoschema"
 	"github.com/zmix999/goInception-plus/kv"
 	"github.com/zmix999/goInception-plus/meta"
@@ -45,9 +47,6 @@ import (
 	decoder "github.com/zmix999/goInception-plus/util/rowDecoder"
 	"github.com/zmix999/goInception-plus/util/sqlexec"
 	"github.com/zmix999/goInception-plus/util/timeutil"
-	"github.com/pingcap/errors"
-	"github.com/pingcap/failpoint"
-	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 )
 
@@ -248,7 +247,6 @@ func onAddColumn(d *ddlCtx, t *meta.Meta, job *model.Job) (ver int64, err error)
 
 		// Finish this job.
 		job.FinishTableJob(model.JobStateDone, model.StatePublic, ver, tblInfo)
-		asyncNotifyEvent(d, &ddlutil.Event{Tp: model.ActionAddColumn, TableInfo: tblInfo, ColumnInfos: []*model.ColumnInfo{columnInfo}})
 	default:
 		err = ErrInvalidDDLState.GenWithStackByArgs("column", columnInfo.State)
 	}
@@ -411,7 +409,6 @@ func onAddColumns(d *ddlCtx, t *meta.Meta, job *model.Job) (ver int64, err error
 		}
 		// Finish this job.
 		job.FinishTableJob(model.JobStateDone, model.StatePublic, ver, tblInfo)
-		asyncNotifyEvent(d, &ddlutil.Event{Tp: model.ActionAddColumns, TableInfo: tblInfo, ColumnInfos: columnInfos})
 	default:
 		err = ErrInvalidDDLState.GenWithStackByArgs("column", columnInfos[0].State)
 	}
@@ -1134,7 +1131,6 @@ func (w *worker) doModifyColumnTypeWithData(
 		job.FinishTableJob(model.JobStateDone, model.StatePublic, ver, tblInfo)
 		// Refactor the job args to add the old index ids into delete range table.
 		job.Args = []interface{}{oldIdxIDs, getPartitionIDs(tblInfo)}
-		asyncNotifyEvent(d, &ddlutil.Event{Tp: model.ActionModifyColumn, TableInfo: tblInfo, ColumnInfos: []*model.ColumnInfo{changingCol}})
 	default:
 		err = ErrInvalidDDLState.GenWithStackByArgs("column", changingCol.State)
 	}

@@ -832,6 +832,8 @@ github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1
 github.com/zenazn/goji v0.9.0/go.mod h1:7S9M489iMyHBNxwZnk9/EHS098H4/F6TATF2mIxtB1Q=
 github.com/zmix999/goInception-plus/parser v0.0.0-20260108021409-337f85e0332d h1:RcoUqQg422Djobnr5kJhTwlsWmc9KYZUB4RDsV/tpfo=
 github.com/zmix999/goInception-plus/parser v0.0.0-20260108021409-337f85e0332d/go.mod h1:WAV4NzxKESyRFXne0Rl41tQ3D35mnWKQ4NNYVcUpA8g=
+github.com/zmix999/goInception-plus/parser v0.0.0-20260108024236-97e998ef7c6d h1:SATvyWwtw4D4bo9uD9KNt+CjvjsvIocI4ycT14Ya1ss=
+github.com/zmix999/goInception-plus/parser v0.0.0-20260108024236-97e998ef7c6d/go.mod h1:WAV4NzxKESyRFXne0Rl41tQ3D35mnWKQ4NNYVcUpA8g=
 go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/bbolt v1.3.3/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/bbolt v1.3.5/go.mod h1:G5EMThwa9y8QZGBClrRx5EY+Yw9kAhnjy3bSjsnlVTQ=

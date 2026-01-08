@@ -157,7 +157,7 @@ require (
 	github.com/tklauser/numcpus v0.2.1 // indirect
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20201229170055-e5319fda7802 // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
-	github.com/zmix999/goInception-plus/parser v0.0.0-20260108021409-337f85e0332d
+	github.com/zmix999/goInception-plus/parser v0.0.0-20260108024236-97e998ef7c6d
 	go.etcd.io/bbolt v1.3.7 // indirect
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 // indirect
 	golang.org/x/time v0.5.0 // indirect

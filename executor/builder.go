@@ -253,10 +253,6 @@ func (b *executorBuilder) build(p plannercore.Plan) Executor {
 		return b.buildIndexMergeReader(v)
 	case *plannercore.SelectInto:
 		return b.buildSelectInto(v)
-	case *plannercore.AdminShowTelemetry:
-		return b.buildAdminShowTelemetry(v)
-	case *plannercore.AdminResetTelemetryID:
-		return b.buildAdminResetTelemetryID(v)
 	case *plannercore.PhysicalCTE:
 		return b.buildCTE(v)
 	case *plannercore.PhysicalCTETable:
@@ -4444,14 +4440,6 @@ func getFeedbackStatsTableID(ctx sessionctx.Context, t table.Table) int64 {
 		return p.GetPhysicalID()
 	}
 	return t.Meta().ID
-}
-
-func (b *executorBuilder) buildAdminShowTelemetry(v *plannercore.AdminShowTelemetry) Executor {
-	return &AdminShowTelemetryExec{baseExecutor: newBaseExecutor(b.ctx, v.Schema(), v.ID())}
-}
-
-func (b *executorBuilder) buildAdminResetTelemetryID(v *plannercore.AdminResetTelemetryID) Executor {
-	return &AdminResetTelemetryIDExec{baseExecutor: newBaseExecutor(b.ctx, v.Schema(), v.ID())}
 }
 
 func partitionPruning(ctx sessionctx.Context, tbl table.PartitionedTable, conds []expression.Expression, partitionNames []model.CIStr,

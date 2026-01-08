@@ -25,6 +25,10 @@ import (
 
 	"github.com/pingcap/errors"
 	"github.com/pingcap/failpoint"
+	"github.com/pingcap/tipb/go-tipb"
+	tikvmetrics "github.com/tikv/client-go/v2/metrics"
+	"github.com/tikv/client-go/v2/tikv"
+	"github.com/tikv/client-go/v2/tikvrpc"
 	"github.com/zmix999/goInception-plus/config"
 	"github.com/zmix999/goInception-plus/errno"
 	"github.com/zmix999/goInception-plus/kv"
@@ -33,7 +37,6 @@ import (
 	"github.com/zmix999/goInception-plus/sessionctx"
 	"github.com/zmix999/goInception-plus/statistics"
 	"github.com/zmix999/goInception-plus/store/copr"
-	"github.com/zmix999/goInception-plus/telemetry"
 	"github.com/zmix999/goInception-plus/types"
 	"github.com/zmix999/goInception-plus/util/chunk"
 	"github.com/zmix999/goInception-plus/util/codec"
@@ -41,10 +44,6 @@ import (
 	"github.com/zmix999/goInception-plus/util/execdetails"
 	"github.com/zmix999/goInception-plus/util/logutil"
 	"github.com/zmix999/goInception-plus/util/memory"
-	"github.com/pingcap/tipb/go-tipb"
-	tikvmetrics "github.com/tikv/client-go/v2/metrics"
-	"github.com/tikv/client-go/v2/tikv"
-	"github.com/tikv/client-go/v2/tikvrpc"
 	"go.uber.org/zap"
 )
 
@@ -160,31 +159,6 @@ func (r *selectResult) fetchResp(ctx context.Context) error {
 		if r.stats != nil {
 			coprCacheHistogramHit.Observe(float64(r.stats.CoprCacheHitNum))
 			coprCacheHistogramMiss.Observe(float64(len(r.stats.copRespTime) - int(r.stats.CoprCacheHitNum)))
-			// Ignore internal sql.
-			if !r.ctx.GetSessionVars().InRestrictedSQL && len(r.stats.copRespTime) > 0 {
-				ratio := float64(r.stats.CoprCacheHitNum) / float64(len(r.stats.copRespTime))
-				if ratio >= 1 {
-					telemetry.CurrentCoprCacheHitRatioGTE100Count.Inc()
-				}
-				if ratio >= 0.8 {
-					telemetry.CurrentCoprCacheHitRatioGTE80Count.Inc()
-				}
-				if ratio >= 0.4 {
-					telemetry.CurrentCoprCacheHitRatioGTE40Count.Inc()
-				}
-				if ratio >= 0.2 {
-					telemetry.CurrentCoprCacheHitRatioGTE20Count.Inc()
-				}
-				if ratio >= 0.1 {
-					telemetry.CurrentCoprCacheHitRatioGTE10Count.Inc()
-				}
-				if ratio >= 0.01 {
-					telemetry.CurrentCoprCacheHitRatioGTE1Count.Inc()
-				}
-				if ratio >= 0 {
-					telemetry.CurrentCoprCacheHitRatioGTE0Count.Inc()
-				}
-			}
 		}
 	}()
 	for {

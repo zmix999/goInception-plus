@@ -49,7 +49,6 @@ import (
 	"github.com/zmix999/goInception-plus/sessionctx"
 	"github.com/zmix999/goInception-plus/sessionctx/variable"
 	"github.com/zmix999/goInception-plus/statistics/handle"
-	"github.com/zmix999/goInception-plus/telemetry"
 	"github.com/zmix999/goInception-plus/util"
 	"github.com/zmix999/goInception-plus/util/dbterror"
 	"github.com/zmix999/goInception-plus/util/domainutil"
@@ -1026,63 +1025,6 @@ func (do *Domain) LoadSysVarCacheLoop(ctx sessionctx.Context) error {
 // PrivilegeHandle returns the MySQLPrivilege.
 func (do *Domain) PrivilegeHandle() *privileges.Handle {
 	return do.privHandle
-}
-
-// TelemetryReportLoop create a goroutine that reports usage data in a loop, it should be called only once
-// in BootstrapSession.
-func (do *Domain) TelemetryReportLoop(ctx sessionctx.Context) {
-	ctx.GetSessionVars().InRestrictedSQL = true
-	err := telemetry.InitialRun(ctx, do.GetEtcdClient())
-	if err != nil {
-		logutil.BgLogger().Warn("Initial telemetry run failed", zap.Error(err))
-	}
-
-	do.wg.Add(1)
-	go func() {
-		defer func() {
-			do.wg.Done()
-			logutil.BgLogger().Info("TelemetryReportLoop exited.")
-			util.Recover(metrics.LabelDomain, "TelemetryReportLoop", nil, false)
-		}()
-		owner := do.newOwnerManager(telemetry.Prompt, telemetry.OwnerKey)
-		for {
-			select {
-			case <-do.exit:
-				owner.Cancel()
-				return
-			case <-time.After(telemetry.ReportInterval):
-				if !owner.IsOwner() {
-					continue
-				}
-				err := telemetry.ReportUsageData(ctx, do.GetEtcdClient())
-				if err != nil {
-					// Only status update errors will be printed out
-					logutil.BgLogger().Warn("TelemetryReportLoop status update failed", zap.Error(err))
-				}
-			}
-		}
-	}()
-}
-
-// TelemetryRotateSubWindowLoop create a goroutine that rotates the telemetry window regularly.
-func (do *Domain) TelemetryRotateSubWindowLoop(ctx sessionctx.Context) {
-	ctx.GetSessionVars().InRestrictedSQL = true
-	do.wg.Add(1)
-	go func() {
-		defer func() {
-			do.wg.Done()
-			logutil.BgLogger().Info("TelemetryRotateSubWindowLoop exited.")
-			util.Recover(metrics.LabelDomain, "TelemetryRotateSubWindowLoop", nil, false)
-		}()
-		for {
-			select {
-			case <-do.exit:
-				return
-			case <-time.After(telemetry.SubWindowSize):
-				telemetry.RotateSubWindow()
-			}
-		}
-	}()
 }
 
 // PlanReplayerLoop creates a goroutine that handles `exit` and `gc`.

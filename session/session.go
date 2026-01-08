@@ -79,7 +79,6 @@ import (
 	"github.com/zmix999/goInception-plus/statistics/handle"
 	storeerr "github.com/zmix999/goInception-plus/store/driver/error"
 	"github.com/zmix999/goInception-plus/tablecodec"
-	"github.com/zmix999/goInception-plus/telemetry"
 	"github.com/zmix999/goInception-plus/types"
 	"github.com/zmix999/goInception-plus/util"
 	"github.com/zmix999/goInception-plus/util/chunk"
@@ -243,7 +242,6 @@ type session struct {
 
 	cache [1]ast.StmtNode
 
-	builtinFunctionUsage telemetry.BuiltinFunctionsUsage
 	// allowed when tikv disk full happened.
 	diskFullOpt kvrpcpb.DiskFullOpt
 
@@ -1734,16 +1732,6 @@ func (s *session) ExecuteStmt(ctx context.Context, stmtNode ast.StmtNode) (sqlex
 		}
 		return nil, err
 	}
-	if !s.isInternal() && config.GetGlobalConfig().EnableTelemetry {
-		telemetry.CurrentExecuteCount.Inc()
-		tiFlashPushDown, tiFlashExchangePushDown := plannercore.IsTiFlashContained(stmt.Plan)
-		if tiFlashPushDown {
-			telemetry.CurrentTiFlashPushDownCount.Inc()
-		}
-		if tiFlashExchangePushDown {
-			telemetry.CurrentTiFlashExchangePushDownCount.Inc()
-		}
-	}
 	return recordSet, nil
 }
 
@@ -1952,18 +1940,9 @@ func (s *session) MysqlPrepareStmt(sql string) (stmtID uint32, paramCount int, f
 func (s *session) preparedStmtExec(ctx context.Context,
 	is infoschema.InfoSchema, snapshotTS uint64,
 	stmtID uint32, prepareStmt *plannercore.CachedPrepareStmt, args []types.Datum) (sqlexec.RecordSet, error) {
-	st, tiFlashPushDown, tiFlashExchangePushDown, err := executor.CompileExecutePreparedStmt(ctx, s, stmtID, is, snapshotTS, args)
+	st, _, _, err := executor.CompileExecutePreparedStmt(ctx, s, stmtID, is, snapshotTS, args)
 	if err != nil {
 		return nil, err
-	}
-	if !s.isInternal() && config.GetGlobalConfig().EnableTelemetry {
-		telemetry.CurrentExecuteCount.Inc()
-		if tiFlashPushDown {
-			telemetry.CurrentTiFlashPushDownCount.Inc()
-		}
-		if tiFlashExchangePushDown {
-			telemetry.CurrentTiFlashExchangePushDownCount.Inc()
-		}
 	}
 	sessionExecuteCompileDurationGeneral.Observe(time.Since(s.sessionVars.StartTime).Seconds())
 	logGeneralQuery(st, s, true)
@@ -2007,17 +1986,6 @@ func (s *session) cachedPlanExec(ctx context.Context,
 	stmtCtx.InitSQLDigest(prepareStmt.NormalizedSQL, prepareStmt.SQLDigest)
 	stmtCtx.SetPlanDigest(prepareStmt.NormalizedPlan, prepareStmt.PlanDigest)
 	logGeneralQuery(stmt, s, false)
-
-	if !s.isInternal() && config.GetGlobalConfig().EnableTelemetry {
-		telemetry.CurrentExecuteCount.Inc()
-		tiFlashPushDown, tiFlashExchangePushDown := plannercore.IsTiFlashContained(stmt.Plan)
-		if tiFlashPushDown {
-			telemetry.CurrentTiFlashPushDownCount.Inc()
-		}
-		if tiFlashExchangePushDown {
-			telemetry.CurrentTiFlashExchangePushDownCount.Inc()
-		}
-	}
 
 	// run ExecStmt
 	var resultSet sqlexec.RecordSet
@@ -2331,7 +2299,6 @@ func (s *session) Close() {
 	if s.idxUsageCollector != nil {
 		s.idxUsageCollector.Delete()
 	}
-	telemetry.GlobalBuiltinFunctionsUsage.Collect(s.GetBuiltinFunctionUsage())
 	ctx := context.WithValue(context.TODO(), inCloseSession{}, struct{}{})
 	s.RollbackTxn(ctx)
 	if s.sessionVars != nil {
@@ -2777,12 +2744,11 @@ func createSessionWithOpt(store kv.Storage, opt *Opt) (*session, error) {
 		return nil, err
 	}
 	s := &session{
-		store:                store,
-		sessionVars:          variable.NewSessionVars(),
-		ddlOwnerChecker:      dom.DDL().OwnerManager(),
-		client:               store.GetClient(),
-		mppClient:            store.GetMPPClient(),
-		builtinFunctionUsage: make(telemetry.BuiltinFunctionsUsage),
+		store:           store,
+		sessionVars:     variable.NewSessionVars(),
+		ddlOwnerChecker: dom.DDL().OwnerManager(),
+		client:          store.GetClient(),
+		mppClient:       store.GetMPPClient(),
 	}
 	if plannercore.PreparedPlanCacheEnabled() {
 		if opt != nil && opt.PreparedPlanCache != nil {
@@ -2809,11 +2775,10 @@ func createSessionWithOpt(store kv.Storage, opt *Opt) (*session, error) {
 // a lock context, which cause we can't call createSession directly.
 func CreateSessionWithDomain(store kv.Storage, dom *domain.Domain) (*session, error) {
 	s := &session{
-		store:                store,
-		sessionVars:          variable.NewSessionVars(),
-		client:               store.GetClient(),
-		mppClient:            store.GetMPPClient(),
-		builtinFunctionUsage: make(telemetry.BuiltinFunctionsUsage),
+		store:       store,
+		sessionVars: variable.NewSessionVars(),
+		client:      store.GetClient(),
+		mppClient:   store.GetMPPClient(),
 	}
 	if plannercore.PreparedPlanCacheEnabled() {
 		s.preparedPlanCache = kvcache.NewSimpleLRUCache(plannercore.PreparedPlanCacheCapacity,
@@ -3170,8 +3135,6 @@ func (s *session) GetTxnWriteThroughputSLI() *sli.TxnWriteThroughputSLI {
 	return &s.txn.writeSLI
 }
 
-var _ telemetry.TemporaryTableFeatureChecker = &session{}
-
 // TemporaryTableExists is used by the telemetry package to avoid circle dependency.
 func (s *session) TemporaryTableExists() bool {
 	is := domain.GetDomain(s).InfoSchema()
@@ -3234,10 +3197,6 @@ func (s *session) updateTelemetryMetric(es *executor.ExecStmt) {
 	} else {
 		telemetryCTEUsage.WithLabelValues("notCTE").Inc()
 	}
-}
-
-func (s *session) GetBuiltinFunctionUsage() map[string]uint32 {
-	return s.builtinFunctionUsage
 }
 
 func (s *session) getSnapshotInterceptor() kv.SnapshotInterceptor {

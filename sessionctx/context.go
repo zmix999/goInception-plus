@@ -19,6 +19,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/pingcap/errors"
+	"github.com/pingcap/tipb/go-binlog"
+	"github.com/tikv/client-go/v2/oracle"
 	"github.com/zmix999/goInception-plus/kv"
 	"github.com/zmix999/goInception-plus/metrics"
 	"github.com/zmix999/goInception-plus/owner"
@@ -27,9 +30,6 @@ import (
 	"github.com/zmix999/goInception-plus/util"
 	"github.com/zmix999/goInception-plus/util/kvcache"
 	"github.com/zmix999/goInception-plus/util/sli"
-	"github.com/pingcap/errors"
-	"github.com/pingcap/tipb/go-binlog"
-	"github.com/tikv/client-go/v2/oracle"
 )
 
 // InfoschemaMetaVersion is a workaround. Due to circular dependency,
@@ -132,9 +132,6 @@ type Context interface {
 	StoreIndexUsage(tblID int64, idxID int64, rowsSelected int64)
 	// GetTxnWriteThroughputSLI returns the TxnWriteThroughputSLI.
 	GetTxnWriteThroughputSLI() *sli.TxnWriteThroughputSLI
-	// GetBuiltinFunctionUsage returns the BuiltinFunctionUsage of current Context, which is not thread safe.
-	// Use primitive map type to prevent circular import. Should convert it to telemetry.BuiltinFunctionUsage before using.
-	GetBuiltinFunctionUsage() map[string]uint32
 }
 
 type basicCtxType int

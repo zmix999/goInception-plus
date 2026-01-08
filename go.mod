@@ -72,10 +72,6 @@ require (
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/cakturk/go-netstat v0.0.0-20200220111822-e5b49efee7a5 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
-	github.com/cznic/golex v0.0.0-20181122101858-9c343928389c // indirect
-	github.com/cznic/parser v0.0.0-20181122101858-d773202d5b1f // indirect
-	github.com/cznic/strutil v0.0.0-20181122101858-275e90344537 // indirect
-	github.com/cznic/y v0.0.0-20181122101901-b05e8c2e8d7b // indirect
 	github.com/denisenkom/go-mssqldb v0.11.0 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
@@ -186,3 +182,5 @@ replace github.com/aws/aws-sdk-go => github.com/aws/aws-sdk-go v1.35.3
 replace github.com/dgrijalva/jwt-go => github.com/form3tech-oss/jwt-go v3.2.6-0.20210809144907-32ab6a8243d7+incompatible
 
 replace gopkg.in/gcfg.v1 => github.com/hanchuanchuan/gcfg.v1 v0.0.0-20190302111942-77c0f3dcc0b3
+
+replace github.com/etcd-io/gofail => go.etcd.io/gofail v0.0.0-20180808172546-51ce9a71510a

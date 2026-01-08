@@ -17,7 +17,6 @@ package planner
 import (
 	"context"
 	"fmt"
-	"math"
 	"runtime/trace"
 	"strings"
 	"sync"
@@ -25,11 +24,9 @@ import (
 
 	"github.com/pingcap/errors"
 	"github.com/pingcap/failpoint"
-	"github.com/zmix999/goInception-plus/bindinfo"
 	"github.com/zmix999/goInception-plus/domain"
 	"github.com/zmix999/goInception-plus/infoschema"
 	"github.com/zmix999/goInception-plus/kv"
-	"github.com/zmix999/goInception-plus/metrics"
 	"github.com/zmix999/goInception-plus/parser"
 	"github.com/zmix999/goInception-plus/parser/ast"
 	"github.com/zmix999/goInception-plus/planner/cascades"
@@ -113,7 +110,7 @@ func Optimize(ctx context.Context, sctx sessionctx.Context, node ast.Node, is in
 	}
 
 	tableHints := hint.ExtractTableHintsFromStmtNode(node, sctx)
-	originStmtHints, originStmtHintsOffs, warns := handleStmtHints(tableHints)
+	originStmtHints, _, warns := handleStmtHints(tableHints)
 	sessVars.StmtCtx.StmtHints = originStmtHints
 	for _, warn := range warns {
 		sessVars.StmtCtx.AppendWarning(warn)
@@ -143,77 +140,12 @@ func Optimize(ctx context.Context, sctx sessionctx.Context, node ast.Node, is in
 	}
 	sctx.PrepareTSFuture(ctx)
 
-	useBinding := sessVars.UsePlanBaselines
-	stmtNode, ok := node.(ast.StmtNode)
-	if !ok {
-		useBinding = false
-	}
 	var (
-		bindRecord *bindinfo.BindRecord
-		scope      string
-		err        error
+		err error
 	)
-	if useBinding {
-		bindRecord, scope, err = getBindRecord(sctx, stmtNode)
-		if err != nil || bindRecord == nil || len(bindRecord.Bindings) == 0 {
-			useBinding = false
-		}
-	}
-	if useBinding && sessVars.SelectLimit != math.MaxUint64 {
-		sessVars.StmtCtx.AppendWarning(errors.New("sql_select_limit is set, ignore SQL bindings"))
-		useBinding = false
-	}
 
 	var names types.NameSlice
-	var bestPlan, bestPlanFromBind plannercore.Plan
-	if useBinding {
-		minCost := math.MaxFloat64
-		var (
-			bindStmtHints stmtctx.StmtHints
-			chosenBinding bindinfo.Binding
-		)
-		originHints := hint.CollectHint(stmtNode)
-		// bindRecord must be not nil when coming here, try to find the best binding.
-		for _, binding := range bindRecord.Bindings {
-			if binding.Status != bindinfo.Using {
-				continue
-			}
-			metrics.BindUsageCounter.WithLabelValues(scope).Inc()
-			hint.BindHint(stmtNode, binding.Hint)
-			curStmtHints, _, curWarns := handleStmtHints(binding.Hint.GetFirstTableHints())
-			sessVars.StmtCtx.StmtHints = curStmtHints
-			plan, curNames, cost, err := optimize(ctx, sctx, node, is)
-			if err != nil {
-				binding.Status = bindinfo.Invalid
-				handleInvalidBindRecord(ctx, sctx, scope, bindinfo.BindRecord{
-					OriginalSQL: bindRecord.OriginalSQL,
-					Db:          bindRecord.Db,
-					Bindings:    []bindinfo.Binding{binding},
-				})
-				continue
-			}
-			if cost < minCost {
-				bindStmtHints, warns, minCost, names, bestPlanFromBind, chosenBinding = curStmtHints, curWarns, cost, curNames, plan, binding
-			}
-		}
-		if bestPlanFromBind == nil {
-			sessVars.StmtCtx.AppendWarning(errors.New("no plan generated from bindings"))
-		} else {
-			bestPlan = bestPlanFromBind
-			sessVars.StmtCtx.StmtHints = bindStmtHints
-			for _, warn := range warns {
-				sessVars.StmtCtx.AppendWarning(warn)
-			}
-			if err := setFoundInBinding(sctx, true); err != nil {
-				logutil.BgLogger().Warn("set tidb_found_in_binding failed", zap.Error(err))
-			}
-			if sessVars.StmtCtx.InVerboseExplain {
-				sessVars.StmtCtx.AppendNote(errors.Errorf("Using the bindSQL: %v", chosenBinding.BindSQL))
-			}
-		}
-		// Restore the hint to avoid changing the stmt node.
-		hint.BindHint(stmtNode, originHints)
-	}
+	var bestPlan plannercore.Plan
 	// No plan found from the bindings, or the bindings are ignored.
 	if bestPlan == nil {
 		sessVars.StmtCtx.StmtHints = originStmtHints
@@ -233,32 +165,6 @@ func Optimize(ctx context.Context, sctx sessionctx.Context, node ast.Node, is in
 	defer func() {
 		sessVars.StmtCtx.StmtHints = savedStmtHints
 	}()
-	if sessVars.EvolvePlanBaselines && bestPlanFromBind != nil {
-		// Check bestPlanFromBind firstly to avoid nil stmtNode.
-		if _, ok := stmtNode.(*ast.SelectStmt); ok && !bindRecord.Bindings[0].Hint.ContainTableHint(plannercore.HintReadFromStorage) {
-			sessVars.StmtCtx.StmtHints = originStmtHints
-			defPlan, _, _, err := optimize(ctx, sctx, node, is)
-			if err != nil {
-				// Ignore this evolution task.
-				return bestPlan, names, nil
-			}
-			defPlanHints := plannercore.GenHintsFromPhysicalPlan(defPlan)
-			for _, hint := range defPlanHints {
-				if hint.HintName.String() == plannercore.HintReadFromStorage {
-					return bestPlan, names, nil
-				}
-			}
-			// The hints generated from the plan do not contain the statement hints of the query, add them back.
-			for _, off := range originStmtHintsOffs {
-				defPlanHints = append(defPlanHints, tableHints[off])
-			}
-			defPlanHintsStr := hint.RestoreOptimizerHints(defPlanHints)
-			binding := bindRecord.FindBinding(defPlanHintsStr)
-			if binding == nil {
-				handleEvolveTasks(ctx, sctx, bindRecord, stmtNode, defPlanHintsStr)
-			}
-		}
-	}
 
 	return bestPlan, names, nil
 }
@@ -439,62 +345,6 @@ func extractSelectAndNormalizeDigest(stmtNode ast.StmtNode, specifiledDB string)
 		return x, normalizedSQL, hash.String(), nil
 	}
 	return nil, "", "", nil
-}
-
-func getBindRecord(ctx sessionctx.Context, stmt ast.StmtNode) (*bindinfo.BindRecord, string, error) {
-	// When the domain is initializing, the bind will be nil.
-	if ctx.Value(bindinfo.SessionBindInfoKeyType) == nil {
-		return nil, "", nil
-	}
-	stmtNode, normalizedSQL, hash, err := extractSelectAndNormalizeDigest(stmt, ctx.GetSessionVars().CurrentDB)
-	if err != nil || stmtNode == nil {
-		return nil, "", err
-	}
-	sessionHandle := ctx.Value(bindinfo.SessionBindInfoKeyType).(*bindinfo.SessionHandle)
-	bindRecord := sessionHandle.GetBindRecord(normalizedSQL, "")
-	if bindRecord != nil {
-		if bindRecord.HasUsingBinding() {
-			return bindRecord, metrics.ScopeSession, nil
-		}
-		return nil, "", nil
-	}
-	globalHandle := domain.GetDomain(ctx).BindHandle()
-	if globalHandle == nil {
-		return nil, "", nil
-	}
-	bindRecord = globalHandle.GetBindRecord(hash, normalizedSQL, "")
-	return bindRecord, metrics.ScopeGlobal, nil
-}
-
-func handleInvalidBindRecord(ctx context.Context, sctx sessionctx.Context, level string, bindRecord bindinfo.BindRecord) {
-	sessionHandle := sctx.Value(bindinfo.SessionBindInfoKeyType).(*bindinfo.SessionHandle)
-	err := sessionHandle.DropBindRecord(bindRecord.OriginalSQL, bindRecord.Db, &bindRecord.Bindings[0])
-	if err != nil {
-		logutil.Logger(ctx).Info("drop session bindings failed")
-	}
-	if level == metrics.ScopeSession {
-		return
-	}
-
-	globalHandle := domain.GetDomain(sctx).BindHandle()
-	globalHandle.AddDropInvalidBindTask(&bindRecord)
-}
-
-func handleEvolveTasks(ctx context.Context, sctx sessionctx.Context, br *bindinfo.BindRecord, stmtNode ast.StmtNode, planHint string) {
-	bindSQL := bindinfo.GenerateBindSQL(ctx, stmtNode, planHint, false, br.Db)
-	if bindSQL == "" {
-		return
-	}
-	charset, collation := sctx.GetSessionVars().GetCharsetInfo()
-	binding := bindinfo.Binding{
-		BindSQL:   bindSQL,
-		Status:    bindinfo.PendingVerify,
-		Charset:   charset,
-		Collation: collation,
-		Source:    bindinfo.Evolve,
-	}
-	globalHandle := domain.GetDomain(sctx).BindHandle()
-	globalHandle.AddEvolvePlanTask(br.OriginalSQL, br.Db, binding)
 }
 
 // useMaxTS returns true when meets following conditions:

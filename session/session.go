@@ -33,6 +33,12 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/ngaut/pools"
+	"github.com/opentracing/opentracing-go"
+	"github.com/pingcap/errors"
+	"github.com/pingcap/failpoint"
+	"github.com/pingcap/kvproto/pkg/kvrpcpb"
+	"github.com/pingcap/tipb/go-binlog"
 	"github.com/zmix999/goInception-plus/parser"
 	"github.com/zmix999/goInception-plus/parser/ast"
 	"github.com/zmix999/goInception-plus/parser/auth"
@@ -42,15 +48,12 @@ import (
 	"github.com/zmix999/goInception-plus/parser/terror"
 	"github.com/zmix999/goInception-plus/table/temptable"
 	"github.com/zmix999/goInception-plus/util/topsql"
-	"github.com/ngaut/pools"
-	"github.com/opentracing/opentracing-go"
-	"github.com/pingcap/errors"
-	"github.com/pingcap/failpoint"
-	"github.com/pingcap/kvproto/pkg/kvrpcpb"
-	"github.com/pingcap/tipb/go-binlog"
 	"go.uber.org/zap"
 
-	"github.com/zmix999/goInception-plus/bindinfo"
+	"github.com/jinzhu/gorm"
+	tikvstore "github.com/tikv/client-go/v2/kv"
+	"github.com/tikv/client-go/v2/tikv"
+	tikvutil "github.com/tikv/client-go/v2/util"
 	"github.com/zmix999/goInception-plus/config"
 	"github.com/zmix999/goInception-plus/ddl"
 	"github.com/zmix999/goInception-plus/ddl/placement"
@@ -89,10 +92,6 @@ import (
 	"github.com/zmix999/goInception-plus/util/sqlexec"
 	"github.com/zmix999/goInception-plus/util/tableutil"
 	"github.com/zmix999/goInception-plus/util/timeutil"
-	"github.com/jinzhu/gorm"
-	tikvstore "github.com/tikv/client-go/v2/kv"
-	"github.com/tikv/client-go/v2/tikv"
-	tikvutil "github.com/tikv/client-go/v2/util"
 )
 
 var (
@@ -2333,10 +2332,6 @@ func (s *session) Close() {
 		s.idxUsageCollector.Delete()
 	}
 	telemetry.GlobalBuiltinFunctionsUsage.Collect(s.GetBuiltinFunctionUsage())
-	bindValue := s.Value(bindinfo.SessionBindInfoKeyType)
-	if bindValue != nil {
-		bindValue.(*bindinfo.SessionHandle).Close()
-	}
 	ctx := context.WithValue(context.TODO(), inCloseSession{}, struct{}{})
 	s.RollbackTxn(ctx)
 	if s.sessionVars != nil {
@@ -2532,8 +2527,6 @@ func CreateSessionWithOpt(store kv.Storage, opt *Opt) (Session, error) {
 	}
 	privilege.BindPrivilegeManager(s, pm)
 
-	sessionBindHandle := bindinfo.NewSessionBindHandle(parser.New())
-	s.SetValue(bindinfo.SessionBindInfoKeyType, sessionBindHandle)
 	// Add stats collector, and it will be freed by background stats worker
 	// which periodically updates stats using the collected data.
 	if do.StatsHandle() != nil && do.StatsUpdating() {
@@ -2807,8 +2800,6 @@ func createSessionWithOpt(store kv.Storage, opt *Opt) (*session, error) {
 	s.sessionVars.BinlogClient = binloginfo.GetPumpsClient()
 	s.txn.init()
 
-	sessionBindHandle := bindinfo.NewSessionBindHandle(parser.New())
-	s.SetValue(bindinfo.SessionBindInfoKeyType, sessionBindHandle)
 	return s, nil
 }
 

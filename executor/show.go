@@ -25,15 +25,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zmix999/goInception-plus/bindinfo"
+	"github.com/cznic/mathutil"
+	"github.com/pingcap/errors"
+	"github.com/pingcap/tidb-tools/pkg/etcd"
+	"github.com/pingcap/tidb-tools/pkg/utils"
+	"github.com/pingcap/tidb-tools/tidb-binlog/node"
 	"github.com/zmix999/goInception-plus/config"
 	"github.com/zmix999/goInception-plus/ddl"
-	"github.com/zmix999/goInception-plus/domain"
 	"github.com/zmix999/goInception-plus/expression"
 	"github.com/zmix999/goInception-plus/infoschema"
 	"github.com/zmix999/goInception-plus/kv"
 	"github.com/zmix999/goInception-plus/meta/autoid"
-	"github.com/zmix999/goInception-plus/parser"
 	"github.com/zmix999/goInception-plus/parser/ast"
 	"github.com/zmix999/goInception-plus/parser/auth"
 	"github.com/zmix999/goInception-plus/parser/charset"
@@ -62,11 +64,6 @@ import (
 	"github.com/zmix999/goInception-plus/util/set"
 	"github.com/zmix999/goInception-plus/util/sqlexec"
 	"github.com/zmix999/goInception-plus/util/stringutil"
-	"github.com/cznic/mathutil"
-	"github.com/pingcap/errors"
-	"github.com/pingcap/tidb-tools/pkg/etcd"
-	"github.com/pingcap/tidb-tools/pkg/utils"
-	"github.com/pingcap/tidb-tools/tidb-binlog/node"
 )
 
 var etcdDialTimeout = 5 * time.Second
@@ -206,8 +203,6 @@ func (e *ShowExec) fetchAll(ctx context.Context) error {
 		return e.fetchShowMasterStatus()
 	case ast.ShowPrivileges:
 		return e.fetchShowPrivileges()
-	case ast.ShowBindings:
-		return e.fetchShowBind()
 	case ast.ShowAnalyzeStatus:
 		e.fetchShowAnalyzeStatus()
 		return nil
@@ -259,77 +254,6 @@ func (v *visibleChecker) Enter(in ast.Node) (out ast.Node, skipChildren bool) {
 
 func (v *visibleChecker) Leave(in ast.Node) (out ast.Node, ok bool) {
 	return in, true
-}
-
-func (e *ShowExec) fetchShowBind() error {
-	var bindRecords []*bindinfo.BindRecord
-	if !e.GlobalScope {
-		handle := e.ctx.Value(bindinfo.SessionBindInfoKeyType).(*bindinfo.SessionHandle)
-		bindRecords = handle.GetAllBindRecord()
-	} else {
-		bindRecords = domain.GetDomain(e.ctx).BindHandle().GetAllBindRecord()
-	}
-	// Remove the invalid bindRecord.
-	ind := 0
-	for _, bindData := range bindRecords {
-		if len(bindData.Bindings) > 0 {
-			bindRecords[ind] = bindData
-			ind++
-		}
-	}
-	bindRecords = bindRecords[:ind]
-	parser := parser.New()
-	for _, bindData := range bindRecords {
-		// For the same origin_sql, sort the bindings according to their update time.
-		sort.Slice(bindData.Bindings, func(i int, j int) bool {
-			cmpResult := bindData.Bindings[i].UpdateTime.Compare(bindData.Bindings[j].UpdateTime)
-			if cmpResult == 0 {
-				// Because the create time must be different, the result of sorting is stable.
-				cmpResult = bindData.Bindings[i].CreateTime.Compare(bindData.Bindings[j].CreateTime)
-			}
-			return cmpResult > 0
-		})
-	}
-	// For the different origin_sql, sort the bindRecords according to their max update time.
-	sort.Slice(bindRecords, func(i int, j int) bool {
-		cmpResult := bindRecords[i].Bindings[0].UpdateTime.Compare(bindRecords[j].Bindings[0].UpdateTime)
-		if cmpResult == 0 {
-			// Because the create time must be different, the result of sorting is stable.
-			cmpResult = bindRecords[i].Bindings[0].CreateTime.Compare(bindRecords[j].Bindings[0].CreateTime)
-		}
-		return cmpResult > 0
-	})
-	for _, bindData := range bindRecords {
-		for _, hint := range bindData.Bindings {
-			stmt, err := parser.ParseOneStmt(hint.BindSQL, hint.Charset, hint.Collation)
-			if err != nil {
-				return err
-			}
-			checker := visibleChecker{
-				defaultDB: bindData.Db,
-				ctx:       e.ctx,
-				is:        e.is,
-				manager:   privilege.GetPrivilegeManager(e.ctx),
-				ok:        true,
-			}
-			stmt.Accept(&checker)
-			if !checker.ok {
-				continue
-			}
-			e.appendRow([]interface{}{
-				bindData.OriginalSQL,
-				hint.BindSQL,
-				bindData.Db,
-				hint.Status,
-				hint.CreateTime,
-				hint.UpdateTime,
-				hint.Charset,
-				hint.Collation,
-				hint.Source,
-			})
-		}
-	}
-	return nil
 }
 
 func (e *ShowExec) fetchShowEngines(ctx context.Context) error {

@@ -24,7 +24,11 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/zmix999/goInception-plus/bindinfo"
+	"github.com/ngaut/pools"
+	"github.com/ngaut/sync2"
+	"github.com/pingcap/errors"
+	"github.com/pingcap/failpoint"
+	"github.com/tikv/client-go/v2/txnkv/transaction"
 	"github.com/zmix999/goInception-plus/config"
 	"github.com/zmix999/goInception-plus/ddl"
 	ddlutil "github.com/zmix999/goInception-plus/ddl/util"
@@ -52,11 +56,6 @@ import (
 	"github.com/zmix999/goInception-plus/util/expensivequery"
 	"github.com/zmix999/goInception-plus/util/logutil"
 	"github.com/zmix999/goInception-plus/util/sqlexec"
-	"github.com/ngaut/pools"
-	"github.com/ngaut/sync2"
-	"github.com/pingcap/errors"
-	"github.com/pingcap/failpoint"
-	"github.com/tikv/client-go/v2/txnkv/transaction"
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/clientv3/concurrency"
 	"go.uber.org/zap"
@@ -70,7 +69,6 @@ type Domain struct {
 	store                kv.Storage
 	infoCache            *infoschema.InfoCache
 	privHandle           *privileges.Handle
-	bindHandle           *bindinfo.BindHandle
 	statsHandle          unsafe.Pointer
 	statsLease           time.Duration
 	ddl                  ddl.DDL
@@ -678,7 +676,6 @@ func (do *Domain) Close() {
 	do.cancel()
 	do.wg.Wait()
 	do.sysSessionPool.Close()
-	variable.UnregisterStatistics(do.bindHandle)
 	if do.onClose != nil {
 		do.onClose()
 	}
@@ -1029,94 +1026,6 @@ func (do *Domain) LoadSysVarCacheLoop(ctx sessionctx.Context) error {
 // PrivilegeHandle returns the MySQLPrivilege.
 func (do *Domain) PrivilegeHandle() *privileges.Handle {
 	return do.privHandle
-}
-
-// BindHandle returns domain's bindHandle.
-func (do *Domain) BindHandle() *bindinfo.BindHandle {
-	return do.bindHandle
-}
-
-// LoadBindInfoLoop create a goroutine loads BindInfo in a loop, it should
-// be called only once in BootstrapSession.
-func (do *Domain) LoadBindInfoLoop(ctxForHandle sessionctx.Context, ctxForEvolve sessionctx.Context) error {
-	ctxForHandle.GetSessionVars().InRestrictedSQL = true
-	ctxForEvolve.GetSessionVars().InRestrictedSQL = true
-	do.bindHandle = bindinfo.NewBindHandle(ctxForHandle)
-	err := do.bindHandle.Update(true)
-	if err != nil || bindinfo.Lease == 0 {
-		return err
-	}
-
-	owner := do.newOwnerManager(bindinfo.Prompt, bindinfo.OwnerKey)
-	do.globalBindHandleWorkerLoop(owner)
-	do.handleEvolvePlanTasksLoop(ctxForEvolve, owner)
-	return nil
-}
-
-func (do *Domain) globalBindHandleWorkerLoop(owner owner.Manager) {
-	do.wg.Add(1)
-	go func() {
-		defer func() {
-			do.wg.Done()
-			logutil.BgLogger().Info("globalBindHandleWorkerLoop exited.")
-			util.Recover(metrics.LabelDomain, "globalBindHandleWorkerLoop", nil, false)
-		}()
-		bindWorkerTicker := time.NewTicker(bindinfo.Lease)
-		gcBindTicker := time.NewTicker(100 * bindinfo.Lease)
-		defer func() {
-			bindWorkerTicker.Stop()
-			gcBindTicker.Stop()
-		}()
-		for {
-			select {
-			case <-do.exit:
-				return
-			case <-bindWorkerTicker.C:
-				err := do.bindHandle.Update(false)
-				if err != nil {
-					logutil.BgLogger().Error("update bindinfo failed", zap.Error(err))
-				}
-				do.bindHandle.DropInvalidBindRecord()
-				if variable.TiDBOptOn(variable.CapturePlanBaseline.GetVal()) {
-					do.bindHandle.CaptureBaselines()
-				}
-				do.bindHandle.SaveEvolveTasksToStore()
-			case <-gcBindTicker.C:
-				if !owner.IsOwner() {
-					continue
-				}
-				err := do.bindHandle.GCBindRecord()
-				if err != nil {
-					logutil.BgLogger().Error("GC bind record failed", zap.Error(err))
-				}
-			}
-		}
-	}()
-}
-
-func (do *Domain) handleEvolvePlanTasksLoop(ctx sessionctx.Context, owner owner.Manager) {
-	do.wg.Add(1)
-	go func() {
-		defer func() {
-			do.wg.Done()
-			logutil.BgLogger().Info("handleEvolvePlanTasksLoop exited.")
-			util.Recover(metrics.LabelDomain, "handleEvolvePlanTasksLoop", nil, false)
-		}()
-		for {
-			select {
-			case <-do.exit:
-				owner.Cancel()
-				return
-			case <-time.After(bindinfo.Lease):
-			}
-			if owner.IsOwner() {
-				err := do.bindHandle.HandleEvolvePlanTask(ctx, false)
-				if err != nil {
-					logutil.BgLogger().Info("evolve plan failed", zap.Error(err))
-				}
-			}
-		}
-	}()
 }
 
 // TelemetryReportLoop create a goroutine that reports usage data in a loop, it should be called only once

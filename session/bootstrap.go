@@ -27,11 +27,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zmix999/goInception-plus/bindinfo"
+	"github.com/pingcap/errors"
 	"github.com/zmix999/goInception-plus/config"
 	"github.com/zmix999/goInception-plus/ddl"
 	"github.com/zmix999/goInception-plus/domain"
-	"github.com/zmix999/goInception-plus/expression"
 	"github.com/zmix999/goInception-plus/infoschema"
 	"github.com/zmix999/goInception-plus/parser"
 	"github.com/zmix999/goInception-plus/parser/auth"
@@ -43,9 +42,7 @@ import (
 	"github.com/zmix999/goInception-plus/util/chunk"
 	"github.com/zmix999/goInception-plus/util/logutil"
 	utilparser "github.com/zmix999/goInception-plus/util/parser"
-	"github.com/zmix999/goInception-plus/util/sqlexec"
 	"github.com/zmix999/goInception-plus/util/timeutil"
-	"github.com/pingcap/errors"
 	"go.uber.org/zap"
 )
 
@@ -1343,18 +1340,6 @@ func upgradeToVer57(s Session, ver int64) {
 	if ver >= version57 {
 		return
 	}
-	insertBuiltinBindInfoRow(s)
-}
-
-func initBindInfoTable(s Session) {
-	mustExecute(s, CreateBindInfoTable)
-	insertBuiltinBindInfoRow(s)
-}
-
-func insertBuiltinBindInfoRow(s Session) {
-	mustExecute(s, `INSERT HIGH_PRIORITY INTO mysql.bind_info VALUES (%?, %?, "mysql", %?, "0000-00-00 00:00:00", "0000-00-00 00:00:00", "", "", %?)`,
-		bindinfo.BuiltinPseudoSQL4BindLock, bindinfo.BuiltinPseudoSQL4BindLock, bindinfo.Builtin, bindinfo.Builtin,
-	)
 }
 
 func upgradeToVer59(s Session, ver int64) {
@@ -1392,58 +1377,6 @@ type bindInfo struct {
 func upgradeToVer67(s Session, ver int64) {
 	if ver >= version67 {
 		return
-	}
-	bindMap := make(map[string]bindInfo)
-	h := &bindinfo.BindHandle{}
-	var err error
-	mustExecute(s, "BEGIN PESSIMISTIC")
-
-	defer func() {
-		if err != nil {
-			mustExecute(s, "ROLLBACK")
-			return
-		}
-
-		mustExecute(s, "COMMIT")
-	}()
-	mustExecute(s, h.LockBindInfoSQL())
-	var rs sqlexec.RecordSet
-	rs, err = s.ExecuteInternal(context.Background(),
-		`SELECT bind_sql, default_db, status, create_time, charset, collation, source
-			FROM mysql.bind_info
-			WHERE source != 'builtin'
-			ORDER BY update_time DESC`)
-	if err != nil {
-		logutil.BgLogger().Fatal("upgradeToVer67 error", zap.Error(err))
-	}
-	req := rs.NewChunk()
-	iter := chunk.NewIterator4Chunk(req)
-	p := parser.New()
-	now := types.NewTime(types.FromGoTime(time.Now()), mysql.TypeTimestamp, 3)
-	for {
-		err = rs.Next(context.TODO(), req)
-		if err != nil {
-			logutil.BgLogger().Fatal("upgradeToVer67 error", zap.Error(err))
-		}
-		if req.NumRows() == 0 {
-			break
-		}
-		updateBindInfo(iter, p, bindMap)
-	}
-	terror.Call(rs.Close)
-
-	mustExecute(s, "DELETE FROM mysql.bind_info where source != 'builtin'")
-	for original, bind := range bindMap {
-		mustExecute(s, fmt.Sprintf("INSERT INTO mysql.bind_info VALUES(%s, %s, '', %s, %s, %s, %s, %s, %s)",
-			expression.Quote(original),
-			expression.Quote(bind.bindSQL),
-			expression.Quote(bind.status),
-			expression.Quote(bind.createTime.String()),
-			expression.Quote(now.String()),
-			expression.Quote(bind.charset),
-			expression.Quote(bind.collation),
-			expression.Quote(bind.source),
-		))
 	}
 }
 

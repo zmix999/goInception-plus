@@ -26,7 +26,16 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/zmix999/goInception-plus/bindinfo"
+	"github.com/opentracing/opentracing-go"
+	"github.com/pingcap/errors"
+	"github.com/pingcap/log"
+	pumpcli "github.com/pingcap/tidb-tools/tidb-binlog/pump_client"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/push"
+	plog "github.com/sirupsen/logrus"
+	"github.com/tikv/client-go/v2/tikv"
+	"github.com/tikv/client-go/v2/txnkv/transaction"
+	pd "github.com/tikv/pd/client"
 	"github.com/zmix999/goInception-plus/config"
 	"github.com/zmix999/goInception-plus/ddl"
 	"github.com/zmix999/goInception-plus/domain"
@@ -62,16 +71,6 @@ import (
 	storageSys "github.com/zmix999/goInception-plus/util/sys/storage"
 	"github.com/zmix999/goInception-plus/util/systimemon"
 	"github.com/zmix999/goInception-plus/util/topsql"
-	"github.com/opentracing/opentracing-go"
-	"github.com/pingcap/errors"
-	"github.com/pingcap/log"
-	pumpcli "github.com/pingcap/tidb-tools/tidb-binlog/pump_client"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/push"
-	plog "github.com/sirupsen/logrus"
-	"github.com/tikv/client-go/v2/tikv"
-	"github.com/tikv/client-go/v2/txnkv/transaction"
-	pd "github.com/tikv/pd/client"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
 )
@@ -595,7 +594,6 @@ func setGlobalVars() {
 	session.SetIndexUsageSyncLease(indexUsageSyncLeaseDuration)
 	planReplayerGCLease := parseDuration(cfg.Performance.PlanReplayerGCLease)
 	session.SetPlanReplayerGCLease(planReplayerGCLease)
-	bindinfo.Lease = parseDuration(cfg.Performance.BindInfoLease)
 	domain.RunAutoAnalyze = cfg.Performance.RunAutoAnalyze
 	statistics.FeedbackProbability.Store(cfg.Performance.FeedbackProbability)
 	statistics.MaxQueryFeedbackCount.Store(int64(cfg.Performance.QueryFeedbackLimit))

@@ -63,8 +63,6 @@ func doDDLWorks(s Session) {
 	mustExecute(s, CreateRoleEdgesTable)
 	// Create default_roles table.
 	mustExecute(s, CreateDefaultRolesTable)
-	// Create bind_info table.
-	initBindInfoTable(s)
 	// Create stats_topn_store table.
 	mustExecute(s, CreateStatsTopNTable)
 	// Create expr_pushdown_blacklist table.

@@ -26,6 +26,10 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/cznic/mathutil"
+	"github.com/pingcap/errors"
+	"github.com/pingcap/failpoint"
+	"github.com/pingcap/tipb/go-tipb"
 	"github.com/zmix999/goInception-plus/distsql"
 	"github.com/zmix999/goInception-plus/domain"
 	"github.com/zmix999/goInception-plus/executor/aggfuncs"
@@ -58,10 +62,6 @@ import (
 	"github.com/zmix999/goInception-plus/util/ranger"
 	"github.com/zmix999/goInception-plus/util/rowcodec"
 	"github.com/zmix999/goInception-plus/util/timeutil"
-	"github.com/cznic/mathutil"
-	"github.com/pingcap/errors"
-	"github.com/pingcap/failpoint"
-	"github.com/pingcap/tipb/go-tipb"
 	"go.uber.org/zap"
 )
 
@@ -247,8 +247,6 @@ func (b *executorBuilder) build(p plannercore.Plan) Executor {
 		return b.buildShuffle(v)
 	case *plannercore.PhysicalShuffleReceiverStub:
 		return b.buildShuffleReceiverStub(v)
-	case *plannercore.SQLBindPlan:
-		return b.buildSQLBindExec(v)
 	case *plannercore.SplitRegion:
 		return b.buildSplitRegion(v)
 	case *plannercore.PhysicalIndexMergeReader:
@@ -4292,24 +4290,6 @@ func (b *executorBuilder) buildShuffle(v *plannercore.PhysicalShuffle) *ShuffleE
 
 func (b *executorBuilder) buildShuffleReceiverStub(v *plannercore.PhysicalShuffleReceiverStub) *shuffleReceiver {
 	return (*shuffleReceiver)(v.Receiver)
-}
-
-func (b *executorBuilder) buildSQLBindExec(v *plannercore.SQLBindPlan) Executor {
-	base := newBaseExecutor(b.ctx, v.Schema(), v.ID())
-	base.initCap = chunk.ZeroCapacity
-
-	e := &SQLBindExec{
-		baseExecutor: base,
-		sqlBindOp:    v.SQLBindOp,
-		normdOrigSQL: v.NormdOrigSQL,
-		bindSQL:      v.BindSQL,
-		charset:      v.Charset,
-		collation:    v.Collation,
-		db:           v.Db,
-		isGlobal:     v.IsGlobal,
-		bindAst:      v.BindStmt,
-	}
-	return e
 }
 
 // NewRowDecoder creates a chunk decoder for new row format row value decode.

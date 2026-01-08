@@ -24,6 +24,12 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/opentracing/opentracing-go"
+	"github.com/pingcap/errors"
+	"github.com/pingcap/failpoint"
+	"github.com/pingcap/tipb/go-binlog"
+	"github.com/tikv/client-go/v2/oracle"
+	"github.com/tikv/client-go/v2/tikv"
 	"github.com/zmix999/goInception-plus/config"
 	"github.com/zmix999/goInception-plus/kv"
 	"github.com/zmix999/goInception-plus/parser/model"
@@ -33,13 +39,6 @@ import (
 	"github.com/zmix999/goInception-plus/sessionctx/binloginfo"
 	"github.com/zmix999/goInception-plus/tablecodec"
 	"github.com/zmix999/goInception-plus/util/logutil"
-	"github.com/zmix999/goInception-plus/util/sli"
-	"github.com/opentracing/opentracing-go"
-	"github.com/pingcap/errors"
-	"github.com/pingcap/failpoint"
-	"github.com/pingcap/tipb/go-binlog"
-	"github.com/tikv/client-go/v2/oracle"
-	"github.com/tikv/client-go/v2/tikv"
 	"go.uber.org/zap"
 )
 
@@ -58,7 +57,6 @@ type LazyTxn struct {
 	initCnt       int
 	stagingHandle kv.StagingHandle
 	mutations     map[int64]*binlog.TableMutation
-	writeSLI      sli.TxnWriteThroughputSLI
 
 	// TxnInfo is added for the lock view feature, the data is frequent modified but
 	// rarely read (just in query select * from information_schema.tidb_trx).

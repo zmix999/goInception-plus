@@ -40,7 +40,6 @@ import (
 	"github.com/zmix999/goInception-plus/util/admin"
 	"github.com/zmix999/goInception-plus/util/dbterror"
 	"github.com/zmix999/goInception-plus/util/logutil"
-	"github.com/zmix999/goInception-plus/util/topsql"
 	"go.etcd.io/etcd/clientv3"
 	"go.uber.org/zap"
 )
@@ -476,8 +475,6 @@ func (w *worker) setDDLLabelForTopSQL(job *model.Job) {
 		w.cacheNormalizedSQL, w.cacheDigest = parser.NormalizeDigest(job.Query)
 		w.cacheSQL = job.Query
 	}
-
-	w.ddlJobCtx = topsql.AttachSQLInfo(context.Background(), w.cacheNormalizedSQL, w.cacheDigest, "", nil, false)
 }
 
 // handleDDLJobQueue handles DDL jobs in DDL Job queue.

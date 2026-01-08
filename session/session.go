@@ -47,7 +47,6 @@ import (
 	"github.com/zmix999/goInception-plus/parser/mysql"
 	"github.com/zmix999/goInception-plus/parser/terror"
 	"github.com/zmix999/goInception-plus/table/temptable"
-	"github.com/zmix999/goInception-plus/util/topsql"
 	"go.uber.org/zap"
 
 	"github.com/jinzhu/gorm"
@@ -87,7 +86,6 @@ import (
 	"github.com/zmix999/goInception-plus/util/execdetails"
 	"github.com/zmix999/goInception-plus/util/kvcache"
 	"github.com/zmix999/goInception-plus/util/logutil"
-	"github.com/zmix999/goInception-plus/util/sli"
 	"github.com/zmix999/goInception-plus/util/sqlexec"
 	"github.com/zmix999/goInception-plus/util/tableutil"
 	"github.com/zmix999/goInception-plus/util/timeutil"
@@ -107,8 +105,6 @@ var (
 	sessionExecuteCompileDurationGeneral  = metrics.SessionExecuteCompileDuration.WithLabelValues(metrics.LblGeneral)
 	sessionExecuteParseDurationInternal   = metrics.SessionExecuteParseDuration.WithLabelValues(metrics.LblInternal)
 	sessionExecuteParseDurationGeneral    = metrics.SessionExecuteParseDuration.WithLabelValues(metrics.LblGeneral)
-
-	telemetryCTEUsage = metrics.TelemetrySQLCTECnt
 )
 
 // Session context, it is consistent with the lifecycle of a client connection.
@@ -1677,10 +1673,6 @@ func (s *session) ExecuteStmt(ctx context.Context, stmtNode ast.StmtNode) (sqlex
 	if err := executor.ResetContextOfStmt(s, stmtNode); err != nil {
 		return nil, err
 	}
-	normalizedSQL, digest := s.sessionVars.StmtCtx.SQLDigest()
-	if variable.TopSQLEnabled() {
-		ctx = topsql.AttachSQLInfo(ctx, normalizedSQL, digest, "", nil, s.sessionVars.InRestrictedSQL)
-	}
 
 	if err := s.validateStatementReadOnlyInStaleness(stmtNode); err != nil {
 		return nil, err
@@ -1689,7 +1681,6 @@ func (s *session) ExecuteStmt(ctx context.Context, stmtNode ast.StmtNode) (sqlex
 	// Uncorrelated subqueries will execute once when building plan, so we reset process info before building plan.
 	cmd32 := atomic.LoadUint32(&s.GetSessionVars().CommandValue)
 	s.SetProcessInfo(stmtNode.Text(), time.Now(), byte(cmd32), 0)
-	s.txn.onStmtStart(digest.String())
 	defer s.txn.onStmtEnd()
 
 	failpoint.Inject("mockStmtSlow", func(val failpoint.Value) {
@@ -3130,11 +3121,6 @@ func (s *session) SetPort(port string) {
 	s.sessionVars.Port = port
 }
 
-// GetTxnWriteThroughputSLI implements the Context interface.
-func (s *session) GetTxnWriteThroughputSLI() *sli.TxnWriteThroughputSLI {
-	return &s.txn.writeSLI
-}
-
 // TemporaryTableExists is used by the telemetry package to avoid circle dependency.
 func (s *session) TemporaryTableExists() bool {
 	is := domain.GetDomain(s).InfoSchema()
@@ -3187,15 +3173,6 @@ func (s *session) updateTelemetryMetric(es *executor.ExecStmt) {
 	}
 	if s.isInternal() {
 		return
-	}
-
-	ti := es.Ti
-	if ti.UseRecursive {
-		telemetryCTEUsage.WithLabelValues("recurCTE").Inc()
-	} else if ti.UseNonRecursive {
-		telemetryCTEUsage.WithLabelValues("nonRecurCTE").Inc()
-	} else {
-		telemetryCTEUsage.WithLabelValues("notCTE").Inc()
 	}
 }
 

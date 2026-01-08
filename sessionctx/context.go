@@ -29,7 +29,6 @@ import (
 	"github.com/zmix999/goInception-plus/sessionctx/variable"
 	"github.com/zmix999/goInception-plus/util"
 	"github.com/zmix999/goInception-plus/util/kvcache"
-	"github.com/zmix999/goInception-plus/util/sli"
 )
 
 // InfoschemaMetaVersion is a workaround. Due to circular dependency,
@@ -130,8 +129,6 @@ type Context interface {
 	PrepareTSFuture(ctx context.Context)
 	// StoreIndexUsage stores the index usage information.
 	StoreIndexUsage(tblID int64, idxID int64, rowsSelected int64)
-	// GetTxnWriteThroughputSLI returns the TxnWriteThroughputSLI.
-	GetTxnWriteThroughputSLI() *sli.TxnWriteThroughputSLI
 }
 
 type basicCtxType int

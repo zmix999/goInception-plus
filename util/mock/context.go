@@ -20,6 +20,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/pingcap/errors"
+	"github.com/pingcap/kvproto/pkg/kvrpcpb"
+	"github.com/pingcap/tipb/go-binlog"
+	"github.com/tikv/client-go/v2/tikv"
 	"github.com/zmix999/goInception-plus/kv"
 	"github.com/zmix999/goInception-plus/owner"
 	"github.com/zmix999/goInception-plus/parser/ast"
@@ -30,12 +34,7 @@ import (
 	"github.com/zmix999/goInception-plus/util/disk"
 	"github.com/zmix999/goInception-plus/util/kvcache"
 	"github.com/zmix999/goInception-plus/util/memory"
-	"github.com/zmix999/goInception-plus/util/sli"
 	"github.com/zmix999/goInception-plus/util/sqlexec"
-	"github.com/pingcap/errors"
-	"github.com/pingcap/kvproto/pkg/kvrpcpb"
-	"github.com/pingcap/tipb/go-binlog"
-	"github.com/tikv/client-go/v2/tikv"
 )
 
 var _ sessionctx.Context = (*Context)(nil)
@@ -284,11 +283,6 @@ func (c *Context) StoreQueryFeedback(_ interface{}) {}
 
 // StoreIndexUsage strores the index usage information.
 func (c *Context) StoreIndexUsage(_ int64, _ int64, _ int64) {}
-
-// GetTxnWriteThroughputSLI implements the sessionctx.Context interface.
-func (c *Context) GetTxnWriteThroughputSLI() *sli.TxnWriteThroughputSLI {
-	return &sli.TxnWriteThroughputSLI{}
-}
 
 // StmtCommit implements the sessionctx.Context interface.
 func (c *Context) StmtCommit() {}

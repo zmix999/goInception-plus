@@ -24,6 +24,7 @@ import (
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/pingcap/errors"
+	"github.com/tikv/client-go/v2/txnkv/txnsnapshot"
 	"github.com/zmix999/goInception-plus/config"
 	"github.com/zmix999/goInception-plus/ddl"
 	"github.com/zmix999/goInception-plus/expression"
@@ -40,7 +41,6 @@ import (
 	"github.com/zmix999/goInception-plus/util/execdetails"
 	"github.com/zmix999/goInception-plus/util/logutil"
 	"github.com/zmix999/goInception-plus/util/memory"
-	"github.com/tikv/client-go/v2/txnkv/txnsnapshot"
 	"go.uber.org/zap"
 )
 
@@ -392,11 +392,11 @@ func (e *InsertValues) fastEvalRow(ctx context.Context, list []expression.Expres
 
 // setValueForRefColumn set some default values for the row to eval the row value with other columns,
 // it follows these rules:
-//     1. for nullable and no default value column, use NULL.
-//     2. for nullable and have default value column, use it's default value.
-//     3. for not null column, use zero value even in strict mode.
-//     4. for auto_increment column, use zero value.
-//     5. for generated column, use NULL.
+//  1. for nullable and no default value column, use NULL.
+//  2. for nullable and have default value column, use it's default value.
+//  3. for not null column, use zero value even in strict mode.
+//  4. for auto_increment column, use zero value.
+//  5. for generated column, use NULL.
 func (e *InsertValues) setValueForRefColumn(row []types.Datum, hasValue []bool) error {
 	for i, c := range e.Table.Cols() {
 		d, err := e.getColDefaultValue(i, c)
@@ -438,7 +438,6 @@ func insertRowsFromSelect(ctx context.Context, base insertCommon) error {
 	extraColsInSel := make([][]types.Datum, 0, chk.Capacity())
 	// In order to ensure the correctness of the `transaction write throughput` SLI statistics,
 	// just ignore the transaction which contain `insert|replace into ... select ... from ...` statement.
-	e.ctx.GetTxnWriteThroughputSLI().SetInvalid()
 	for {
 		err := Next(ctx, selectExec, chk)
 		if err != nil {

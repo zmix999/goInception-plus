@@ -6,18 +6,16 @@ import (
 	"github.com/jackc/pgproto3/v2"
 	pgOID "github.com/lib/pq/oid"
 	"github.com/pingcap/errors"
+	"github.com/tikv/client-go/v2/util"
 	"github.com/zmix999/goInception-plus/kv"
 	"github.com/zmix999/goInception-plus/parser/mysql"
 	"github.com/zmix999/goInception-plus/parser/terror"
 	plannercore "github.com/zmix999/goInception-plus/planner/core"
 	"github.com/zmix999/goInception-plus/sessionctx/stmtctx"
-	"github.com/zmix999/goInception-plus/sessionctx/variable"
 	storeerr "github.com/zmix999/goInception-plus/store/driver/error"
 	"github.com/zmix999/goInception-plus/types"
 	"github.com/zmix999/goInception-plus/util/execdetails"
 	"github.com/zmix999/goInception-plus/util/hack"
-	"github.com/zmix999/goInception-plus/util/topsql"
-	"github.com/tikv/client-go/v2/util"
 	"math"
 	"runtime/trace"
 	"strconv"
@@ -220,14 +218,6 @@ func (cc *clientConn) handleStmtExecute(ctx context.Context, execute pgproto3.Ex
 			strconv.FormatUint(uint64(stmtID), 10), "stmt_description")
 	}
 
-	if variable.TopSQLEnabled() {
-		preparedStmt, _ := cc.preparedStmtID2CachePreparedStmt(stmtID)
-		//preparedStmt, _ := cc.preparedStmtID2CachePreparedStmt(execute.Portal)
-		if preparedStmt != nil && preparedStmt.SQLDigest != nil {
-			ctx = topsql.AttachSQLInfo(ctx, preparedStmt.NormalizedSQL, preparedStmt.SQLDigest, "", nil, false)
-		}
-	}
-
 	stmt := cc.ctx.GetStatement(int(stmtID))
 	if stmt == nil {
 		return mysql.NewErr(mysql.ErrUnknownStmtHandler,
@@ -302,12 +292,6 @@ func (cc *clientConn) handleStmtFetch(ctx context.Context, data []byte) (err err
 	if stmt == nil {
 		return errors.Annotate(mysql.NewErr(mysql.ErrUnknownStmtHandler,
 			strconv.FormatUint(uint64(stmtID), 10), "stmt_fetch"), cc.preparedStmt2String(stmtID))
-	}
-	if variable.TopSQLEnabled() {
-		prepareObj, _ := cc.preparedStmtID2CachePreparedStmt(stmtID)
-		if prepareObj != nil && prepareObj.SQLDigest != nil {
-			ctx = topsql.AttachSQLInfo(ctx, prepareObj.NormalizedSQL, prepareObj.SQLDigest, "", nil, false)
-		}
 	}
 	sql := ""
 	if prepared, ok := cc.ctx.GetStatement(int(stmtID)).(*TiDBStatement); ok {

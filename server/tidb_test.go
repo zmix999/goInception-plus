@@ -31,6 +31,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/go-sql-driver/mysql"
+	. "github.com/pingcap/check"
+	"github.com/pingcap/errors"
 	"github.com/zmix999/goInception-plus/domain"
 	"github.com/zmix999/goInception-plus/kv"
 	"github.com/zmix999/goInception-plus/metrics"
@@ -41,10 +44,6 @@ import (
 	"github.com/zmix999/goInception-plus/util"
 	"github.com/zmix999/goInception-plus/util/collate"
 	"github.com/zmix999/goInception-plus/util/logutil"
-	"github.com/zmix999/goInception-plus/util/topsql/reporter"
-	"github.com/go-sql-driver/mysql"
-	. "github.com/pingcap/check"
-	"github.com/pingcap/errors"
 )
 
 type tidbTestSuite struct {
@@ -713,8 +712,4 @@ func (ts *tidbTestSerialSuite) TestPrepareCount(c *C) {
 	err = qctx.GetStatement(stmt.ID()).Close()
 	c.Assert(err, IsNil)
 	c.Assert(atomic.LoadInt64(&variable.PreparedStmtCount), Equals, prepareCnt)
-}
-
-type collectorWrapper struct {
-	reporter.TopSQLReporter
 }

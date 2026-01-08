@@ -44,19 +44,17 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/pingcap/errors"
+	"github.com/tikv/client-go/v2/util"
 	"github.com/zmix999/goInception-plus/kv"
 	"github.com/zmix999/goInception-plus/parser/mysql"
 	"github.com/zmix999/goInception-plus/parser/terror"
 	plannercore "github.com/zmix999/goInception-plus/planner/core"
 	"github.com/zmix999/goInception-plus/sessionctx/stmtctx"
-	"github.com/zmix999/goInception-plus/sessionctx/variable"
 	storeerr "github.com/zmix999/goInception-plus/store/driver/error"
 	"github.com/zmix999/goInception-plus/types"
 	"github.com/zmix999/goInception-plus/util/execdetails"
 	"github.com/zmix999/goInception-plus/util/hack"
-	"github.com/zmix999/goInception-plus/util/topsql"
-	"github.com/pingcap/errors"
-	"github.com/tikv/client-go/v2/util"
 )
 
 func (cc *clientConn) mysqlhandleStmtPrepare(ctx context.Context, sql string) error {
@@ -126,13 +124,6 @@ func (cc *clientConn) mysqlhandleStmtExecute(ctx context.Context, data []byte) (
 	pos := 0
 	stmtID := binary.LittleEndian.Uint32(data[0:4])
 	pos += 4
-
-	if variable.TopSQLEnabled() {
-		preparedStmt, _ := cc.preparedStmtID2CachePreparedStmt(stmtID)
-		if preparedStmt != nil && preparedStmt.SQLDigest != nil {
-			ctx = topsql.AttachSQLInfo(ctx, preparedStmt.NormalizedSQL, preparedStmt.SQLDigest, "", nil, false)
-		}
-	}
 
 	stmt := cc.ctx.GetStatement(int(stmtID))
 	if stmt == nil {
@@ -272,12 +263,6 @@ func (cc *clientConn) mysqlhandleStmtFetch(ctx context.Context, data []byte) (er
 	if stmt == nil {
 		return errors.Annotate(mysql.NewErr(mysql.ErrUnknownStmtHandler,
 			strconv.FormatUint(uint64(stmtID), 10), "stmt_fetch"), cc.preparedStmt2String(stmtID))
-	}
-	if variable.TopSQLEnabled() {
-		prepareObj, _ := cc.preparedStmtID2CachePreparedStmt(stmtID)
-		if prepareObj != nil && prepareObj.SQLDigest != nil {
-			ctx = topsql.AttachSQLInfo(ctx, prepareObj.NormalizedSQL, prepareObj.SQLDigest, "", nil, false)
-		}
 	}
 	sql := ""
 	if prepared, ok := cc.ctx.GetStatement(int(stmtID)).(*TiDBStatement); ok {

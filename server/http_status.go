@@ -38,6 +38,9 @@ import (
 	"github.com/pingcap/errors"
 	"github.com/pingcap/failpoint"
 	"github.com/pingcap/fn"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/soheilhy/cmux"
+	"github.com/tiancaiamao/appdash/traceapp"
 	"github.com/zmix999/goInception-plus/config"
 	"github.com/zmix999/goInception-plus/kv"
 	"github.com/zmix999/goInception-plus/parser/mysql"
@@ -46,11 +49,7 @@ import (
 	"github.com/zmix999/goInception-plus/util/logutil"
 	"github.com/zmix999/goInception-plus/util/memory"
 	"github.com/zmix999/goInception-plus/util/printer"
-	"github.com/zmix999/goInception-plus/util/topsql/tracecpu"
 	"github.com/zmix999/goInception-plus/util/versioninfo"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/soheilhy/cmux"
-	"github.com/tiancaiamao/appdash/traceapp"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/channelz/service"
 	static "sourcegraph.com/sourcegraph/appdash-data"
@@ -276,7 +275,6 @@ func (s *Server) startHTTPServer() {
 
 	serverMux.HandleFunc("/debug/pprof/", pprof.Index)
 	serverMux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-	serverMux.HandleFunc("/debug/pprof/profile", tracecpu.ProfileHTTPHandler)
 	serverMux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
 	serverMux.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
@@ -353,21 +351,11 @@ func (s *Server) startHTTPServer() {
 			serveError(w, http.StatusInternalServerError, fmt.Sprintf("Create zipped %s fail: %v", "profile", err))
 			return
 		}
-		if err := tracecpu.StartCPUProfile(fw); err != nil {
-			serveError(w, http.StatusInternalServerError,
-				fmt.Sprintf("Could not enable CPU profiling: %s", err))
-			return
-		}
 		sec, err := strconv.ParseInt(r.FormValue("seconds"), 10, 64)
 		if sec <= 0 || err != nil {
 			sec = 10
 		}
 		sleepWithCtx(r.Context(), time.Duration(sec)*time.Second)
-		err = tracecpu.StopCPUProfile()
-		if err != nil {
-			serveError(w, http.StatusInternalServerError, fmt.Sprintf("Create zipped %s fail: %v", "config", err))
-			return
-		}
 
 		// dump config
 		fw, err = zw.Create("config")

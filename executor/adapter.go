@@ -24,6 +24,14 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/cznic/mathutil"
+	"github.com/opentracing/opentracing-go"
+	"github.com/pingcap/errors"
+	"github.com/pingcap/failpoint"
+	"github.com/pingcap/log"
+	tikverr "github.com/tikv/client-go/v2/error"
+	"github.com/tikv/client-go/v2/oracle"
+	"github.com/tikv/client-go/v2/util"
 	"github.com/zmix999/goInception-plus/config"
 	"github.com/zmix999/goInception-plus/ddl/placement"
 	"github.com/zmix999/goInception-plus/domain"
@@ -51,15 +59,6 @@ import (
 	"github.com/zmix999/goInception-plus/util/sqlexec"
 	"github.com/zmix999/goInception-plus/util/stmtsummary"
 	"github.com/zmix999/goInception-plus/util/stringutil"
-	"github.com/zmix999/goInception-plus/util/topsql"
-	"github.com/cznic/mathutil"
-	"github.com/opentracing/opentracing-go"
-	"github.com/pingcap/errors"
-	"github.com/pingcap/failpoint"
-	"github.com/pingcap/log"
-	tikverr "github.com/tikv/client-go/v2/error"
-	"github.com/tikv/client-go/v2/oracle"
-	"github.com/tikv/client-go/v2/util"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -227,7 +226,6 @@ func (a *ExecStmt) PointGet(ctx context.Context, is infoschema.InfoSchema) (*rec
 		defer span1.Finish()
 		ctx = opentracing.ContextWithSpan(ctx, span1)
 	}
-	ctx = a.setPlanLabelForTopSQL(ctx)
 	startTs := uint64(math.MaxUint64)
 	err := a.Ctx.InitTxnWithStartTS(startTs)
 	if err != nil {
@@ -308,16 +306,6 @@ func (a *ExecStmt) RebuildPlan(ctx context.Context) (int64, error) {
 	return a.InfoSchema.SchemaMetaVersion(), nil
 }
 
-func (a *ExecStmt) setPlanLabelForTopSQL(ctx context.Context) context.Context {
-	if a.Plan == nil || !variable.TopSQLEnabled() {
-		return ctx
-	}
-	vars := a.Ctx.GetSessionVars()
-	normalizedSQL, sqlDigest := vars.StmtCtx.SQLDigest()
-	normalizedPlan, planDigest := getPlanDigest(a.Ctx, a.Plan)
-	return topsql.AttachSQLInfo(ctx, normalizedSQL, sqlDigest, normalizedPlan, planDigest, vars.InRestrictedSQL)
-}
-
 // Exec builds an Executor from a plan. If the Executor doesn't return result,
 // like the INSERT, UPDATE statements, it executes in this function, if the Executor returns
 // result, execution is done after this function returns, in the returned sqlexec.RecordSet Next method.
@@ -376,8 +364,6 @@ func (a *ExecStmt) Exec(ctx context.Context) (_ sqlexec.RecordSet, err error) {
 	if err != nil {
 		return nil, err
 	}
-	// ExecuteExec will rewrite `a.Plan`, so set plan label should be executed after `a.buildExecutor`.
-	ctx = a.setPlanLabelForTopSQL(ctx)
 
 	if err = e.Open(ctx); err != nil {
 		terror.Call(e.Close)
@@ -873,14 +859,6 @@ func (a *ExecStmt) FinishExecuteStmt(txnTS uint64, err error, hasMoreResults boo
 			LockKeys: execDetail.LockKeysDetail,
 		}
 		sessVars.StmtCtx.RuntimeStatsColl.RegisterStats(a.Plan.ID(), statsWithCommit)
-	}
-	// Record related SLI metrics.
-	if execDetail.CommitDetail != nil && execDetail.CommitDetail.WriteSize > 0 {
-		a.Ctx.GetTxnWriteThroughputSLI().AddTxnWriteSize(execDetail.CommitDetail.WriteSize, execDetail.CommitDetail.WriteKeys)
-	}
-	if execDetail.ScanDetail != nil && execDetail.ScanDetail.ProcessedKeys > 0 && sessVars.StmtCtx.AffectedRows() > 0 {
-		// Only record the read keys in write statement which affect row more than 0.
-		a.Ctx.GetTxnWriteThroughputSLI().AddReadKeys(execDetail.ScanDetail.ProcessedKeys)
 	}
 	succ := err == nil
 	// `LowSlowQuery` and `SummaryStmt` must be called before recording `PrevStmt`.

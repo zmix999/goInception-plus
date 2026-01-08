@@ -55,6 +55,11 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/opentracing/opentracing-go"
+	"github.com/pingcap/errors"
+	"github.com/pingcap/failpoint"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/tikv/client-go/v2/util"
 	"github.com/zmix999/goInception-plus/config"
 	"github.com/zmix999/goInception-plus/errno"
 	"github.com/zmix999/goInception-plus/executor"
@@ -82,11 +87,6 @@ import (
 	"github.com/zmix999/goInception-plus/util/hack"
 	"github.com/zmix999/goInception-plus/util/logutil"
 	"github.com/zmix999/goInception-plus/util/memory"
-	"github.com/opentracing/opentracing-go"
-	"github.com/pingcap/errors"
-	"github.com/pingcap/failpoint"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/tikv/client-go/v2/util"
 	"go.uber.org/zap"
 )
 
@@ -1145,8 +1145,6 @@ func (cc *clientConn) addMetrics(cmd byte, startTime time.Time, err error) {
 	}
 
 	cost := time.Since(startTime)
-	sessionVar := cc.ctx.GetSessionVars()
-	cc.ctx.GetTxnWriteThroughputSLI().FinishExecuteStmt(cost, cc.ctx.AffectedRows(), sessionVar.InTxn())
 
 	switch sqlType {
 	case "Use":

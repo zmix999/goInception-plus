@@ -8,13 +8,11 @@ import (
 	"github.com/zmix999/goInception-plus/parser/ast"
 	plannercore "github.com/zmix999/goInception-plus/planner/core"
 	"github.com/zmix999/goInception-plus/sessionctx"
-	"github.com/zmix999/goInception-plus/sessionctx/variable"
 	driver "github.com/zmix999/goInception-plus/types/parser_driver"
 	"github.com/zmix999/goInception-plus/util"
 	"github.com/zmix999/goInception-plus/util/chunk"
 	"github.com/zmix999/goInception-plus/util/hint"
 	"github.com/zmix999/goInception-plus/util/sqlexec"
-	"github.com/zmix999/goInception-plus/util/topsql"
 	"math"
 	"sort"
 	"strings"
@@ -131,9 +129,6 @@ func (e *PrepareExec) Next(ctx context.Context, req *chunk.Chunk) error {
 		SchemaVersion: ret.InfoSchema.SchemaMetaVersion(),
 	}
 	normalizedSQL, digest := parser.NormalizeDigest(prepared.Stmt.Text())
-	if variable.TopSQLEnabled() {
-		ctx = topsql.AttachSQLInfo(ctx, normalizedSQL, digest, "", nil, vars.InRestrictedSQL)
-	}
 
 	if !plannercore.PreparedPlanCacheEnabled() {
 		prepared.UseCache = false
@@ -240,7 +235,7 @@ func ParamMakerSorter(markers []ast.ParamMarkerExpr) error {
 	return nil
 }
 
-//SetInsertParamType when the plan is insert, set the type of parameter expression
+// SetInsertParamType when the plan is insert, set the type of parameter expression
 func SetInsertParamType(insertPlan *plannercore.Insert, paramExprs *[]ast.ParamMarkerExpr) error {
 	// if insertPlan already have a select plan,we could use that to set parameter expressions' type
 	if insertPlan.SelectPlan != nil {

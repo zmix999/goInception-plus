@@ -31,6 +31,9 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/pingcap/errors"
 	"github.com/pingcap/failpoint"
+	tikverr "github.com/tikv/client-go/v2/error"
+	tikvstore "github.com/tikv/client-go/v2/kv"
+	tikvutil "github.com/tikv/client-go/v2/util"
 	"github.com/zmix999/goInception-plus/config"
 	"github.com/zmix999/goInception-plus/domain"
 	"github.com/zmix999/goInception-plus/domain/infosync"
@@ -64,10 +67,6 @@ import (
 	"github.com/zmix999/goInception-plus/util/logutil"
 	"github.com/zmix999/goInception-plus/util/memory"
 	"github.com/zmix999/goInception-plus/util/resourcegrouptag"
-	"github.com/zmix999/goInception-plus/util/topsql"
-	tikverr "github.com/tikv/client-go/v2/error"
-	tikvstore "github.com/tikv/client-go/v2/kv"
-	tikvutil "github.com/tikv/client-go/v2/util"
 	"go.uber.org/zap"
 )
 
@@ -822,6 +821,7 @@ func (e *CheckTableExec) checkTableRecord(idxOffset int) error {
 
 // ShowSlowExec represents the executor of showing the slow queries.
 // It is build from the "admin show slow" statement:
+//
 //	admin show slow top [internal | all] N
 //	admin show slow recent N
 type ShowSlowExec struct {
@@ -1467,21 +1467,22 @@ func (e *MaxOneRowExec) Next(ctx context.Context, req *chunk.Chunk) error {
 // UnionExec pulls all it's children's result and returns to its parent directly.
 // A "resultPuller" is started for every child to pull result from that child and push it to the "resultPool", the used
 // "Chunk" is obtained from the corresponding "resourcePool". All resultPullers are running concurrently.
-//                             +----------------+
-//   +---> resourcePool 1 ---> | resultPuller 1 |-----+
-//   |                         +----------------+     |
-//   |                                                |
-//   |                         +----------------+     v
-//   +---> resourcePool 2 ---> | resultPuller 2 |-----> resultPool ---+
-//   |                         +----------------+     ^               |
-//   |                               ......           |               |
-//   |                         +----------------+     |               |
-//   +---> resourcePool n ---> | resultPuller n |-----+               |
-//   |                         +----------------+                     |
-//   |                                                                |
-//   |                          +-------------+                       |
-//   |--------------------------| main thread | <---------------------+
-//                              +-------------+
+//
+//	                          +----------------+
+//	+---> resourcePool 1 ---> | resultPuller 1 |-----+
+//	|                         +----------------+     |
+//	|                                                |
+//	|                         +----------------+     v
+//	+---> resourcePool 2 ---> | resultPuller 2 |-----> resultPool ---+
+//	|                         +----------------+     ^               |
+//	|                               ......           |               |
+//	|                         +----------------+     |               |
+//	+---> resourcePool n ---> | resultPuller n |-----+               |
+//	|                         +----------------+                     |
+//	|                                                                |
+//	|                          +-------------+                       |
+//	|--------------------------| main thread | <---------------------+
+//	                           +-------------+
 type UnionExec struct {
 	baseExecutor
 	concurrency int
@@ -1714,9 +1715,6 @@ func ResetContextOfStmt(ctx sessionctx.Context, s ast.StmtNode) (err error) {
 		if variable.EnablePProfSQLCPU.Load() && len(prepareStmt.NormalizedSQL) > 0 {
 			goCtx = pprof.WithLabels(goCtx, pprof.Labels("sql", util.QueryStrForLog(prepareStmt.NormalizedSQL)))
 			pprof.SetGoroutineLabels(goCtx)
-		}
-		if variable.TopSQLEnabled() && prepareStmt.SQLDigest != nil {
-			topsql.AttachSQLInfo(goCtx, prepareStmt.NormalizedSQL, prepareStmt.SQLDigest, "", nil, vars.InRestrictedSQL)
 		}
 	}
 	// execute missed stmtID uses empty sql

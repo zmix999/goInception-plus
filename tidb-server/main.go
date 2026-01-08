@@ -70,7 +70,6 @@ import (
 	"github.com/zmix999/goInception-plus/util/sys/linux"
 	storageSys "github.com/zmix999/goInception-plus/util/sys/storage"
 	"github.com/zmix999/goInception-plus/util/systimemon"
-	"github.com/zmix999/goInception-plus/util/topsql"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
 )
@@ -766,7 +765,6 @@ func cleanup(svr *server.Server, storage kv.Storage, dom *domain.Domain, gracefu
 	plugin.Shutdown(context.Background())
 	closeDomainAndStorage(storage, dom)
 	disk.CleanUp()
-	topsql.Close()
 }
 
 func stringToList(repairString string) []string {

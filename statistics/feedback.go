@@ -27,7 +27,6 @@ import (
 	"github.com/pingcap/failpoint"
 	"github.com/pingcap/log"
 	"github.com/zmix999/goInception-plus/kv"
-	"github.com/zmix999/goInception-plus/metrics"
 	"github.com/zmix999/goInception-plus/parser/mysql"
 	"github.com/zmix999/goInception-plus/sessionctx/stmtctx"
 	"github.com/zmix999/goInception-plus/sessionctx/variable"
@@ -281,7 +280,6 @@ func (q *QueryFeedback) Update(startKey kv.Key, counts, ndvs []int64) {
 	for _, count := range counts {
 		sum += count
 	}
-	metrics.DistSQLScanKeysPartialHistogram.Observe(float64(sum))
 	q.actual += sum
 	if !q.Valid || q.Hist == nil {
 		return

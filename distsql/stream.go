@@ -19,8 +19,8 @@ import (
 	"time"
 
 	"github.com/pingcap/errors"
+	"github.com/pingcap/tipb/go-tipb"
 	"github.com/zmix999/goInception-plus/kv"
-	"github.com/zmix999/goInception-plus/metrics"
 	"github.com/zmix999/goInception-plus/parser/terror"
 	"github.com/zmix999/goInception-plus/sessionctx"
 	"github.com/zmix999/goInception-plus/statistics"
@@ -28,7 +28,6 @@ import (
 	"github.com/zmix999/goInception-plus/util/chunk"
 	"github.com/zmix999/goInception-plus/util/codec"
 	"github.com/zmix999/goInception-plus/util/dbterror"
-	"github.com/pingcap/tipb/go-tipb"
 )
 
 // streamResult implements the SelectResult interface.
@@ -82,7 +81,6 @@ func (r *streamResult) readDataFromResponse(ctx context.Context, resp kv.Respons
 		if !r.durationReported {
 			// TODO: Add a label to distinguish between success or failure.
 			// https://github.com/zmix999/goInception-plus/issues/11397
-			metrics.DistSQLQueryHistogram.WithLabelValues(r.label, r.sqlType).Observe(r.fetchDuration.Seconds())
 			r.durationReported = true
 		}
 		return true, nil
@@ -166,10 +164,6 @@ func (r *streamResult) NextRaw(ctx context.Context) ([]byte, error) {
 }
 
 func (r *streamResult) Close() error {
-	if r.feedback.Actual() > 0 {
-		metrics.DistSQLScanKeysHistogram.Observe(float64(r.feedback.Actual()))
-	}
-	metrics.DistSQLPartialCountHistogram.Observe(float64(r.partialCount))
 	if r.resp != nil {
 		return r.resp.Close()
 	}

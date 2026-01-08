@@ -31,10 +31,16 @@ import (
 	"github.com/pingcap/failpoint"
 	"github.com/pingcap/kvproto/pkg/coprocessor"
 	"github.com/pingcap/kvproto/pkg/kvrpcpb"
+	"github.com/pingcap/tipb/go-tipb"
+	"github.com/tikv/client-go/v2/metrics"
+	"github.com/tikv/client-go/v2/tikv"
+	"github.com/tikv/client-go/v2/tikvrpc"
+	"github.com/tikv/client-go/v2/txnkv/txnlock"
+	"github.com/tikv/client-go/v2/txnkv/txnsnapshot"
+	"github.com/tikv/client-go/v2/util"
 	"github.com/zmix999/goInception-plus/domain/infosync"
 	"github.com/zmix999/goInception-plus/errno"
 	"github.com/zmix999/goInception-plus/kv"
-	tidbmetrics "github.com/zmix999/goInception-plus/metrics"
 	"github.com/zmix999/goInception-plus/parser/terror"
 	"github.com/zmix999/goInception-plus/store/driver/backoff"
 	derr "github.com/zmix999/goInception-plus/store/driver/error"
@@ -43,17 +49,8 @@ import (
 	"github.com/zmix999/goInception-plus/util/logutil"
 	"github.com/zmix999/goInception-plus/util/memory"
 	"github.com/zmix999/goInception-plus/util/trxevents"
-	"github.com/pingcap/tipb/go-tipb"
-	"github.com/tikv/client-go/v2/metrics"
-	"github.com/tikv/client-go/v2/tikv"
-	"github.com/tikv/client-go/v2/tikvrpc"
-	"github.com/tikv/client-go/v2/txnkv/txnlock"
-	"github.com/tikv/client-go/v2/txnkv/txnsnapshot"
-	"github.com/tikv/client-go/v2/util"
 	"go.uber.org/zap"
 )
-
-var coprCacheHistogramEvict = tidbmetrics.DistSQLCoprCacheHistogram.WithLabelValues("evict")
 
 // Maximum total sleep time(in ms) for kv/cop commands.
 const (
@@ -658,9 +655,6 @@ func (worker *copIteratorWorker) handleTask(ctx context.Context, task *copTask, 
 		} else {
 			remainTasks = remainTasks[1:]
 		}
-	}
-	if worker.store.coprCache != nil && worker.store.coprCache.cache.Metrics != nil {
-		coprCacheHistogramEvict.Observe(float64(worker.store.coprCache.cache.Metrics.KeysEvicted()))
 	}
 }
 

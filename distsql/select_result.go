@@ -32,7 +32,6 @@ import (
 	"github.com/zmix999/goInception-plus/config"
 	"github.com/zmix999/goInception-plus/errno"
 	"github.com/zmix999/goInception-plus/kv"
-	"github.com/zmix999/goInception-plus/metrics"
 	"github.com/zmix999/goInception-plus/parser/terror"
 	"github.com/zmix999/goInception-plus/sessionctx"
 	"github.com/zmix999/goInception-plus/statistics"
@@ -49,11 +48,6 @@ import (
 
 var (
 	errQueryInterrupted = dbterror.ClassExecutor.NewStd(errno.ErrQueryInterrupted)
-)
-
-var (
-	coprCacheHistogramHit  = metrics.DistSQLCoprCacheHistogram.WithLabelValues("hit")
-	coprCacheHistogramMiss = metrics.DistSQLCoprCacheHistogram.WithLabelValues("miss")
 )
 
 var (
@@ -155,12 +149,6 @@ type selectResult struct {
 }
 
 func (r *selectResult) fetchResp(ctx context.Context) error {
-	defer func() {
-		if r.stats != nil {
-			coprCacheHistogramHit.Observe(float64(r.stats.CoprCacheHitNum))
-			coprCacheHistogramMiss.Observe(float64(len(r.stats.copRespTime) - int(r.stats.CoprCacheHitNum)))
-		}
-	}()
 	for {
 		r.respChkIdx = 0
 		startTime := time.Now()
@@ -180,7 +168,6 @@ func (r *selectResult) fetchResp(ctx context.Context) error {
 				// final round of fetch
 				// TODO: Add a label to distinguish between success or failure.
 				// https://github.com/zmix999/goInception-plus/issues/11397
-				metrics.DistSQLQueryHistogram.WithLabelValues(r.label, r.sqlType).Observe(r.fetchDuration.Seconds())
 				r.durationReported = true
 			}
 			return nil
@@ -421,10 +408,6 @@ func (r *selectResult) memConsume(bytes int64) {
 
 // Close closes selectResult.
 func (r *selectResult) Close() error {
-	if r.feedback.Actual() >= 0 {
-		metrics.DistSQLScanKeysHistogram.Observe(float64(r.feedback.Actual()))
-	}
-	metrics.DistSQLPartialCountHistogram.Observe(float64(r.partialCount))
 	respSize := atomic.SwapInt64(&r.selectRespSize, 0)
 	if respSize > 0 {
 		r.memConsume(-respSize)

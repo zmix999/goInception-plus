@@ -19,6 +19,12 @@ import (
 	"strings"
 	"time"
 
+	mysqlDriver "github.com/go-sql-driver/mysql"
+	"github.com/jinzhu/gorm"
+	"github.com/percona/go-mysql/query"
+	"github.com/pingcap/errors"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/zmix999/goInception-plus/config"
 	"github.com/zmix999/goInception-plus/executor"
 	"github.com/zmix999/goInception-plus/parser/ast"
@@ -34,12 +40,6 @@ import (
 	"github.com/zmix999/goInception-plus/util"
 	"github.com/zmix999/goInception-plus/util/sqlexec"
 	"github.com/zmix999/goInception-plus/util/stringutil"
-	mysqlDriver "github.com/go-sql-driver/mysql"
-	"github.com/jinzhu/gorm"
-	"github.com/percona/go-mysql/query"
-	"github.com/pingcap/errors"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -6381,7 +6381,7 @@ func (s *session) checkCreateIndex(table *ast.TableName, IndexName string,
 
 				if !s.innodbLargePrefix && !isOverflowIndexLength &&
 					!isBlobColumn &&
-					columnIndexLength > maxKeyLength {
+					columnIndexLength > maxKeyLength && s.dbType == DBTypeMysql {
 					s.appendErrorNo(ER_TOO_LONG_KEY, IndexName, maxKeyLength)
 					isOverflowIndexLength = true
 				}

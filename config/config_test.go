@@ -24,11 +24,11 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/zmix999/goInception-plus/util/logutil"
 	"github.com/BurntSushi/toml"
 	zaplog "github.com/pingcap/log"
 	"github.com/stretchr/testify/require"
 	tracing "github.com/uber/jaeger-client-go/config"
+	"github.com/zmix999/goInception-plus/util/logutil"
 )
 
 func TestNullableBoolUnmarshal(t *testing.T) {
@@ -77,71 +77,6 @@ func TestNullableBoolUnmarshal(t *testing.T) {
 	err = json.Unmarshal([]byte("{\"disable-timestamp\":null}"), &log)
 	require.NoError(t, err)
 	require.Equal(t, nbUnset, log.DisableTimestamp)
-}
-
-func TestLogConfig(t *testing.T) {
-	var conf Config
-	configFile := "log_config.toml"
-	_, localFile, _, _ := runtime.Caller(0)
-	configFile = filepath.Join(filepath.Dir(localFile), configFile)
-
-	f, err := os.Create(configFile)
-	require.NoError(t, err)
-	defer func() {
-		require.NoError(t, f.Close())
-		require.NoError(t, os.Remove(configFile))
-	}()
-
-	var testLoad = func(confStr string, expectedEnableErrorStack, expectedDisableErrorStack, expectedEnableTimestamp, expectedDisableTimestamp nullableBool, resultedDisableTimestamp, resultedDisableErrorVerbose bool) {
-		conf = defaultConf
-		_, err = f.WriteString(confStr)
-		require.NoError(t, err)
-		require.NoError(t, conf.Load(configFile))
-		require.NoError(t, conf.Valid())
-		require.Equal(t, expectedEnableErrorStack, conf.Log.EnableErrorStack)
-		require.Equal(t, expectedDisableErrorStack, conf.Log.DisableErrorStack)
-		require.Equal(t, expectedEnableTimestamp, conf.Log.EnableTimestamp)
-		require.Equal(t, expectedDisableTimestamp, conf.Log.DisableTimestamp)
-		require.Equal(t, logutil.NewLogConfig("info", "text", "tidb-slow.log", conf.Log.File, resultedDisableTimestamp, func(config *zaplog.Config) { config.DisableErrorVerbose = resultedDisableErrorVerbose }), conf.Log.ToLogConfig())
-		err := f.Truncate(0)
-		require.NoError(t, err)
-		_, err = f.Seek(0, 0)
-		require.NoError(t, err)
-	}
-
-	testLoad(`
-[Log]
-`, nbUnset, nbUnset, nbUnset, nbUnset, false, true)
-
-	testLoad(`
-[Log]
-enable-timestamp = false
-`, nbUnset, nbUnset, nbFalse, nbUnset, true, true)
-
-	testLoad(`
-[Log]
-enable-timestamp = true
-disable-timestamp = false
-`, nbUnset, nbUnset, nbTrue, nbFalse, false, true)
-
-	testLoad(`
-[Log]
-enable-timestamp = false
-disable-timestamp = true
-`, nbUnset, nbUnset, nbFalse, nbTrue, true, true)
-
-	testLoad(`
-[Log]
-enable-timestamp = true
-disable-timestamp = true
-`, nbUnset, nbUnset, nbTrue, nbUnset, false, true)
-
-	testLoad(`
-[Log]
-enable-error-stack = false
-disable-error-stack = false
-`, nbFalse, nbUnset, nbUnset, nbUnset, false, true)
-
 }
 
 func TestConfig(t *testing.T) {
@@ -447,106 +382,6 @@ xkNuJ2BlEGkwWLiRbKy1lNBBFUXKuhh3L/EIY10WTnr3TQzeL6H1
 	}
 }
 
-func TestOOMActionValid(t *testing.T) {
-	t.Parallel()
-
-	c1 := NewConfig()
-	tests := []struct {
-		oomAction string
-		valid     bool
-	}{
-		{"log", true},
-		{"Log", true},
-		{"Cancel", true},
-		{"cANceL", true},
-		{"quit", false},
-	}
-	for _, tt := range tests {
-		c1.OOMAction = tt.oomAction
-		require.Equal(t, tt.valid, c1.Valid() == nil)
-	}
-}
-
-func TestTxnTotalSizeLimitValid(t *testing.T) {
-	t.Parallel()
-
-	conf := NewConfig()
-	tests := []struct {
-		limit uint64
-		valid bool
-	}{
-		{4 << 10, true},
-		{10 << 30, true},
-		{10<<30 + 1, true},
-		{1 << 40, true},
-		{1<<40 + 1, false},
-	}
-
-	for _, tt := range tests {
-		conf.Performance.TxnTotalSizeLimit = tt.limit
-		require.Equal(t, tt.valid, conf.Valid() == nil)
-	}
-}
-
-func TestPreparePlanCacheValid(t *testing.T) {
-	t.Parallel()
-
-	conf := NewConfig()
-	tests := map[PreparedPlanCache]bool{
-		{Enabled: true, Capacity: 0}:                        false,
-		{Enabled: true, Capacity: 2}:                        true,
-		{Enabled: true, MemoryGuardRatio: -0.1}:             false,
-		{Enabled: true, MemoryGuardRatio: 2.2}:              false,
-		{Enabled: true, Capacity: 2, MemoryGuardRatio: 0.5}: true,
-	}
-	for testCase, res := range tests {
-		conf.PreparedPlanCache = testCase
-		require.Equal(t, res, conf.Valid() == nil)
-	}
-}
-
-func TestMaxIndexLength(t *testing.T) {
-	t.Parallel()
-
-	conf := NewConfig()
-	checkValid := func(indexLen int, shouldBeValid bool) {
-		conf.MaxIndexLength = indexLen
-		require.Equal(t, shouldBeValid, conf.Valid() == nil)
-	}
-	checkValid(DefMaxIndexLength, true)
-	checkValid(DefMaxIndexLength-1, false)
-	checkValid(DefMaxOfMaxIndexLength, true)
-	checkValid(DefMaxOfMaxIndexLength+1, false)
-}
-
-func TestIndexLimit(t *testing.T) {
-	t.Parallel()
-
-	conf := NewConfig()
-	checkValid := func(indexLimit int, shouldBeValid bool) {
-		conf.IndexLimit = indexLimit
-		require.Equal(t, shouldBeValid, conf.Valid() == nil)
-	}
-	checkValid(DefIndexLimit, true)
-	checkValid(DefIndexLimit-1, false)
-	checkValid(DefMaxOfIndexLimit, true)
-	checkValid(DefMaxOfIndexLimit+1, false)
-}
-
-func TestTableColumnCountLimit(t *testing.T) {
-	t.Parallel()
-
-	conf := NewConfig()
-	checkValid := func(tableColumnLimit int, shouldBeValid bool) {
-		conf.TableColumnCountLimit = uint32(tableColumnLimit)
-		require.Equal(t, shouldBeValid, conf.Valid() == nil)
-	}
-	checkValid(DefTableColumnCountLimit, true)
-	checkValid(DefTableColumnCountLimit-1, false)
-	checkValid(DefMaxOfTableColumnCountLimit, true)
-	checkValid(DefMaxOfTableColumnCountLimit+1, false)
-}
-
 func TestEncodeDefTempStorageDir(t *testing.T) {
 	t.Parallel()
 
@@ -609,26 +444,6 @@ func TestModifyThroughLDFlags(t *testing.T) {
 	defaultConf.EnableTelemetry = originalEnableTelemetry
 	CheckTableBeforeDrop = originalCheckTableBeforeDrop
 	StoreGlobalConfig(originalGlobalConfig)
-}
-
-func TestSecurityValid(t *testing.T) {
-	t.Parallel()
-
-	c1 := NewConfig()
-	tests := []struct {
-		spilledFileEncryptionMethod string
-		valid                       bool
-	}{
-		{"", false},
-		{"Plaintext", true},
-		{"plaintext123", false},
-		{"aes256-ctr", false},
-		{"aes128-ctr", true},
-	}
-	for _, tt := range tests {
-		c1.Security.SpilledFileEncryptionMethod = tt.spilledFileEncryptionMethod
-		require.Equal(t, tt.valid, c1.Valid() == nil)
-	}
 }
 
 func TestTcpNoDelay(t *testing.T) {

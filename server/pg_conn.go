@@ -18,6 +18,13 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/jackc/pgio"
+	"github.com/jackc/pgproto3/v2"
+	"github.com/jackc/pgtype"
+	"github.com/opentracing/opentracing-go"
+	"github.com/pingcap/errors"
+	"github.com/pingcap/failpoint"
+	"github.com/tikv/client-go/v2/util"
 	"github.com/zmix999/goInception-plus/executor"
 	"github.com/zmix999/goInception-plus/metrics"
 	"github.com/zmix999/goInception-plus/parser/ast"
@@ -33,13 +40,6 @@ import (
 	"github.com/zmix999/goInception-plus/util/hack"
 	"github.com/zmix999/goInception-plus/util/logutil"
 	"github.com/zmix999/goInception-plus/util/memory"
-	"github.com/jackc/pgio"
-	"github.com/jackc/pgproto3/v2"
-	"github.com/jackc/pgtype"
-	"github.com/opentracing/opentracing-go"
-	"github.com/pingcap/errors"
-	"github.com/pingcap/failpoint"
-	"github.com/tikv/client-go/v2/util"
 	"go.uber.org/zap"
 )
 
@@ -111,7 +111,6 @@ func (cc *clientConn) Run(ctx context.Context) {
 					}
 				}
 			}
-			disconnectByClientWithError.Inc()
 			return
 		}
 
@@ -125,11 +124,9 @@ func (cc *clientConn) Run(ctx context.Context) {
 			cc.audit(plugin.Error) // tell the plugin API there was a dispatch error
 			if terror.ErrorEqual(err, io.EOF) {
 				cc.addMetrics(data[0], startTime, nil)
-				disconnectNormal.Inc()
 				return
 			} else if terror.ErrResultUndetermined.Equal(err) {
 				logutil.Logger(ctx).Error("result undetermined, close this connection", zap.Error(err))
-				disconnectErrorUndetermined.Inc()
 				return
 			} else if terror.ErrCritical.Equal(err) {
 				metrics.CriticalErrorCounter.Add(1)
@@ -170,11 +167,6 @@ func (cc *clientConn) dispatch(ctx context.Context, data []byte) error {
 		atomic.StoreUint32(&cc.ctx.GetSessionVars().Killed, 0)
 	}()
 	t := time.Now()
-	if (cc.ctx.Status() & mysql.ServerStatusInTrans) > 0 {
-		connIdleDurationHistogramInTxn.Observe(t.Sub(cc.lastActive).Seconds())
-	} else {
-		connIdleDurationHistogramNotInTxn.Observe(t.Sub(cc.lastActive).Seconds())
-	}
 
 	span := opentracing.StartSpan("server.dispatch")
 

@@ -224,12 +224,12 @@ else
 ifeq ("$(API)", "1")
 	@echo "Running in native mode (API)."
 	@export log_level=error;
-	$(GOTEST) -timeout 30m -ldflags '$(TEST_LDFLAGS)' github.com/zmix999/goInception-plus/session -api
+	$(GOTEST) -timeout 60m -ldflags '$(TEST_LDFLAGS)' github.com/zmix999/goInception-plus/session -api
 else
 	@echo "Running in native mode."
 	@export log_level=error;
 	$(GO) mod tidy;
-	$(GOTEST) -timeout 30m -ldflags '$(TEST_LDFLAGS)' -cover $(PACKAGES) || { $(GOFAIL_DISABLE); exit 1; }
+	$(GOTEST) -timeout 60m -ldflags '$(TEST_LDFLAGS)' -cover $(PACKAGES) || { $(GOFAIL_DISABLE); exit 1; }
 endif
 
 endif

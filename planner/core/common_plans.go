@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/pingcap/errors"
+	"github.com/tikv/client-go/v2/oracle"
 	"github.com/zmix999/goInception-plus/config"
 	"github.com/zmix999/goInception-plus/domain"
 	"github.com/zmix999/goInception-plus/expression"
@@ -34,7 +35,6 @@ import (
 	"github.com/zmix999/goInception-plus/privilege"
 	"github.com/zmix999/goInception-plus/sessionctx"
 	"github.com/zmix999/goInception-plus/sessionctx/variable"
-	"github.com/zmix999/goInception-plus/statistics"
 	"github.com/zmix999/goInception-plus/table"
 	"github.com/zmix999/goInception-plus/table/tables"
 	"github.com/zmix999/goInception-plus/types"
@@ -46,7 +46,6 @@ import (
 	"github.com/zmix999/goInception-plus/util/logutil"
 	"github.com/zmix999/goInception-plus/util/ranger"
 	"github.com/zmix999/goInception-plus/util/texttree"
-	"github.com/tikv/client-go/v2/oracle"
 	"go.uber.org/zap"
 )
 
@@ -849,7 +848,8 @@ type Simple struct {
 }
 
 // PhysicalSimpleWrapper is a wrapper of `Simple` to implement physical plan interface.
-//   Used for simple statements executing in coprocessor.
+//
+//	Used for simple statements executing in coprocessor.
 type PhysicalSimpleWrapper struct {
 	basePhysicalPlan
 	Inner Simple
@@ -922,42 +922,6 @@ type Delete struct {
 	SelectPlan PhysicalPlan
 
 	TblColPosInfos TblColPosInfoSlice
-}
-
-// AnalyzeInfo is used to store the database name, table name and partition name of analyze task.
-type AnalyzeInfo struct {
-	DBName        string
-	TableName     string
-	PartitionName string
-	TableID       statistics.AnalyzeTableID
-	Incremental   bool
-	StatsVersion  int
-}
-
-// AnalyzeColumnsTask is used for analyze columns.
-type AnalyzeColumnsTask struct {
-	HandleCols       HandleCols
-	CommonHandleInfo *model.IndexInfo
-	ColsInfo         []*model.ColumnInfo
-	TblInfo          *model.TableInfo
-	Indexes          []*model.IndexInfo
-	AnalyzeInfo
-}
-
-// AnalyzeIndexTask is used for analyze index.
-type AnalyzeIndexTask struct {
-	IndexInfo *model.IndexInfo
-	TblInfo   *model.TableInfo
-	AnalyzeInfo
-}
-
-// Analyze represents an analyze plan
-type Analyze struct {
-	baseSchemaProducer
-
-	ColTasks []AnalyzeColumnsTask
-	IdxTasks []AnalyzeIndexTask
-	Opts     map[ast.AnalyzeOptionType]uint64
 }
 
 // LoadData represents a loaddata plan.

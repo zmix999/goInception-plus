@@ -20,13 +20,13 @@ import (
 	"strings"
 
 	"github.com/pingcap/errors"
+	"github.com/tikv/client-go/v2/oracle"
 	"github.com/zmix999/goInception-plus/domain"
 	"github.com/zmix999/goInception-plus/parser/ast"
 	"github.com/zmix999/goInception-plus/parser/model"
 	"github.com/zmix999/goInception-plus/parser/mysql"
 	"github.com/zmix999/goInception-plus/statistics"
 	"github.com/zmix999/goInception-plus/types"
-	"github.com/tikv/client-go/v2/oracle"
 )
 
 func (e *ShowExec) fetchShowStatsExtended() error {
@@ -441,15 +441,6 @@ func (e *ShowExec) appendTableForStatsHealthy(dbName, tblName, partitionName str
 		partitionName,
 		healthy,
 	})
-}
-
-func (e *ShowExec) fetchShowAnalyzeStatus() {
-	rows := dataForAnalyzeStatusHelper(e.baseExecutor.ctx)
-	for _, row := range rows {
-		for i, val := range row {
-			e.result.AppendDatum(i, &val)
-		}
-	}
 }
 
 func (e *ShowExec) fetchShowColumnStatsUsage() error {

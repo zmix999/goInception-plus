@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/pingcap/errors"
+	"github.com/tikv/client-go/v2/oracle"
 	"github.com/zmix999/goInception-plus/config"
 	"github.com/zmix999/goInception-plus/ddl"
 	"github.com/zmix999/goInception-plus/domain"
@@ -57,8 +58,6 @@ import (
 	"github.com/zmix999/goInception-plus/util/ranger"
 	"github.com/zmix999/goInception-plus/util/sem"
 	"github.com/zmix999/goInception-plus/util/set"
-	"github.com/tikv/client-go/v2/oracle"
-	"github.com/tikv/client-go/v2/tikv"
 
 	"github.com/cznic/mathutil"
 	"github.com/zmix999/goInception-plus/table/tables"
@@ -723,8 +722,6 @@ func (b *PlanBuilder) Build(ctx context.Context, node ast.Node) (Plan, error) {
 		return b.buildSet(ctx, x)
 	case *ast.SetConfigStmt:
 		return b.buildSetConfig(ctx, x)
-	case *ast.AnalyzeTableStmt:
-		return b.buildAnalyze(x)
 	case *ast.BinlogStmt, *ast.FlushStmt, *ast.UseStmt, *ast.BRIEStmt,
 		*ast.BeginStmt, *ast.CommitStmt, *ast.RollbackStmt, *ast.CreateUserStmt, *ast.SetPwdStmt, *ast.AlterInstanceStmt,
 		*ast.GrantStmt, *ast.DropUserStmt, *ast.AlterUserStmt, *ast.RevokeStmt, *ast.KillStmt, *ast.DropStatsStmt,
@@ -1942,268 +1939,6 @@ func getModifiedIndexesInfoForAnalyze(tblInfo *model.TableInfo, allColumns bool,
 	return idxsInfo
 }
 
-func (b *PlanBuilder) buildAnalyzeFullSamplingTask(
-	as *ast.AnalyzeTableStmt,
-	taskSlice []AnalyzeColumnsTask,
-	physicalIDs []int64,
-	names []string,
-	tbl *ast.TableName,
-	version int,
-) ([]AnalyzeColumnsTask, error) {
-	if as.Incremental {
-		b.ctx.GetSessionVars().StmtCtx.AppendWarning(errors.Errorf("The version 2 stats would ignore the INCREMENTAL keyword and do full sampling"))
-	}
-	colsInfo, err := b.getAnalyzeColumnsInfo(as, tbl)
-	if err != nil {
-		return nil, err
-	}
-	allColumns := len(tbl.TableInfo.Columns) == len(colsInfo)
-	indexes := getModifiedIndexesInfoForAnalyze(tbl.TableInfo, allColumns, colsInfo)
-	handleCols := BuildHandleColsForAnalyze(b.ctx, tbl.TableInfo, allColumns, colsInfo)
-	for i, id := range physicalIDs {
-		if id == tbl.TableInfo.ID {
-			id = -1
-		}
-		info := AnalyzeInfo{
-			DBName:        tbl.Schema.O,
-			TableName:     tbl.Name.O,
-			PartitionName: names[i],
-			TableID:       statistics.AnalyzeTableID{TableID: tbl.TableInfo.ID, PartitionID: id},
-			Incremental:   false,
-			StatsVersion:  version,
-		}
-		newTask := AnalyzeColumnsTask{
-			HandleCols:  handleCols,
-			ColsInfo:    colsInfo,
-			AnalyzeInfo: info,
-			TblInfo:     tbl.TableInfo,
-			Indexes:     indexes,
-		}
-		if newTask.HandleCols == nil {
-			extraCol := model.NewExtraHandleColInfo()
-			// Always place _tidb_rowid at the end of colsInfo, this is corresponding to logics in `analyzeColumnsPushdown`.
-			newTask.ColsInfo = append(newTask.ColsInfo, extraCol)
-			newTask.HandleCols = &IntHandleCols{col: colInfoToColumn(extraCol, len(newTask.ColsInfo)-1)}
-		}
-		taskSlice = append(taskSlice, newTask)
-	}
-	return taskSlice, nil
-}
-
-func (b *PlanBuilder) buildAnalyzeTable(as *ast.AnalyzeTableStmt, opts map[ast.AnalyzeOptionType]uint64, version int) (Plan, error) {
-	p := &Analyze{Opts: opts}
-	for _, tbl := range as.TableNames {
-		if tbl.TableInfo.IsView() {
-			return nil, errors.Errorf("analyze view %s is not supported now.", tbl.Name.O)
-		}
-		if tbl.TableInfo.IsSequence() {
-			return nil, errors.Errorf("analyze sequence %s is not supported now.", tbl.Name.O)
-		}
-		idxInfo, colInfo := getColsInfo(tbl)
-		physicalIDs, names, err := GetPhysicalIDsAndPartitionNames(tbl.TableInfo, as.PartitionNames)
-		if err != nil {
-			return nil, err
-		}
-		var commonHandleInfo *model.IndexInfo
-		// If we want to analyze this table with analyze version 2 but the existing stats is version 1 and stats feedback is enabled,
-		// we will switch back to analyze version 1.
-		if statistics.FeedbackProbability.Load() > 0 && version == 2 {
-			statsHandle := domain.GetDomain(b.ctx).StatsHandle()
-			versionIsSame := statsHandle.CheckAnalyzeVersion(tbl.TableInfo, physicalIDs, &version)
-			if !versionIsSame {
-				b.ctx.GetSessionVars().StmtCtx.AppendWarning(errors.New(fmt.Sprintf("Use analyze version 1 on table `%s` ", tbl.Name) +
-					"because this table already has version 1 statistics and query feedback is also enabled. " +
-					"If you want to switch to version 2 statistics, please first disable query feedback by setting feedback-probability to 0.0 in the config file."))
-			}
-		}
-		if version == statistics.Version2 {
-			p.ColTasks, err = b.buildAnalyzeFullSamplingTask(as, p.ColTasks, physicalIDs, names, tbl, version)
-			if err != nil {
-				return nil, err
-			}
-			continue
-		}
-		if len(as.ColumnNames) > 0 {
-			return nil, errors.Errorf("Only the analyze version 2 supports analyzing the specified columns")
-		}
-		for _, idx := range idxInfo {
-			// For prefix common handle. We don't use analyze mixed to handle it with columns. Because the full value
-			// is read by coprocessor, the prefix index would get wrong stats in this case.
-			if idx.Primary && tbl.TableInfo.IsCommonHandle && !idx.HasPrefixIndex() {
-				commonHandleInfo = idx
-				continue
-			}
-			for i, id := range physicalIDs {
-				if id == tbl.TableInfo.ID {
-					id = -1
-				}
-				info := AnalyzeInfo{
-					DBName:        tbl.Schema.O,
-					TableName:     tbl.Name.O,
-					PartitionName: names[i],
-					TableID:       statistics.AnalyzeTableID{TableID: tbl.TableInfo.ID, PartitionID: id},
-					Incremental:   as.Incremental,
-					StatsVersion:  version,
-				}
-				p.IdxTasks = append(p.IdxTasks, AnalyzeIndexTask{
-					IndexInfo:   idx,
-					AnalyzeInfo: info,
-					TblInfo:     tbl.TableInfo,
-				})
-			}
-		}
-		handleCols := BuildHandleColsForAnalyze(b.ctx, tbl.TableInfo, true, nil)
-		if len(colInfo) > 0 || handleCols != nil {
-			for i, id := range physicalIDs {
-				if id == tbl.TableInfo.ID {
-					id = -1
-				}
-				info := AnalyzeInfo{
-					DBName:        tbl.Schema.O,
-					TableName:     tbl.Name.O,
-					PartitionName: names[i],
-					TableID:       statistics.AnalyzeTableID{TableID: tbl.TableInfo.ID, PartitionID: id},
-					Incremental:   as.Incremental,
-					StatsVersion:  version,
-				}
-				p.ColTasks = append(p.ColTasks, AnalyzeColumnsTask{
-					HandleCols:       handleCols,
-					CommonHandleInfo: commonHandleInfo,
-					ColsInfo:         colInfo,
-					AnalyzeInfo:      info,
-					TblInfo:          tbl.TableInfo,
-				})
-			}
-		}
-	}
-	return p, nil
-}
-
-func (b *PlanBuilder) buildAnalyzeIndex(as *ast.AnalyzeTableStmt, opts map[ast.AnalyzeOptionType]uint64, version int) (Plan, error) {
-	p := &Analyze{Opts: opts}
-	tblInfo := as.TableNames[0].TableInfo
-	physicalIDs, names, err := GetPhysicalIDsAndPartitionNames(tblInfo, as.PartitionNames)
-	if err != nil {
-		return nil, err
-	}
-	statsHandle := domain.GetDomain(b.ctx).StatsHandle()
-	if statsHandle == nil {
-		return nil, errors.Errorf("statistics hasn't been initialized, please try again later")
-	}
-	versionIsSame := statsHandle.CheckAnalyzeVersion(tblInfo, physicalIDs, &version)
-	if !versionIsSame {
-		if b.ctx.GetSessionVars().EnableFastAnalyze {
-			return nil, errors.Errorf("Fast analyze hasn't reached General Availability and only support analyze version 1 currently. But the existing statistics of the table is not version 1.")
-		}
-		b.ctx.GetSessionVars().StmtCtx.AppendWarning(errors.Errorf("The analyze version from the session is not compatible with the existing statistics of the table. Use the existing version instead"))
-	}
-	if version == statistics.Version2 {
-		b.ctx.GetSessionVars().StmtCtx.AppendWarning(errors.Errorf("The version 2 would collect all statistics not only the selected indexes"))
-		return b.buildAnalyzeTable(as, opts, version)
-	}
-	for _, idxName := range as.IndexNames {
-		if isPrimaryIndex(idxName) {
-			handleCols := BuildHandleColsForAnalyze(b.ctx, tblInfo, true, nil)
-			// Fast analyze use analyze column to solve int handle.
-			if handleCols != nil && handleCols.IsInt() && b.ctx.GetSessionVars().EnableFastAnalyze {
-				for i, id := range physicalIDs {
-					if id == tblInfo.ID {
-						id = -1
-					}
-					info := AnalyzeInfo{
-						DBName:        as.TableNames[0].Schema.O,
-						TableName:     as.TableNames[0].Name.O,
-						PartitionName: names[i], TableID: statistics.AnalyzeTableID{TableID: tblInfo.ID, PartitionID: id},
-						Incremental:  as.Incremental,
-						StatsVersion: version,
-					}
-					p.ColTasks = append(p.ColTasks, AnalyzeColumnsTask{HandleCols: handleCols, AnalyzeInfo: info, TblInfo: tblInfo})
-				}
-				continue
-			}
-		}
-		idx := tblInfo.FindIndexByName(idxName.L)
-		if idx == nil || idx.State != model.StatePublic {
-			return nil, ErrAnalyzeMissIndex.GenWithStackByArgs(idxName.O, tblInfo.Name.O)
-		}
-		for i, id := range physicalIDs {
-			if id == tblInfo.ID {
-				id = -1
-			}
-			info := AnalyzeInfo{
-				DBName:        as.TableNames[0].Schema.O,
-				TableName:     as.TableNames[0].Name.O,
-				PartitionName: names[i],
-				TableID:       statistics.AnalyzeTableID{TableID: tblInfo.ID, PartitionID: id},
-				Incremental:   as.Incremental,
-				StatsVersion:  version,
-			}
-			p.IdxTasks = append(p.IdxTasks, AnalyzeIndexTask{IndexInfo: idx, AnalyzeInfo: info, TblInfo: tblInfo})
-		}
-	}
-	return p, nil
-}
-
-func (b *PlanBuilder) buildAnalyzeAllIndex(as *ast.AnalyzeTableStmt, opts map[ast.AnalyzeOptionType]uint64, version int) (Plan, error) {
-	p := &Analyze{Opts: opts}
-	tblInfo := as.TableNames[0].TableInfo
-	physicalIDs, names, err := GetPhysicalIDsAndPartitionNames(tblInfo, as.PartitionNames)
-	if err != nil {
-		return nil, err
-	}
-	statsHandle := domain.GetDomain(b.ctx).StatsHandle()
-	if statsHandle == nil {
-		return nil, errors.Errorf("statistics hasn't been initialized, please try again later")
-	}
-	versionIsSame := statsHandle.CheckAnalyzeVersion(tblInfo, physicalIDs, &version)
-	if !versionIsSame {
-		if b.ctx.GetSessionVars().EnableFastAnalyze {
-			return nil, errors.Errorf("Fast analyze hasn't reached General Availability and only support analyze version 1 currently. But the existing statistics of the table is not version 1.")
-		}
-		b.ctx.GetSessionVars().StmtCtx.AppendWarning(errors.Errorf("The analyze version from the session is not compatible with the existing statistics of the table. Use the existing version instead"))
-	}
-	if version == statistics.Version2 {
-		b.ctx.GetSessionVars().StmtCtx.AppendWarning(errors.Errorf("The version 2 would collect all statistics not only the selected indexes"))
-		return b.buildAnalyzeTable(as, opts, version)
-	}
-	for _, idx := range tblInfo.Indices {
-		if idx.State == model.StatePublic {
-			for i, id := range physicalIDs {
-				if id == tblInfo.ID {
-					id = -1
-				}
-				info := AnalyzeInfo{
-					DBName:        as.TableNames[0].Schema.O,
-					TableName:     as.TableNames[0].Name.O,
-					PartitionName: names[i],
-					TableID:       statistics.AnalyzeTableID{TableID: tblInfo.ID, PartitionID: id},
-					Incremental:   as.Incremental,
-					StatsVersion:  version,
-				}
-				p.IdxTasks = append(p.IdxTasks, AnalyzeIndexTask{IndexInfo: idx, AnalyzeInfo: info, TblInfo: tblInfo})
-			}
-		}
-	}
-	handleCols := BuildHandleColsForAnalyze(b.ctx, tblInfo, true, nil)
-	if handleCols != nil {
-		for i, id := range physicalIDs {
-			if id == tblInfo.ID {
-				id = -1
-			}
-			info := AnalyzeInfo{
-				DBName:        as.TableNames[0].Schema.O,
-				TableName:     as.TableNames[0].Name.O,
-				PartitionName: names[i],
-				TableID:       statistics.AnalyzeTableID{TableID: tblInfo.ID, PartitionID: id},
-				Incremental:   as.Incremental,
-				StatsVersion:  version,
-			}
-			p.ColTasks = append(p.ColTasks, AnalyzeColumnsTask{HandleCols: handleCols, AnalyzeInfo: info, TblInfo: tblInfo})
-		}
-	}
-	return p, nil
-}
-
 // CMSketchSizeLimit indicates the size limit of CMSketch.
 var CMSketchSizeLimit = kv.TxnEntrySizeLimit / binary.MaxVarintLen32
 
@@ -2288,38 +2023,6 @@ func handleAnalyzeOptions(opts []ast.AnalyzeOpt, statsVer int) (map[ast.AnalyzeO
 		return nil, errors.Errorf("cm sketch size(depth * width) should not larger than %d", CMSketchSizeLimit)
 	}
 	return optMap, nil
-}
-
-func (b *PlanBuilder) buildAnalyze(as *ast.AnalyzeTableStmt) (Plan, error) {
-	// If enable fast analyze, the storage must be tikv.Storage.
-	if _, isTikvStorage := b.ctx.GetStore().(tikv.Storage); !isTikvStorage && b.ctx.GetSessionVars().EnableFastAnalyze {
-		return nil, errors.Errorf("Only support fast analyze in tikv storage.")
-	}
-	statsVersion := b.ctx.GetSessionVars().AnalyzeVersion
-	if b.ctx.GetSessionVars().EnableFastAnalyze && statsVersion >= statistics.Version2 {
-		return nil, errors.Errorf("Fast analyze hasn't reached General Availability and only support analyze version 1 currently.")
-	}
-	for _, tbl := range as.TableNames {
-		user := b.ctx.GetSessionVars().User
-		var insertErr, selectErr error
-		if user != nil {
-			insertErr = ErrTableaccessDenied.GenWithStackByArgs("INSERT", user.AuthUsername, user.AuthHostname, tbl.Name.O)
-			selectErr = ErrTableaccessDenied.GenWithStackByArgs("SELECT", user.AuthUsername, user.AuthHostname, tbl.Name.O)
-		}
-		b.visitInfo = appendVisitInfo(b.visitInfo, mysql.InsertPriv, tbl.Schema.O, tbl.Name.O, "", insertErr)
-		b.visitInfo = appendVisitInfo(b.visitInfo, mysql.SelectPriv, tbl.Schema.O, tbl.Name.O, "", selectErr)
-	}
-	opts, err := handleAnalyzeOptions(as.AnalyzeOpts, statsVersion)
-	if err != nil {
-		return nil, err
-	}
-	if as.IndexFlag {
-		if len(as.IndexNames) == 0 {
-			return b.buildAnalyzeAllIndex(as, opts, statsVersion)
-		}
-		return b.buildAnalyzeIndex(as, opts, statsVersion)
-	}
-	return b.buildAnalyzeTable(as, opts, statsVersion)
 }
 
 func buildShowNextRowID() (*expression.Schema, types.NameSlice) {

@@ -51,7 +51,6 @@ import (
 	"github.com/zmix999/goInception-plus/session/txninfo"
 	"github.com/zmix999/goInception-plus/sessionctx"
 	"github.com/zmix999/goInception-plus/sessionctx/variable"
-	"github.com/zmix999/goInception-plus/statistics"
 	"github.com/zmix999/goInception-plus/store/helper"
 	"github.com/zmix999/goInception-plus/table"
 	"github.com/zmix999/goInception-plus/types"
@@ -113,8 +112,6 @@ func (e *memtableRetriever) retrieve(ctx context.Context, sctx sessionctx.Contex
 			err = e.setDataFromPartitions(ctx, sctx, dbs)
 		case infoschema.TableClusterInfo:
 			err = e.dataForTiDBClusterInfo(sctx)
-		case infoschema.TableAnalyzeStatus:
-			e.setDataForAnalyzeStatus(sctx)
 		case infoschema.TableTiDBIndexes:
 			e.setDataFromIndexes(sctx, dbs)
 		case infoschema.TableViews:
@@ -1810,44 +1807,6 @@ func (e *memtableRetriever) setDataFromSessionVar(ctx sessionctx.Context) error 
 	}
 	e.rows = rows
 	return nil
-}
-
-// dataForAnalyzeStatusHelper is a helper function which can be used in show_stats.go
-func dataForAnalyzeStatusHelper(sctx sessionctx.Context) (rows [][]types.Datum) {
-	checker := privilege.GetPrivilegeManager(sctx)
-	for _, job := range statistics.GetAllAnalyzeJobs() {
-		job.Lock()
-		var startTime, endTime interface{}
-		if job.StartTime.IsZero() {
-			startTime = nil
-		} else {
-			startTime = types.NewTime(types.FromGoTime(job.StartTime), mysql.TypeDatetime, 0)
-		}
-		if job.EndTime.IsZero() {
-			endTime = nil
-		} else {
-			endTime = types.NewTime(types.FromGoTime(job.EndTime), mysql.TypeDatetime, 0)
-		}
-		if checker == nil || checker.RequestVerification(sctx.GetSessionVars().ActiveRoles, job.DBName, job.TableName, "", mysql.AllPrivMask) {
-			rows = append(rows, types.MakeDatums(
-				job.DBName,        // TABLE_SCHEMA
-				job.TableName,     // TABLE_NAME
-				job.PartitionName, // PARTITION_NAME
-				job.JobInfo,       // JOB_INFO
-				job.RowCount,      // ROW_COUNT
-				startTime,         // START_TIME
-				endTime,           // END_TIME
-				job.State,         // STATE
-			))
-		}
-		job.Unlock()
-	}
-	return
-}
-
-// setDataForAnalyzeStatus gets all the analyze jobs.
-func (e *memtableRetriever) setDataForAnalyzeStatus(sctx sessionctx.Context) {
-	e.rows = dataForAnalyzeStatusHelper(sctx)
 }
 
 // setDataForPseudoProfiling returns pseudo data for table profiling when system variable `profiling` is set to `ON`.

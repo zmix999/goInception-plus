@@ -203,9 +203,6 @@ func (e *ShowExec) fetchAll(ctx context.Context) error {
 		return e.fetchShowMasterStatus()
 	case ast.ShowPrivileges:
 		return e.fetchShowPrivileges()
-	case ast.ShowAnalyzeStatus:
-		e.fetchShowAnalyzeStatus()
-		return nil
 	case ast.ShowRegions:
 		return e.fetchShowTableRegions()
 	case ast.ShowBuiltins:

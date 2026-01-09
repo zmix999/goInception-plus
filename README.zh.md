@@ -23,6 +23,6 @@ go build -o goInception-plus tidb-server/main.go
 ----
 
 #### 致谢
-    goInception-plus基于TiDB的语法解析器。
+  goInception-plus基于TiDB的语法解析器。
 - [goInception - 审核工具](https://github.com/hanchuanchuan/goInception)
 - [TiDB](https://github.com/pingcap/tidb)

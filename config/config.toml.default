@@ -3,12 +3,14 @@
 # IP地址
 host = "0.0.0.0"
 
-# 端口
+# 默认MySQL协议端口
 port = 4000
+
+# 默认PostgreSQL协议端口
+second-port = 5000
 
 # TiDB数据库目录
 path = "/tmp/tidb"
-
 
 [log]
 # 日志级别: debug, info, warn, error, fatal.
@@ -33,7 +35,6 @@ max-days = 0
 
 # 要保留的最大旧日志文件数，默认值 `0`，即不清理
 max-backups = 0
-
 
 [inc]
 backup_host = ""

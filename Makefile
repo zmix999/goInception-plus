@@ -71,11 +71,10 @@ build:
 	$(GOBUILD)
 
 goyacc:
-	@$(GOBUILD) -o bin/goyacc parser/goyacc/main.go
+	@cd parser && $(GOBUILD) -o ../bin/goyacc goyacc/main.go goyacc/format_yacc.go
 
 bin/goyacc: parser/goyacc/main.go parser/goyacc/format_yacc.go
-	$(GO) mod download
-	$(GO) build -o bin/goyacc parser/goyacc/main.go parser/goyacc/format_yacc.go
+	@cd parser && $(GO) mod download && $(GO) build -o ../bin/goyacc goyacc/main.go goyacc/format_yacc.go
 
 parser: parser/parser.go parser/hintparser.go
 

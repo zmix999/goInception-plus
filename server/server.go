@@ -48,6 +48,8 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/blacktear23/go-proxyprotocol"
+	"github.com/pingcap/errors"
 	"github.com/zmix999/goInception-plus/config"
 	"github.com/zmix999/goInception-plus/domain"
 	"github.com/zmix999/goInception-plus/errno"
@@ -64,8 +66,6 @@ import (
 	"github.com/zmix999/goInception-plus/util/logutil"
 	"github.com/zmix999/goInception-plus/util/sys/linux"
 	"github.com/zmix999/goInception-plus/util/timeutil"
-	"github.com/blacktear23/go-proxyprotocol"
-	"github.com/pingcap/errors"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -84,10 +84,6 @@ func init() {
 		osUser = ""
 	} else {
 		osUser = currentUser.Name
-	}
-	osVersion, err = linux.OSVersion()
-	if err != nil {
-		osVersion = ""
 	}
 	runInGoTest = flag.Lookup("test.v") != nil || flag.Lookup("check.v") != nil
 }

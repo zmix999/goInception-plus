@@ -68,8 +68,6 @@ import (
 	"github.com/zmix999/goInception-plus/util/sem"
 	"github.com/zmix999/goInception-plus/util/signal"
 	"github.com/zmix999/goInception-plus/util/sys/linux"
-	storageSys "github.com/zmix999/goInception-plus/util/sys/storage"
-	"github.com/zmix999/goInception-plus/util/systimemon"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
 )
@@ -234,21 +232,6 @@ func syncLog() {
 		}
 		fmt.Fprintln(os.Stderr, "sync log err:", err)
 		os.Exit(1)
-	}
-}
-
-func checkTempStorageQuota() {
-	// check capacity and the quota when OOMUseTmpStorage is enabled
-	c := config.GetGlobalConfig()
-	if c.TempStorageQuota < 0 {
-		// means unlimited, do nothing
-	} else {
-		capacityByte, err := storageSys.GetTargetDirectoryCapacity(c.TempStoragePath)
-		if err != nil {
-			log.Fatal(err.Error())
-		} else if capacityByte < uint64(c.TempStorageQuota) {
-			log.Fatal(fmt.Sprintf("value of [tmp-storage-quota](%d byte) exceeds the capacity(%d byte) of the [%s] directory", c.TempStorageQuota, capacityByte, c.TempStoragePath))
-		}
 	}
 }
 
@@ -714,27 +697,6 @@ func createServer(storage kv.Storage, dom *domain.Domain) *server.Server {
 	go dom.ExpensiveQueryHandle().SetSessionManager(svr).Run()
 	dom.InfoSyncer().SetSessionManager(svr)
 	return svr
-}
-
-func setupMetrics() {
-	cfg := config.GetGlobalConfig()
-	// Enable the mutex profile, 1/10 of mutex blocking event sampling.
-	runtime.SetMutexProfileFraction(10)
-	systimeErrHandler := func() {
-		metrics.TimeJumpBackCounter.Inc()
-	}
-	callBackCount := 0
-	successCallBack := func() {
-		callBackCount++
-		// It is callback by monitor per second, we increase metrics.KeepAliveCounter per 5s.
-		if callBackCount >= 5 {
-			callBackCount = 0
-			metrics.KeepAliveCounter.Inc()
-		}
-	}
-	go systimemon.StartMonitor(time.Now, systimeErrHandler, successCallBack)
-
-	pushMetric(cfg.Status.MetricsAddr, time.Duration(cfg.Status.MetricsInterval)*time.Second)
 }
 
 func setupTracing() {

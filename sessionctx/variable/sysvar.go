@@ -26,6 +26,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/cznic/mathutil"
+	"github.com/pingcap/errors"
+	tikvstore "github.com/tikv/client-go/v2/kv"
 	"github.com/zmix999/goInception-plus/config"
 	"github.com/zmix999/goInception-plus/kv"
 	"github.com/zmix999/goInception-plus/parser/ast"
@@ -36,9 +39,6 @@ import (
 	"github.com/zmix999/goInception-plus/util/logutil"
 	"github.com/zmix999/goInception-plus/util/stmtsummary"
 	"github.com/zmix999/goInception-plus/util/versioninfo"
-	"github.com/cznic/mathutil"
-	"github.com/pingcap/errors"
-	tikvstore "github.com/tikv/client-go/v2/kv"
 	atomic2 "go.uber.org/atomic"
 )
 
@@ -1670,8 +1670,7 @@ var defaultSysVars = []*SysVar{
 		return nil
 	}},
 	{Scope: ScopeGlobal | ScopeSession, Name: TiDBRedactLog, Value: BoolToOnOff(DefTiDBRedactLog), Type: TypeBool, SetSession: func(s *SessionVars, val string) error {
-		s.EnableRedactLog = TiDBOptOn(val)
-		errors.RedactLogEnabled.Store(s.EnableRedactLog)
+		errors.RedactLogEnabled.Store(val)
 		return nil
 	}},
 	{Scope: ScopeGlobal, Name: TiDBRestrictedReadOnly, Value: BoolToOnOff(DefTiDBRestrictedReadOnly), Type: TypeBool},

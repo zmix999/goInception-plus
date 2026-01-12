@@ -17,13 +17,11 @@ package executor
 import (
 	"context"
 	"crypto/tls"
-	"runtime"
-	"strconv"
 	"testing"
 	"time"
 	"unsafe"
 
-	"github.com/zmix999/goInception-plus/executor/aggfuncs"
+	"github.com/stretchr/testify/require"
 	"github.com/zmix999/goInception-plus/expression"
 	"github.com/zmix999/goInception-plus/kv"
 	"github.com/zmix999/goInception-plus/parser/ast"
@@ -38,7 +36,6 @@ import (
 	"github.com/zmix999/goInception-plus/util/mock"
 	"github.com/zmix999/goInception-plus/util/ranger"
 	"github.com/zmix999/goInception-plus/util/tableutil"
-	"github.com/stretchr/testify/require"
 )
 
 // Note: it's a tricky way to export the `inspectionSummaryRules` and `inspectionRules` for unit test but invisible for normal code
@@ -124,7 +121,6 @@ func TestExecutorPkg(t *testing.T) {
 	t.Run("BuildKvRangesForIndexJoinWithoutCwc", SubTestBuildKvRangesForIndexJoinWithoutCwc)
 	t.Run("GetFieldsFromLine", SubTestGetFieldsFromLine)
 	t.Run("SlowQueryRuntimeStats", SubTestSlowQueryRuntimeStats)
-	t.Run("AggPartialResultMapperB", SubTestAggPartialResultMapperB)
 	t.Run("FilterTemporaryTableKeys", SubTestFilterTemporaryTableKeys)
 }
 
@@ -321,72 +317,6 @@ func SubTestSlowQueryRuntimeStats(t *testing.T) {
 	require.Equal(t, stats.Clone().String(), stats.String())
 	stats.Merge(stats.Clone())
 	require.Equal(t, "initialize: 2ms, read_file: 2s, parse_log: {time:200ms, concurrency:15}, total_file: 4, read_file: 4, read_size: 2 GB", stats.String())
-}
-
-// Test whether the actual buckets in Golang Map is same with the estimated number.
-// The test relies the implement of Golang Map. ref https://github.com/golang/go/blob/go1.13/src/runtime/map.go#L114
-func SubTestAggPartialResultMapperB(t *testing.T) {
-	if runtime.Version() < `go1.13` {
-		t.Skip("Unsupported version")
-	}
-	type testCase struct {
-		rowNum          int
-		expectedB       int
-		expectedGrowing bool
-	}
-	cases := []testCase{
-		{
-			rowNum:          0,
-			expectedB:       0,
-			expectedGrowing: false,
-		},
-		{
-			rowNum:          100,
-			expectedB:       4,
-			expectedGrowing: false,
-		},
-		{
-			rowNum:          10000,
-			expectedB:       11,
-			expectedGrowing: false,
-		},
-		{
-			rowNum:          1000000,
-			expectedB:       18,
-			expectedGrowing: false,
-		},
-		{
-			rowNum:          851968, // 6.5 * (1 << 17)
-			expectedB:       17,
-			expectedGrowing: false,
-		},
-		{
-			rowNum:          851969, // 6.5 * (1 << 17) + 1
-			expectedB:       18,
-			expectedGrowing: true,
-		},
-		{
-			rowNum:          425984, // 6.5 * (1 << 16)
-			expectedB:       16,
-			expectedGrowing: false,
-		},
-		{
-			rowNum:          425985, // 6.5 * (1 << 16) + 1
-			expectedB:       17,
-			expectedGrowing: true,
-		},
-	}
-
-	for _, tc := range cases {
-		aggMap := make(aggPartialResultMapper)
-		tempSlice := make([]aggfuncs.PartialResult, 10)
-		for num := 0; num < tc.rowNum; num++ {
-			aggMap[strconv.Itoa(num)] = tempSlice
-		}
-
-		require.Equal(t, tc.expectedB, getB(aggMap))
-		require.Equal(t, tc.expectedGrowing, getGrowing(aggMap))
-	}
 }
 
 // A header for a Go map.

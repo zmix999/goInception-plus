@@ -103,7 +103,7 @@ sql_safe_updates = -1
 lock_wait_timeout = -1
 
 # 是否跳过goinception用户权限校验, 默认跳过
-skip_grant_table = true
+skip-grant-table = true
 
 support_charset = "utf8,utf8mb4"
 support_engine = "innodb"

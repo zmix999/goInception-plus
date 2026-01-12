@@ -54,7 +54,7 @@ const (
 	DefMaxOfIndexLimit = 64 * 8
 	// DefPort is the default port of TiDB
 	DefPort = 4000
-	// DefPort is the default port of TiDBForPostgreSQL
+	// DefSecondPort is the default port of TiDBForPostgreSQL
 	DefSecondPort = 5000
 	// DefStatusPort is the default status port of TiDB
 	DefStatusPort = 10080
@@ -661,7 +661,7 @@ type Inc struct {
 	ColumnsMustHaveIndex string `toml:"columns_must_have_index" json:"columns_must_have_index"`
 
 	// 是否跳过用户权限校验
-	SkipGrantTable bool `toml:"skip_grant_table" json:"skip_grant_table"`
+	SkipGrantTable bool `toml:"skip-grant-table" json:"skip-grant-table"`
 	// 要跳过的sql语句, 多个时以分号分隔
 	SkipSqls string `toml:"skip_sqls" json:"skip_sqls"`
 

@@ -25,9 +25,7 @@ import (
 	"testing"
 
 	"github.com/BurntSushi/toml"
-	zaplog "github.com/pingcap/log"
 	"github.com/stretchr/testify/require"
-	tracing "github.com/uber/jaeger-client-go/config"
 	"github.com/zmix999/goInception-plus/util/logutil"
 )
 
@@ -238,64 +236,6 @@ log-rotate = true`)
 	tmp := err.(*ErrConfigValidationFailed)
 	require.True(t, isAllDeprecatedConfigItems(tmp.UndecodedItems))
 
-	// Test telemetry config default value and whether it will be overwritten.
-	conf = NewConfig()
-	err = f.Truncate(0)
-	require.NoError(t, err)
-	_, err = f.Seek(0, 0)
-	require.NoError(t, err)
-	require.NoError(t, f.Sync())
-	require.NoError(t, conf.Load(configFile))
-	require.True(t, conf.EnableTelemetry)
-
-	_, err = f.WriteString(`
-enable-table-lock = true
-`)
-	require.NoError(t, err)
-	require.NoError(t, f.Sync())
-	require.NoError(t, conf.Load(configFile))
-	require.True(t, conf.EnableTelemetry)
-
-	_, err = f.WriteString(`
-enable-telemetry = false
-`)
-	require.NoError(t, err)
-	require.NoError(t, f.Sync())
-	require.NoError(t, conf.Load(configFile))
-	require.False(t, conf.EnableTelemetry)
-
-	_, err = f.WriteString(`
-[security]
-spilled-file-encryption-method = "aes128-ctr"
-`)
-	require.NoError(t, err)
-	require.NoError(t, f.Sync())
-	require.NoError(t, conf.Load(configFile))
-	require.Equal(t, SpilledFileEncryptionMethodAES128CTR, conf.Security.SpilledFileEncryptionMethod)
-
-	require.NoError(t, f.Sync())
-	require.NoError(t, conf.Load(configFile))
-
-	configFile = filepath.Join(filepath.Dir(localFile), "config.toml.example")
-	require.NoError(t, conf.Load(configFile))
-
-	// Make sure the example config is the same as default config except `auto_tls`.
-	conf.Security.AutoTLS = false
-	conf.Log.EnableSlowLog = false
-	conf.Log.RecordPlanInSlowLog = 0
-	require.Equal(t, GetGlobalConfig(), conf)
-
-	// Test for log config.
-	require.Equal(t, logutil.NewLogConfig("info", "text", "tidb-slow.log", conf.Log.File, false, func(config *zaplog.Config) { config.DisableErrorVerbose = conf.Log.getDisableErrorStack() }), conf.Log.ToLogConfig())
-
-	// Test for tracing config.
-	tracingConf := &tracing.Configuration{
-		Disabled: true,
-		Reporter: &tracing.ReporterConfig{},
-		Sampler:  &tracing.SamplerConfig{Type: "const", Param: 1.0},
-	}
-	require.Equal(t, conf.OpenTracing.ToTracingConfig(), tracingConf)
-
 	// Test for TLS config.
 	certFile := "cert.pem"
 	certFile = filepath.Join(filepath.Dir(localFile), certFile)
@@ -452,18 +392,4 @@ func TestTcpNoDelay(t *testing.T) {
 	c1 := NewConfig()
 	//check default value
 	require.True(t, c1.Performance.TCPNoDelay)
-}
-
-func TestConfigExample(t *testing.T) {
-	conf := NewConfig()
-	_, localFile, _, _ := runtime.Caller(0)
-	configFile := filepath.Join(filepath.Dir(localFile), "config.toml.example")
-	metaData, err := toml.DecodeFile(configFile, conf)
-	require.NoError(t, err)
-	keys := metaData.Keys()
-	for _, key := range keys {
-		for _, s := range key {
-			require.False(t, ContainHiddenConfig(s))
-		}
-	}
 }

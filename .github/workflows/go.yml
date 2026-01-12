@@ -12,13 +12,13 @@ jobs:
     name: Build
     runs-on: ubuntu-22.04
     steps:
-      - name: Check Space
-        run: |
-          df -h
       - name: Delete Files
         run: |
           docker rmi `docker images -q`
           sudo rm -rf /usr/share/dotnet  /usr/local/lib/android
+      - name: Check Space
+        run: |
+          df -h
       - name: Stop default MySQL
         run: |
           sudo systemctl stop mysql

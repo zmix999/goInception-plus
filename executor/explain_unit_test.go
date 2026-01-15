@@ -79,7 +79,7 @@ func TestExplainAnalyzeInvokeNextAndClose(t *testing.T) {
 
 	expectedStr := "next error, close error"
 	if err != nil && (err.Error() != expectedStr || !mockOpr.closed) {
-		t.Errorf(err.Error())
+		t.Errorf("%s", err.Error())
 	}
 	// mockErrorOperator panic
 	explainExec = &ExplainExec{
@@ -96,6 +96,6 @@ func TestExplainAnalyzeInvokeNextAndClose(t *testing.T) {
 
 	_, err = explainExec.generateExplainInfo(tmpCtx)
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Errorf("%s", err.Error())
 	}
 }

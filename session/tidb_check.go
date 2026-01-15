@@ -23,14 +23,14 @@ import (
 	"math"
 	"strings"
 
+	"github.com/pingcap/errors"
+	"github.com/siddontang/go-log/log"
 	"github.com/zmix999/goInception-plus/parser/ast"
 	"github.com/zmix999/goInception-plus/parser/charset"
 	"github.com/zmix999/goInception-plus/parser/model"
 	"github.com/zmix999/goInception-plus/parser/mysql"
 	"github.com/zmix999/goInception-plus/types"
 	driver "github.com/zmix999/goInception-plus/types/parser_driver"
-	"github.com/pingcap/errors"
-	"github.com/siddontang/go-log/log"
 )
 
 const (
@@ -200,7 +200,7 @@ func (s *session) checkAutoIncrementOp(colDef *ast.ColumnDef, num int) (bool, er
 			if op.Tp == ast.ColumnOptionDefaultValue {
 				if tmp, ok := op.Expr.(*driver.ValueExpr); ok {
 					if !tmp.Datum.IsNull() {
-						errors.Errorf(fmt.Sprintf(s.getErrorMessage(ER_INVALID_DEFAULT), colDef.Name.Name.O))
+						errors.Errorf("%s", fmt.Sprintf(s.getErrorMessage(ER_INVALID_DEFAULT), colDef.Name.Name.O))
 					}
 				}
 			}
@@ -215,7 +215,7 @@ func (s *session) checkAutoIncrementOp(colDef *ast.ColumnDef, num int) (bool, er
 		}
 		for _, op := range colDef.Options[num+1:] {
 			if op.Tp == ast.ColumnOptionAutoIncrement {
-				return hasAutoIncrement, errors.Errorf(fmt.Sprintf(s.getErrorMessage(ER_INVALID_DEFAULT), colDef.Name.Name.O))
+				return hasAutoIncrement, errors.Errorf("%s", fmt.Sprintf(s.getErrorMessage(ER_INVALID_DEFAULT), colDef.Name.Name.O))
 			}
 		}
 	}

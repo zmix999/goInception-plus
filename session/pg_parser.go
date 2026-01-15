@@ -87,7 +87,10 @@ func (s *session) parserWallog(ctx context.Context) {
 	defer s.conn.Close(ctx)
 
 	var changeRows int
+	var change Change
+	var oldKeys OldKeys
 	var walevent WalEvent
+	typeMap := pgtype.NewMap()
 	relations := map[uint32]*pglogrepl.RelationMessageV2{}
 	clientXLogPos := s.XLogPos
 	nextStandbyMessageDeadline := time.Now().Add(time.Second * 10)
@@ -135,7 +138,7 @@ func (s *session) parserWallog(ctx context.Context) {
 						if !ok {
 							log.Fatalf("unknown relation ID %d", logicalMsg.RelationID)
 						}
-						walevent = s.ParseInsertMessage(rel, logicalMsg)
+						walevent = s.ParseInsertMessage(typeMap, rel, logicalMsg, change, walevent)
 						changeRows, err = s.process(record, walevent)
 						if err != nil {
 							log.Error(err)
@@ -149,7 +152,7 @@ func (s *session) parserWallog(ctx context.Context) {
 						if !ok {
 							log.Fatalf("unknown relation ID %d", logicalMsg.RelationID)
 						}
-						walevent = s.ParseUpdateMessage(rel, logicalMsg)
+						walevent = s.ParseUpdateMessage(typeMap, rel, logicalMsg, change, oldKeys, walevent)
 						changeRows, err = s.process(record, walevent)
 						if err != nil {
 							log.Error(err)
@@ -164,7 +167,7 @@ func (s *session) parserWallog(ctx context.Context) {
 						if !ok {
 							log.Fatalf("unknown relation ID %d", logicalMsg.RelationID)
 						}
-						walevent = s.ParseDeleteMessage(rel, logicalMsg)
+						walevent = s.ParseDeleteMessage(typeMap, rel, logicalMsg, change, oldKeys, walevent)
 						changeRows, err = s.process(record, walevent)
 						if err != nil {
 							log.Error(err)
@@ -205,12 +208,9 @@ ENDCHECK:
 	}
 }
 
-func (s *session) ParseInsertMessage(rel *pglogrepl.RelationMessageV2, logicalMsg *pglogrepl.InsertMessageV2) WalEvent {
-	var change Change
-	var walevent WalEvent
-	typeMap := pgtype.NewMap()
+func (s *session) ParseInsertMessage(mi *pgtype.Map, rel *pglogrepl.RelationMessageV2, logicalMsg *pglogrepl.InsertMessageV2, change Change, walevent WalEvent) WalEvent {
 	for idx, col := range logicalMsg.Tuple.Columns {
-		if dt, ok := typeMap.TypeForOID(rel.Columns[idx].DataType); ok {
+		if dt, ok := mi.TypeForOID(rel.Columns[idx].DataType); ok {
 			change.ColumnTypes = append(change.ColumnTypes, dt.Name)
 		}
 		change.ColumnNames = append(change.ColumnNames, rel.Columns[idx].Name)
@@ -224,20 +224,16 @@ func (s *session) ParseInsertMessage(rel *pglogrepl.RelationMessageV2, logicalMs
 	return walevent
 }
 
-func (s *session) ParseUpdateMessage(rel *pglogrepl.RelationMessageV2, logicalMsg *pglogrepl.UpdateMessageV2) WalEvent {
-	var change Change
-	var oldKeys OldKeys
-	var walevent WalEvent
-	typeMap := pgtype.NewMap()
+func (s *session) ParseUpdateMessage(mi *pgtype.Map, rel *pglogrepl.RelationMessageV2, logicalMsg *pglogrepl.UpdateMessageV2, change Change, oldKeys OldKeys, walevent WalEvent) WalEvent {
 	for idx, col := range logicalMsg.NewTuple.Columns {
-		if dt, ok := typeMap.TypeForOID(rel.Columns[idx].DataType); ok {
+		if dt, ok := mi.TypeForOID(rel.Columns[idx].DataType); ok {
 			change.ColumnTypes = append(change.ColumnTypes, dt.Name)
 		}
 		change.ColumnNames = append(change.ColumnNames, rel.Columns[idx].Name)
 		change.ColumnValues = append(change.ColumnValues, col.Data)
 	}
 	for idx, col := range logicalMsg.OldTuple.Columns {
-		if dt, ok := typeMap.TypeForOID(rel.Columns[idx].DataType); ok {
+		if dt, ok := mi.TypeForOID(rel.Columns[idx].DataType); ok {
 			oldKeys.KeyTypes = append(oldKeys.KeyTypes, dt.Name)
 		}
 		oldKeys.KeyNames = append(oldKeys.KeyNames, rel.Columns[idx].Name)
@@ -253,13 +249,9 @@ func (s *session) ParseUpdateMessage(rel *pglogrepl.RelationMessageV2, logicalMs
 	return walevent
 }
 
-func (s *session) ParseDeleteMessage(rel *pglogrepl.RelationMessageV2, logicalMsg *pglogrepl.DeleteMessageV2) WalEvent {
-	var change Change
-	var oldKeys OldKeys
-	var walevent WalEvent
-	typeMap := pgtype.NewMap()
+func (s *session) ParseDeleteMessage(mi *pgtype.Map, rel *pglogrepl.RelationMessageV2, logicalMsg *pglogrepl.DeleteMessageV2, change Change, oldKeys OldKeys, walevent WalEvent) WalEvent {
 	for idx, col := range logicalMsg.OldTuple.Columns {
-		if dt, ok := typeMap.TypeForOID(rel.Columns[idx].DataType); ok {
+		if dt, ok := mi.TypeForOID(rel.Columns[idx].DataType); ok {
 			oldKeys.KeyTypes = append(oldKeys.KeyTypes, dt.Name)
 		}
 		oldKeys.KeyNames = append(oldKeys.KeyNames, rel.Columns[idx].Name)

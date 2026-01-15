@@ -1,14 +1,17 @@
 package session
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
-	"github.com/zmix999/goInception-plus/parser/mysql"
-	"github.com/zmix999/goInception-plus/util"
+	"github.com/jackc/pglogrepl"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jinzhu/gorm"
 	"github.com/pingcap/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/zmix999/goInception-plus/parser/mysql"
+	"github.com/zmix999/goInception-plus/util"
 )
 
 func (s *session) PostgreSQLCheckOptions() error {
@@ -88,6 +91,7 @@ func (s *session) PostgreSQLCheckOptions() error {
 			return errors.New(s.getErrorMessage(ER_INVALID_BACKUP_HOST_INFO))
 		}
 		s.inintbackupdb()
+		s.initWalConnect(context.Background())
 	}
 
 	tmp := s.processInfo.Load()
@@ -112,4 +116,19 @@ func (s *session) PostgreSQLCheckOptions() error {
 		s.ddlDB.LogMode(false)
 	}
 	return nil
+}
+
+func (s *session) initWalConnect(ctx context.Context) {
+	addr := fmt.Sprintf("postgres://%s:%s@%s:%d/postgres?replication=database",
+		s.opt.User, s.opt.Password, s.opt.Host, s.opt.Port)
+	conn, err := pgconn.Connect(ctx, addr)
+	if err != nil {
+		fmt.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+	}
+	sysident, err := pglogrepl.IdentifySystem(ctx, conn)
+	if err != nil {
+		s.appendErrorMsg(err.Error())
+	}
+	s.XLogPos = sysident.XLogPos
+	s.conn = conn
 }

@@ -33,6 +33,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/jackc/pglogrepl"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/ngaut/pools"
 	"github.com/opentracing/opentracing-go"
 	"github.com/pingcap/errors"
@@ -365,6 +367,12 @@ type session struct {
 	maskingFields []MaskingFieldInfo
 	// PostgreSQL 模式
 	isPostgreSqlMode bool
+	// Postgresql pgrepl连接
+	conn *pgconn.PgConn
+	// Postgresql 事务id
+	txID int
+	// Postgresql LSN
+	XLogPos pglogrepl.LSN
 }
 
 type alterTableInfo struct {

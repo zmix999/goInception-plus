@@ -68,7 +68,6 @@ const (
 	remoteBackupTable              = "$_$Inception_backup_information$_$"
 	transactionMarkDb              = "$_$Inception$_$"
 	transactionMarkTable           = "transaction_mark"
-	testLogicalPlugin              = "test_logical_plugin"
 	logicalPlugin                  = "logical_plugin"
 	TABLE_COMMENT_MAXLEN           = 2048
 	COLUMN_COMMENT_MAXLEN          = 1024
@@ -807,13 +806,6 @@ func (s *session) executeCommit(ctx context.Context) {
 		}
 	} else {
 		if s.opt.Backup && s.dbType == DBPostgreSQL {
-			if !s.checkLogicalPlugin() {
-				s.appendErrorMsg("wal2json插件不存在,无法备份!")
-				return
-			} else {
-				s.clearLogicalPlugin(true)
-
-			}
 			if !s.checkWalLevelIsLogical() {
 				s.modifyWalLevelIsLogical()
 			}

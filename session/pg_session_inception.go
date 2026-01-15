@@ -2,17 +2,18 @@ package session
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"fmt"
 	"math"
-	"strconv"
 	"strings"
 	"time"
 
-	"github.com/zmix999/goInception-plus/parser/ast"
+	"github.com/jackc/pglogrepl"
 	"github.com/lib/pq"
 	pgDriver "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
+	"github.com/zmix999/goInception-plus/parser/ast"
 )
 
 func (s *session) PostgreSQLServerVersion() {
@@ -188,22 +189,6 @@ func (s *session) PostgreSQLbuildReturningSQL(record *Record) string {
 	return sqlBuilder.String()
 }
 
-func (s *session) PostgreSQLbuildWalSQL(record *Record, returing ReturningValues) {
-	var trx_id int
-	if returing.Xmax > 0 {
-		trx_id = returing.Xmax
-	} else if returing.Xmin > 0 {
-		trx_id = returing.Xmin
-	}
-	var walsql strings.Builder
-	walsql.Grow(128)
-	walsql.WriteString("SELECT data FROM pg_logical_slot_peek_changes('")
-	walsql.WriteString(logicalPlugin)
-	walsql.WriteString("', NULL, NULL) WHERE xid = ")
-	walsql.WriteString(strconv.Itoa(trx_id))
-	record.WalSql = walsql.String()
-}
-
 type ReturningValues struct {
 	Xmin int `gorm:"Column:xmin"`
 	Xmax int `gorm:"Column:xmax"`
@@ -219,8 +204,7 @@ func (s *session) PostgreSQLexecuteRemoteStatement(record *Record, isTran bool, 
 	}
 	//创建逻辑解密槽
 	if !isUse && isDml {
-		s.clearLogicalPlugin(false)
-		s.initLogicalPlugin()
+		s.initLogicalPlugin(context.Background())
 		sqlStmt = s.PostgreSQLbuildReturningSQL(record)
 	} else if isUse {
 		sqlStmt = fmt.Sprintf("set search_path to %s", s.dbName)
@@ -246,7 +230,11 @@ func (s *session) PostgreSQLexecuteRemoteStatement(record *Record, isTran bool, 
 	record.ExecTime = fmt.Sprintf("%.3f", time.Since(start).Seconds())
 	record.ExecTimestamp = time.Now().Unix()
 	if !isUse {
-		s.PostgreSQLbuildWalSQL(record, returing)
+		if returing.Xmax > 0 {
+			s.txID = returing.Xmax
+		} else if returing.Xmin > 0 {
+			s.txID = returing.Xmin
+		}
 	}
 	if err != nil {
 		s.checkError(err)
@@ -550,40 +538,6 @@ func (s *session) modifyWalLevelIsLogical() {
 	}
 }
 
-func (s *session) checkLogicalPlugin() bool {
-	log.Debug("checkLogicalPlugin")
-
-	sql := fmt.Sprintf("select pg_create_logical_replication_slot('%s', 'wal2json');", testLogicalPlugin)
-	if _, err := s.PostgreSQLexecSQL(sql, true); err != nil {
-		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-		if err != nil {
-			return false
-		}
-	}
-	return true
-}
-
-func (s *session) clearLogicalPlugin(isCheck bool) {
-	log.Debug("clearLogicalPlugin")
-
-	var sql string
-	if isCheck {
-		sql = fmt.Sprintf("select pg_drop_replication_slot('%s');", testLogicalPlugin)
-	} else {
-		sql = fmt.Sprintf("select pg_drop_replication_slot('%s');", logicalPlugin)
-	}
-	if _, err := s.PostgreSQLexecSQL(sql, true); err != nil {
-		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-		if myErr, ok := err.(*pgDriver.Error); ok {
-			if myErr.Code != "42704" { /*replication slot does not exist */
-				s.appendErrorMsg(myErr.Message + " (sql: " + sql + ")")
-			}
-		} else {
-			s.appendErrorMsg(err.Error())
-		}
-	}
-}
-
 func (s *session) checkReplicaIdentityIsFull() bool {
 	log.Debug("checkReplicaIdentityIsFull")
 
@@ -617,12 +571,20 @@ func (s *session) modifyReplicaIdentityIsFull() {
 	}
 }
 
-func (s *session) initLogicalPlugin() {
+func (s *session) initLogicalPlugin(ctx context.Context) {
 	log.Debug("initLogicalPlugin")
 
-	sql := fmt.Sprintf("select pg_create_logical_replication_slot('%s','wal2json');", logicalPlugin)
-
-	if _, err := s.PostgreSQLexecSQL(sql, true); err != nil {
-		s.checkError(err)
+	pluginArguments := []string{"\"include-xids\" '1'"}
+	sysident, err := pglogrepl.IdentifySystem(ctx, s.conn)
+	if err != nil {
+		s.appendErrorMsg(err.Error())
+	}
+	_, err = pglogrepl.CreateReplicationSlot(ctx, s.conn, logicalPlugin, "wal2json", pglogrepl.CreateReplicationSlotOptions{Temporary: true})
+	if err != nil {
+		log.Fatalln("CreateReplicationSlot failed:", err)
+	}
+	err = pglogrepl.StartReplication(ctx, s.conn, logicalPlugin, sysident.XLogPos, pglogrepl.StartReplicationOptions{PluginArgs: pluginArguments})
+	if err != nil {
+		log.Fatalln("StartReplication failed:", err)
 	}
 }

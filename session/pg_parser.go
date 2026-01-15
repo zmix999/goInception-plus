@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jackc/pglogrepl"
+	"github.com/jackc/pgx/v5/pgproto3"
 	"github.com/pingcap/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -41,12 +43,9 @@ type Change struct {
 	OldKeys      *OldKeys      `json:"oldkeys,omitempty"`      // Present in DELETE and UPDATE
 }
 
-type SlotChanges struct {
+type WalEvent struct {
+	Xid    int      `json:"xid"`
 	Change []Change `json:"change"`
-}
-
-type Restult struct {
-	Data string `gorm:"Column:data"`
 }
 
 func (s *session) PostgreSQLparserBinlog(ctx context.Context) {
@@ -77,60 +76,85 @@ func (s *session) PostgreSQLparserBinlog(ctx context.Context) {
 
 	log.Debug("Parser")
 	startTime := time.Now()
+
 	if s.inc.BackupDbType == "mysql" {
 		s.lastBackupTable = fmt.Sprintf("`%s`.`%s`", record.BackupDBName, record.TableInfo.Name)
 	} else if s.inc.BackupDbType == "postgres" {
 		s.lastBackupTable = fmt.Sprintf("\"%s\".%s", record.BackupDBName, record.TableInfo.Name)
 	}
 
-	var results []Restult
+	defer s.conn.Close(ctx)
 
-	_, err := s.PostgreSQLrawScan(record.WalSql, &results)
-	if err != nil {
-		log.Errorf(err.Error())
-	}
+	var changeRows int
+	var walevent WalEvent
 
-	var totalChanges int64 = 0
-	var change SlotChanges
+	clientXLogPos := s.XLogPos
+	nextStandbyMessageDeadline := time.Now().Add(time.Second * 10)
 
-	for _, row := range results {
-		err = json.Unmarshal([]byte(row.Data), &change)
+	for {
+		if time.Now().After(nextStandbyMessageDeadline) {
+			err := pglogrepl.SendStandbyStatusUpdate(ctx, s.conn, pglogrepl.StandbyStatusUpdate{WALWritePosition: clientXLogPos})
+			if err != nil {
+				log.Fatalln("SendStandbyStatusUpdate failed:", err)
+			}
+			nextStandbyMessageDeadline = time.Now().Add(time.Second * 10)
+		}
+
+		rawMsg, err := s.conn.ReceiveMessage(ctx)
 		if err != nil {
+			log.Infof("Get message error: %v\n", errors.ErrorStack(err))
+			s.appendErrorMsg(err.Error())
+			break
+		}
+
+		msg, ok := rawMsg.(*pgproto3.CopyData)
+		if !ok {
+			log.Printf("Received unexpected message: %T\n", rawMsg)
 			continue
 		}
-		for _, col := range change.Change {
-			var err error
-			switch col.Kind {
-			case "insert":
-				err = s.PostgreSQLgenerateDeleteSql(record.TableInfo, col)
-			case "delete":
-				err = s.PostgreSQLgenerateInsertSql(record.TableInfo, col)
-			case "update":
-				err = s.PostgreSQLgenerateUpdateSql(record.TableInfo, col)
-			}
+		switch msg.Data[0] {
+		case pglogrepl.XLogDataByteID:
+			xld, err := pglogrepl.ParseXLogData(msg.Data[1:])
 			if err != nil {
-				log.Error(err)
-			} else {
-				totalChanges++
+				log.Fatalln("ParseXLogData failed:", err)
+			}
+			waldata := string(xld.WALData)
+			err = json.Unmarshal([]byte(waldata), &walevent)
+			if err != nil {
+				continue
+			}
+			if walevent.Xid == s.txID {
+				for _, col := range walevent.Change {
+					switch col.Kind {
+					case "insert":
+						err = s.PostgreSQLgenerateDeleteSql(record.TableInfo, col)
+					case "delete":
+						err = s.PostgreSQLgenerateInsertSql(record.TableInfo, col)
+					case "update":
+						err = s.PostgreSQLgenerateUpdateSql(record.TableInfo, col)
+					}
+					if err != nil {
+						log.Error(err)
+					} else {
+						changeRows++
+					}
+				}
+				goto ENDCHECK
 			}
 		}
-		// 检查受影响行数状态
-		if record.AffectedRows > 0 {
-			if totalChanges >= record.AffectedRows {
-				record.StageStatus = StatusBackupOK
-			}
+	}
+ENDCHECK:
+	if record.AffectedRows > 0 {
+		if int64(changeRows) >= record.AffectedRows {
+			record.StageStatus = StatusBackupOK
 		}
+	}
+	record.BackupCostTime = fmt.Sprintf("%.3f", time.Since(startTime).Seconds())
 
-		record.BackupCostTime = fmt.Sprintf("%.3f", time.Since(startTime).Seconds())
-		s.clearLogicalPlugin(false)
-
-		if !s.killExecute {
-			// 进程Killed
-			if err := checkClose(ctx); err != nil {
-				log.Warn("Killed: ", err)
-				s.appendErrorMsg("Operation has been killed!")
-				break
-			}
+	if !s.killExecute {
+		if err := checkClose(ctx); err != nil {
+			log.Warn("Killed: ", err)
+			s.appendErrorMsg("Operation has been killed!")
 		}
 	}
 }

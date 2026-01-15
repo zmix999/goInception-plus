@@ -697,6 +697,8 @@ type Inc struct {
 	// 版本信息
 	Version string `toml:"version" json:"version"`
 
+	// PostgreSQL wal output 插件[pgoutput,wal2json]
+	WalPlugin string `toml:"wal_plugin" json:"wal_plugin"`
 	// 自定义的关键字，用于检查字段名是否符合规范
 	CustomKeywords []string `toml:"custom_keywords" json:"custom_keywords"`
 }
@@ -1132,8 +1134,8 @@ var defaultConf = Config{
 		IndexPrefix:     "idx_",  // 默认不检查,由CheckIndexPrefix控制
 		UniqIndexPrefix: "uniq_", // 默认不检查,由CheckIndexPrefix控制
 		TablePrefix:     "",      // 默认不检查表前缀
-
-		CustomKeywords: []string{},
+		WalPlugin:       "pgoutput",
+		CustomKeywords:  []string{},
 	},
 	Osc: Osc{
 		OscPrintNone:               false,

@@ -69,6 +69,7 @@ const (
 	transactionMarkDb              = "$_$Inception$_$"
 	transactionMarkTable           = "transaction_mark"
 	logicalPlugin                  = "logical_plugin"
+	publication                    = "logical_publication"
 	TABLE_COMMENT_MAXLEN           = 2048
 	COLUMN_COMMENT_MAXLEN          = 1024
 	INDEX_COMMENT_MAXLEN           = 1024
@@ -880,7 +881,7 @@ func (s *session) executeCommit(ctx context.Context) {
 				s.parserBinlog(ctx)
 			}
 		} else {
-			s.PostgreSQLparserBinlog(ctx)
+			s.parserWallog(ctx)
 		}
 	}
 }

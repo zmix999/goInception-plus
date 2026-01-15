@@ -370,7 +370,9 @@ type session struct {
 	// Postgresql pgrepl连接
 	conn *pgconn.PgConn
 	// Postgresql 事务id
-	txID int
+	txID uint32
+	// Postgresql xid
+	Xid uint32
 	// Postgresql LSN
 	XLogPos pglogrepl.LSN
 }

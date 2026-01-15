@@ -11,6 +11,7 @@ import (
 
 	"github.com/jackc/pglogrepl"
 	"github.com/jackc/pgx/v5/pgproto3"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/pingcap/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -44,11 +45,11 @@ type Change struct {
 }
 
 type WalEvent struct {
-	Xid    int      `json:"xid"`
+	Xid    uint32   `json:"xid"`
 	Change []Change `json:"change"`
 }
 
-func (s *session) PostgreSQLparserBinlog(ctx context.Context) {
+func (s *session) parserWallog(ctx context.Context) {
 
 	// var err error
 	var wg sync.WaitGroup
@@ -87,7 +88,7 @@ func (s *session) PostgreSQLparserBinlog(ctx context.Context) {
 
 	var changeRows int
 	var walevent WalEvent
-
+	relations := map[uint32]*pglogrepl.RelationMessageV2{}
 	clientXLogPos := s.XLogPos
 	nextStandbyMessageDeadline := time.Now().Add(time.Second * 10)
 
@@ -118,29 +119,74 @@ func (s *session) PostgreSQLparserBinlog(ctx context.Context) {
 			if err != nil {
 				log.Fatalln("ParseXLogData failed:", err)
 			}
-			waldata := string(xld.WALData)
-			err = json.Unmarshal([]byte(waldata), &walevent)
-			if err != nil {
-				continue
-			}
-			if walevent.Xid == s.txID {
-				for _, col := range walevent.Change {
-					switch col.Kind {
-					case "insert":
-						err = s.PostgreSQLgenerateDeleteSql(record.TableInfo, col)
-					case "delete":
-						err = s.PostgreSQLgenerateInsertSql(record.TableInfo, col)
-					case "update":
-						err = s.PostgreSQLgenerateUpdateSql(record.TableInfo, col)
+			if s.inc.WalPlugin == "pgoutput" {
+				logicalMsg, err := pglogrepl.ParseV2(xld.WALData, false)
+				if err != nil {
+					log.Fatalf("Parse logical replication message: %s", err)
+				}
+				switch logicalMsg := logicalMsg.(type) {
+				case *pglogrepl.RelationMessageV2:
+					relations[logicalMsg.RelationID] = logicalMsg
+				case *pglogrepl.BeginMessage:
+					s.Xid = logicalMsg.Xid
+				case *pglogrepl.InsertMessageV2:
+					if s.txID == s.Xid {
+						rel, ok := relations[logicalMsg.RelationID]
+						if !ok {
+							log.Fatalf("unknown relation ID %d", logicalMsg.RelationID)
+						}
+						walevent = s.ParseInsertMessage(rel, logicalMsg)
+						changeRows, err = s.process(record, walevent)
+						if err != nil {
+							log.Error(err)
+						} else {
+							goto ENDCHECK
+						}
 					}
-					if err != nil {
-						log.Error(err)
-					} else {
-						changeRows++
+				case *pglogrepl.UpdateMessageV2:
+					if s.txID == s.Xid {
+						rel, ok := relations[logicalMsg.RelationID]
+						if !ok {
+							log.Fatalf("unknown relation ID %d", logicalMsg.RelationID)
+						}
+						walevent = s.ParseUpdateMessage(rel, logicalMsg)
+						changeRows, err = s.process(record, walevent)
+						if err != nil {
+							log.Error(err)
+						} else {
+							goto ENDCHECK
+						}
+
+					}
+				case *pglogrepl.DeleteMessageV2:
+					if s.txID == s.Xid {
+						rel, ok := relations[logicalMsg.RelationID]
+						if !ok {
+							log.Fatalf("unknown relation ID %d", logicalMsg.RelationID)
+						}
+						walevent = s.ParseDeleteMessage(rel, logicalMsg)
+						changeRows, err = s.process(record, walevent)
+						if err != nil {
+							log.Error(err)
+						} else {
+							goto ENDCHECK
+						}
 					}
 				}
-				goto ENDCHECK
+
+			} else if s.inc.WalPlugin == "wal2json" {
+				err = json.Unmarshal([]byte(xld.WALData), &walevent)
+				if err != nil {
+					continue
+				}
+				changeRows, err = s.process(record, walevent)
+				if err != nil {
+					log.Error(err)
+				} else {
+					goto ENDCHECK
+				}
 			}
+
 		}
 	}
 ENDCHECK:
@@ -157,6 +203,94 @@ ENDCHECK:
 			s.appendErrorMsg("Operation has been killed!")
 		}
 	}
+}
+
+func (s *session) ParseInsertMessage(rel *pglogrepl.RelationMessageV2, logicalMsg *pglogrepl.InsertMessageV2) WalEvent {
+	var change Change
+	var walevent WalEvent
+	typeMap := pgtype.NewMap()
+	for idx, col := range logicalMsg.Tuple.Columns {
+		if dt, ok := typeMap.TypeForOID(rel.Columns[idx].DataType); ok {
+			change.ColumnTypes = append(change.ColumnTypes, dt.Name)
+		}
+		change.ColumnNames = append(change.ColumnNames, rel.Columns[idx].Name)
+		change.ColumnValues = append(change.ColumnValues, col.Data)
+	}
+	change.Kind = "insert"
+	change.Schema = rel.Namespace
+	change.Table = rel.RelationName
+	walevent.Xid = s.Xid
+	walevent.Change = append(walevent.Change, change)
+	return walevent
+}
+
+func (s *session) ParseUpdateMessage(rel *pglogrepl.RelationMessageV2, logicalMsg *pglogrepl.UpdateMessageV2) WalEvent {
+	var change Change
+	var oldKeys OldKeys
+	var walevent WalEvent
+	typeMap := pgtype.NewMap()
+	for idx, col := range logicalMsg.NewTuple.Columns {
+		if dt, ok := typeMap.TypeForOID(rel.Columns[idx].DataType); ok {
+			change.ColumnTypes = append(change.ColumnTypes, dt.Name)
+		}
+		change.ColumnNames = append(change.ColumnNames, rel.Columns[idx].Name)
+		change.ColumnValues = append(change.ColumnValues, col.Data)
+	}
+	for idx, col := range logicalMsg.OldTuple.Columns {
+		if dt, ok := typeMap.TypeForOID(rel.Columns[idx].DataType); ok {
+			oldKeys.KeyTypes = append(oldKeys.KeyTypes, dt.Name)
+		}
+		oldKeys.KeyNames = append(oldKeys.KeyNames, rel.Columns[idx].Name)
+		oldKeys.KeyValues = append(oldKeys.KeyValues, col.Data)
+	}
+
+	change.Kind = "update"
+	change.Schema = rel.Namespace
+	change.Table = rel.RelationName
+	change.OldKeys = &oldKeys
+	walevent.Xid = s.Xid
+	walevent.Change = append(walevent.Change, change)
+	return walevent
+}
+
+func (s *session) ParseDeleteMessage(rel *pglogrepl.RelationMessageV2, logicalMsg *pglogrepl.DeleteMessageV2) WalEvent {
+	var change Change
+	var oldKeys OldKeys
+	var walevent WalEvent
+	typeMap := pgtype.NewMap()
+	for idx, col := range logicalMsg.OldTuple.Columns {
+		if dt, ok := typeMap.TypeForOID(rel.Columns[idx].DataType); ok {
+			oldKeys.KeyTypes = append(oldKeys.KeyTypes, dt.Name)
+		}
+		oldKeys.KeyNames = append(oldKeys.KeyNames, rel.Columns[idx].Name)
+		oldKeys.KeyValues = append(oldKeys.KeyValues, col.Data)
+	}
+	change.Kind = "delete"
+	change.OldKeys = &oldKeys
+	change.Schema = rel.Namespace
+	change.Table = rel.RelationName
+	walevent.Xid = s.Xid
+	walevent.Change = append(walevent.Change, change)
+	return walevent
+}
+
+func (s *session) process(record *Record, walevent WalEvent) (int, error) {
+	var err error
+	var changeRows int
+	if walevent.Xid == s.txID {
+		for _, col := range walevent.Change {
+			switch col.Kind {
+			case "insert":
+				err = s.PostgreSQLgenerateDeleteSql(record.TableInfo, col)
+			case "delete":
+				err = s.PostgreSQLgenerateInsertSql(record.TableInfo, col)
+			case "update":
+				err = s.PostgreSQLgenerateUpdateSql(record.TableInfo, col)
+			}
+			changeRows++
+		}
+	}
+	return changeRows, err
 }
 
 func (s *session) PostgreSQLgenerateDeleteSql(t *TableInfo, change Change) (err error) {

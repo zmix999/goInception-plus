@@ -190,8 +190,8 @@ func (s *session) PostgreSQLbuildReturningSQL(record *Record) string {
 }
 
 type ReturningValues struct {
-	Xmin int `gorm:"Column:xmin"`
-	Xmax int `gorm:"Column:xmax"`
+	Xmin uint32 `gorm:"Column:xmin"`
+	Xmax uint32 `gorm:"Column:xmax"`
 }
 
 func (s *session) PostgreSQLexecuteRemoteStatement(record *Record, isTran bool, isDml bool) {
@@ -573,13 +573,40 @@ func (s *session) modifyReplicaIdentityIsFull() {
 
 func (s *session) initLogicalPlugin(ctx context.Context) {
 	log.Debug("initLogicalPlugin")
+	if s.inc.WalPlugin == "pgoutput" {
+		drop_pub := fmt.Sprintf("DROP PUBLICATION IF EXISTS %s;", publication)
+		result := s.conn.Exec(ctx, drop_pub)
+		_, err := result.ReadAll()
+		if err != nil {
+			log.Fatalln("drop publication if exists error", err)
+		}
+		create_pub := fmt.Sprintf("CREATE PUBLICATION %s FOR ALL TABLES;", publication)
+		result = s.conn.Exec(ctx, create_pub)
+		_, err = result.ReadAll()
+		if err != nil {
+			log.Fatalln("create publication error", err)
+		}
+	}
 
-	pluginArguments := []string{"\"include-xids\" '1'"}
+	var pluginArguments []string
+	if s.inc.WalPlugin == "pgoutput" {
+		// streaming of large transactions is available since PG 14 (protocol version 2)
+		// we also need to set 'streaming' to 'true'
+		pluginArguments = []string{
+			"proto_version '2'",
+			fmt.Sprintf("publication_names '%s'", publication),
+			"messages 'true'",
+			"streaming 'true'",
+		}
+	} else if s.inc.WalPlugin == "wal2json" {
+		pluginArguments = []string{"\"include-xids\" '1'"}
+	}
+
 	sysident, err := pglogrepl.IdentifySystem(ctx, s.conn)
 	if err != nil {
 		s.appendErrorMsg(err.Error())
 	}
-	_, err = pglogrepl.CreateReplicationSlot(ctx, s.conn, logicalPlugin, "wal2json", pglogrepl.CreateReplicationSlotOptions{Temporary: true})
+	_, err = pglogrepl.CreateReplicationSlot(ctx, s.conn, logicalPlugin, s.inc.WalPlugin, pglogrepl.CreateReplicationSlotOptions{Temporary: true})
 	if err != nil {
 		log.Fatalln("CreateReplicationSlot failed:", err)
 	}

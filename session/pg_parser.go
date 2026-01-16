@@ -208,13 +208,27 @@ ENDCHECK:
 	}
 }
 
-func (s *session) ParseInsertMessage(mi *pgtype.Map, rel *pglogrepl.RelationMessageV2, logicalMsg *pglogrepl.InsertMessageV2, change Change, walevent WalEvent) WalEvent {
+func decodeTextColumnData(mi *pgtype.Map, data []byte, dataType uint32) (interface{}, error) {
+	if dt, ok := mi.TypeForOID(dataType); ok {
+		return dt.Codec.DecodeValue(mi, dataType, pgtype.TextFormatCode, data)
+	}
+	return string(data), nil
+}
+
+func (s *session) ParseInsertMessage(typeMap *pgtype.Map, rel *pglogrepl.RelationMessageV2, logicalMsg *pglogrepl.InsertMessageV2, change Change, walevent WalEvent) WalEvent {
 	for idx, col := range logicalMsg.Tuple.Columns {
-		if dt, ok := mi.TypeForOID(rel.Columns[idx].DataType); ok {
+		switch col.DataType {
+		case 't': //text
+			value, err := decodeTextColumnData(typeMap, col.Data, rel.Columns[idx].DataType)
+			if err != nil {
+				log.Fatalln("error decoding column data:", err)
+			}
+			change.ColumnValues = append(change.ColumnValues, value)
+		}
+		if dt, ok := typeMap.TypeForOID(rel.Columns[idx].DataType); ok {
 			change.ColumnTypes = append(change.ColumnTypes, dt.Name)
 		}
 		change.ColumnNames = append(change.ColumnNames, rel.Columns[idx].Name)
-		change.ColumnValues = append(change.ColumnValues, col.Data)
 	}
 	change.Kind = "insert"
 	change.Schema = rel.Namespace
@@ -224,20 +238,35 @@ func (s *session) ParseInsertMessage(mi *pgtype.Map, rel *pglogrepl.RelationMess
 	return walevent
 }
 
-func (s *session) ParseUpdateMessage(mi *pgtype.Map, rel *pglogrepl.RelationMessageV2, logicalMsg *pglogrepl.UpdateMessageV2, change Change, oldKeys OldKeys, walevent WalEvent) WalEvent {
+func (s *session) ParseUpdateMessage(typeMap *pgtype.Map, rel *pglogrepl.RelationMessageV2, logicalMsg *pglogrepl.UpdateMessageV2, change Change, oldKeys OldKeys, walevent WalEvent) WalEvent {
 	for idx, col := range logicalMsg.NewTuple.Columns {
-		if dt, ok := mi.TypeForOID(rel.Columns[idx].DataType); ok {
+		switch col.DataType {
+		case 't': //text
+			value, err := decodeTextColumnData(typeMap, col.Data, rel.Columns[idx].DataType)
+			if err != nil {
+				log.Fatalln("error decoding column data:", err)
+			}
+			change.ColumnValues = append(change.ColumnValues, value)
+		}
+		if dt, ok := typeMap.TypeForOID(rel.Columns[idx].DataType); ok {
 			change.ColumnTypes = append(change.ColumnTypes, dt.Name)
 		}
 		change.ColumnNames = append(change.ColumnNames, rel.Columns[idx].Name)
-		change.ColumnValues = append(change.ColumnValues, col.Data)
+
 	}
 	for idx, col := range logicalMsg.OldTuple.Columns {
-		if dt, ok := mi.TypeForOID(rel.Columns[idx].DataType); ok {
+		switch col.DataType {
+		case 't': //text
+			value, err := decodeTextColumnData(typeMap, col.Data, rel.Columns[idx].DataType)
+			if err != nil {
+				log.Fatalln("error decoding column data:", err)
+			}
+			oldKeys.KeyValues = append(oldKeys.KeyValues, value)
+		}
+		if dt, ok := typeMap.TypeForOID(rel.Columns[idx].DataType); ok {
 			oldKeys.KeyTypes = append(oldKeys.KeyTypes, dt.Name)
 		}
 		oldKeys.KeyNames = append(oldKeys.KeyNames, rel.Columns[idx].Name)
-		oldKeys.KeyValues = append(oldKeys.KeyValues, col.Data)
 	}
 
 	change.Kind = "update"
@@ -249,9 +278,17 @@ func (s *session) ParseUpdateMessage(mi *pgtype.Map, rel *pglogrepl.RelationMess
 	return walevent
 }
 
-func (s *session) ParseDeleteMessage(mi *pgtype.Map, rel *pglogrepl.RelationMessageV2, logicalMsg *pglogrepl.DeleteMessageV2, change Change, oldKeys OldKeys, walevent WalEvent) WalEvent {
+func (s *session) ParseDeleteMessage(typeMap *pgtype.Map, rel *pglogrepl.RelationMessageV2, logicalMsg *pglogrepl.DeleteMessageV2, change Change, oldKeys OldKeys, walevent WalEvent) WalEvent {
 	for idx, col := range logicalMsg.OldTuple.Columns {
-		if dt, ok := mi.TypeForOID(rel.Columns[idx].DataType); ok {
+		switch col.DataType {
+		case 't': //text
+			value, err := decodeTextColumnData(typeMap, col.Data, rel.Columns[idx].DataType)
+			if err != nil {
+				log.Fatalln("error decoding column data:", err)
+			}
+			oldKeys.KeyValues = append(oldKeys.KeyValues, value)
+		}
+		if dt, ok := typeMap.TypeForOID(rel.Columns[idx].DataType); ok {
 			oldKeys.KeyTypes = append(oldKeys.KeyTypes, dt.Name)
 		}
 		oldKeys.KeyNames = append(oldKeys.KeyNames, rel.Columns[idx].Name)

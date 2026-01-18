@@ -14,7 +14,6 @@ jobs:
     steps:
       - name: Delete Files
         run: |
-          docker rmi `docker images -q`
           sudo rm -rf /usr/share/dotnet  /usr/local/lib/android
       - name: Check Space
         run: |

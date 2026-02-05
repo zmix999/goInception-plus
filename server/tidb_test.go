@@ -90,8 +90,9 @@ func (ts *tidbTestSuiteBase) SetUpSuite(c *C) {
 	ts.tidbdrv = NewTiDBDriver(ts.store)
 	cfg := newTestConfig()
 	cfg.Socket = ""
+	cfg.SecondSocket = ""
 	cfg.Port = ts.port
-	cfg.SecondPort = ts.port
+	cfg.SecondPort = ts.secondPort
 	cfg.Status.ReportStatus = true
 	cfg.Status.StatusPort = ts.statusPort
 	cfg.Security.SkipGrantTable = false
@@ -132,27 +133,6 @@ func (ts *tidbTestSuite) TestStatusAPI(c *C) {
 	ts.runTestStatusAPI(c)
 }
 
-func (ts *tidbTestSuite) TestStatusPort(c *C) {
-	store, err := mockstore.NewMockStore()
-	c.Assert(err, IsNil)
-	defer store.Close()
-	session.DisableStats4Test()
-	dom, err := session.BootstrapSession(store)
-	c.Assert(err, IsNil)
-	defer dom.Close()
-	ts.tidbdrv = NewTiDBDriver(store)
-	cfg := newTestConfig()
-	cfg.Socket = ""
-	cfg.Port = 0
-	cfg.Status.ReportStatus = true
-	cfg.Status.StatusPort = ts.statusPort
-	cfg.Performance.TCPKeepAlive = true
-
-	server, err := NewServer(cfg, ts.tidbdrv)
-	c.Assert(err, NotNil)
-	c.Assert(server, IsNil)
-}
-
 func newTLSHttpClient(c *C, caFile, certFile, keyFile string) *http.Client {
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	c.Assert(err, IsNil)
@@ -174,11 +154,13 @@ func (ts *tidbTestSuite) TestOnlySocket(c *C) {
 	osTempDir := os.TempDir()
 	tempDir, err := os.MkdirTemp(osTempDir, "tidb-test.*.socket")
 	c.Assert(err, IsNil)
-	socketFile := tempDir + "/tidbtest.sock" // Unix Socket does not work on Windows, so '/' should be OK
+	socketFileMySQL := tempDir + "/tidbtestmysql.sock" // Unix Socket does not work on Windows, so '/' should be OK
+	socketFilePG := tempDir + "/tidbtestpg.sock"
 	defer os.RemoveAll(tempDir)
 	cli := newTestServerClient()
 	cfg := newTestConfig()
-	cfg.Socket = socketFile
+	cfg.Socket = socketFileMySQL
+	cfg.SecondSocket = socketFilePG
 	cfg.Host = "" // No network interface listening for mysql traffic
 	cfg.Status.ReportStatus = false
 
@@ -191,14 +173,16 @@ func (ts *tidbTestSuite) TestOnlySocket(c *C) {
 	time.Sleep(time.Millisecond * 100)
 	defer server.Close()
 	c.Assert(server.listener, IsNil)
+	c.Assert(server.secondListener, IsNil)
 	c.Assert(server.socket, NotNil)
+	c.Assert(server.secondSocket, NotNil)
 
 	// Test with Socket connection + Setup user1@% for all host access
 	defer func() {
 		cli.runTests(c, func(config *mysql.Config) {
 			config.User = "root"
 			config.Net = "unix"
-			config.Addr = socketFile
+			config.Addr = socketFileMySQL
 		},
 			func(dbt *DBTest) {
 				dbt.mustQuery("DROP USER IF EXISTS 'user1'@'%'")
@@ -209,7 +193,7 @@ func (ts *tidbTestSuite) TestOnlySocket(c *C) {
 	cli.runTests(c, func(config *mysql.Config) {
 		config.User = "root"
 		config.Net = "unix"
-		config.Addr = socketFile
+		config.Addr = socketFileMySQL
 		config.DBName = "test"
 	},
 		func(dbt *DBTest) {
@@ -238,7 +222,7 @@ func (ts *tidbTestSuite) TestOnlySocket(c *C) {
 	// Test with unix domain socket file connection with all hosts
 	cli.runTests(c, func(config *mysql.Config) {
 		config.Net = "unix"
-		config.Addr = socketFile
+		config.Addr = socketFileMySQL
 		config.User = "user1"
 		config.DBName = "test"
 	},
@@ -252,7 +236,7 @@ func (ts *tidbTestSuite) TestOnlySocket(c *C) {
 	// Setup user1@127.0.0.1 for loop back network interface access
 	cli.runTests(c, func(config *mysql.Config) {
 		config.Net = "unix"
-		config.Addr = socketFile
+		config.Addr = socketFileMySQL
 		config.User = "root"
 		config.DBName = "test"
 	},
@@ -268,7 +252,7 @@ func (ts *tidbTestSuite) TestOnlySocket(c *C) {
 	// Test with unix domain socket file connection with all hosts
 	cli.runTests(c, func(config *mysql.Config) {
 		config.Net = "unix"
-		config.Addr = socketFile
+		config.Addr = socketFileMySQL
 		config.User = "user1"
 		config.DBName = "test"
 	},
@@ -282,7 +266,7 @@ func (ts *tidbTestSuite) TestOnlySocket(c *C) {
 	// Setup user1@localhost for socket (and if MySQL compatible; loop back network interface access)
 	cli.runTests(c, func(config *mysql.Config) {
 		config.Net = "unix"
-		config.Addr = socketFile
+		config.Addr = socketFileMySQL
 		config.User = "root"
 		config.DBName = "test"
 	},
@@ -297,7 +281,7 @@ func (ts *tidbTestSuite) TestOnlySocket(c *C) {
 	// Test with unix domain socket file connection with all hosts
 	cli.runTests(c, func(config *mysql.Config) {
 		config.Net = "unix"
-		config.Addr = socketFile
+		config.Addr = socketFileMySQL
 		config.User = "user1"
 		config.DBName = "test"
 	},

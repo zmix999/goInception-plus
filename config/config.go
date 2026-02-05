@@ -93,6 +93,7 @@ type Config struct {
 	Store            string `toml:"store" json:"store"`
 	Path             string `toml:"path" json:"path"`
 	Socket           string `toml:"socket" json:"socket"`
+	SecondSocket     string `toml:"second-socket" json:"second-socket"`
 	Lease            string `toml:"lease" json:"lease"`
 	RunDDL           bool   `toml:"run-ddl" json:"run-ddl"`
 	SplitTable       bool   `toml:"split-table" json:"split-table"`
@@ -994,6 +995,7 @@ var defaultConf = Config{
 	Port:                         DefPort,
 	SecondPort:                   DefSecondPort,
 	Socket:                       "/tmp/tidb-{Port}.sock",
+	SecondSocket:                 "/tmp/tidb-{SecondPort}.sock",
 	Cors:                         "",
 	Store:                        "unistore",
 	Path:                         "/tmp/tidb",

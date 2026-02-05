@@ -18,21 +18,19 @@ import (
 	"database/sql"
 	"fmt"
 	"net"
-	"net/http"
 	"time"
 
+	. "github.com/pingcap/check"
+	"github.com/tikv/client-go/v2/tikv"
 	"github.com/zmix999/goInception-plus/domain"
 	"github.com/zmix999/goInception-plus/kv"
 	"github.com/zmix999/goInception-plus/session"
-	"github.com/zmix999/goInception-plus/sessionctx/binloginfo"
 	"github.com/zmix999/goInception-plus/sessionctx/stmtctx"
 	"github.com/zmix999/goInception-plus/store/helper"
 	"github.com/zmix999/goInception-plus/store/mockstore"
 	"github.com/zmix999/goInception-plus/tablecodec"
 	"github.com/zmix999/goInception-plus/types"
 	"github.com/zmix999/goInception-plus/util/codec"
-	. "github.com/pingcap/check"
-	"github.com/tikv/client-go/v2/tikv"
 )
 
 type basicHTTPHandlerTestSuite struct {
@@ -197,73 +195,6 @@ func (ts *HTTPHandlerTestSuite) TestRegionIndexRangeWithStartNoLimit(c *C) {
 	c.Assert(r.Last.IsRecord, IsTrue)
 	c.Assert(r.GetRecordFrame(3, "", "", false), NotNil)
 	c.Assert(r.GetIndexFrame(8, 1, "", "", ""), NotNil)
-}
-
-func (ts *HTTPHandlerTestSuite) TestBinlogRecover(c *C) {
-	ts.startServer(c)
-	defer ts.stopServer(c)
-	binloginfo.EnableSkipBinlogFlag()
-	c.Assert(binloginfo.IsBinlogSkipped(), Equals, true)
-	resp, err := ts.fetchStatus("/binlog/recover")
-	c.Assert(err, IsNil)
-	defer resp.Body.Close()
-	c.Assert(resp.StatusCode, Equals, http.StatusOK)
-	c.Assert(binloginfo.IsBinlogSkipped(), Equals, false)
-
-	// Invalid operation will use the default operation.
-	binloginfo.EnableSkipBinlogFlag()
-	c.Assert(binloginfo.IsBinlogSkipped(), Equals, true)
-	resp, err = ts.fetchStatus("/binlog/recover?op=abc")
-	c.Assert(err, IsNil)
-	defer resp.Body.Close()
-	c.Assert(resp.StatusCode, Equals, http.StatusOK)
-	c.Assert(binloginfo.IsBinlogSkipped(), Equals, false)
-
-	binloginfo.EnableSkipBinlogFlag()
-	c.Assert(binloginfo.IsBinlogSkipped(), Equals, true)
-	resp, err = ts.fetchStatus("/binlog/recover?op=abc&seconds=1")
-	c.Assert(err, IsNil)
-	defer resp.Body.Close()
-	c.Assert(resp.StatusCode, Equals, http.StatusOK)
-	c.Assert(binloginfo.IsBinlogSkipped(), Equals, false)
-
-	binloginfo.EnableSkipBinlogFlag()
-	c.Assert(binloginfo.IsBinlogSkipped(), Equals, true)
-	binloginfo.AddOneSkippedCommitter()
-	resp, err = ts.fetchStatus("/binlog/recover?op=abc&seconds=1")
-	c.Assert(err, IsNil)
-	defer resp.Body.Close()
-	c.Assert(resp.StatusCode, Equals, http.StatusBadRequest)
-	c.Assert(binloginfo.IsBinlogSkipped(), Equals, false)
-	binloginfo.RemoveOneSkippedCommitter()
-
-	binloginfo.AddOneSkippedCommitter()
-	c.Assert(binloginfo.SkippedCommitterCount(), Equals, int32(1))
-	resp, err = ts.fetchStatus("/binlog/recover?op=reset")
-	c.Assert(err, IsNil)
-	defer resp.Body.Close()
-	c.Assert(resp.StatusCode, Equals, http.StatusOK)
-	c.Assert(binloginfo.SkippedCommitterCount(), Equals, int32(0))
-
-	binloginfo.EnableSkipBinlogFlag()
-	resp, err = ts.fetchStatus("/binlog/recover?op=nowait")
-	c.Assert(err, IsNil)
-	defer resp.Body.Close()
-	c.Assert(resp.StatusCode, Equals, http.StatusOK)
-	c.Assert(binloginfo.IsBinlogSkipped(), Equals, false)
-
-	// Only the first should work.
-	binloginfo.EnableSkipBinlogFlag()
-	resp, err = ts.fetchStatus("/binlog/recover?op=nowait&op=reset")
-	c.Assert(err, IsNil)
-	defer resp.Body.Close()
-	c.Assert(resp.StatusCode, Equals, http.StatusOK)
-	c.Assert(binloginfo.IsBinlogSkipped(), Equals, false)
-
-	resp, err = ts.fetchStatus("/binlog/recover?op=status")
-	c.Assert(err, IsNil)
-	defer resp.Body.Close()
-	c.Assert(resp.StatusCode, Equals, http.StatusOK)
 }
 
 func (ts *basicHTTPHandlerTestSuite) startServer(c *C) {

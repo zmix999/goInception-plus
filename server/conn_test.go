@@ -21,11 +21,11 @@ import (
 	"encoding/binary"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/zmix999/goInception-plus/parser/mysql"
 	"github.com/zmix999/goInception-plus/session"
 	"github.com/zmix999/goInception-plus/testkit"
 	"github.com/zmix999/goInception-plus/util/arena"
-	"github.com/stretchr/testify/require"
 )
 
 func TestMalformHandshakeHeader(t *testing.T) {
@@ -166,6 +166,7 @@ func TestInitialHandshake(t *testing.T) {
 	var outBuffer bytes.Buffer
 	cfg := newTestConfig()
 	cfg.Socket = ""
+	cfg.SecondSocket = ""
 	cfg.Port = 0
 	cfg.SecondPort = 0
 	cfg.Status.StatusPort = 0

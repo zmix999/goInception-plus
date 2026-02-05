@@ -32,6 +32,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-sql-driver/mysql"
+	. "github.com/pingcap/check"
+	"github.com/pingcap/errors"
+	"github.com/pingcap/failpoint"
+	"github.com/pingcap/log"
+	"github.com/tikv/client-go/v2/tikv"
 	"github.com/zmix999/goInception-plus/config"
 	"github.com/zmix999/goInception-plus/errno"
 	"github.com/zmix999/goInception-plus/kv"
@@ -39,12 +45,6 @@ import (
 	"github.com/zmix999/goInception-plus/session"
 	"github.com/zmix999/goInception-plus/util/logutil"
 	"github.com/zmix999/goInception-plus/util/versioninfo"
-	"github.com/go-sql-driver/mysql"
-	. "github.com/pingcap/check"
-	"github.com/pingcap/errors"
-	"github.com/pingcap/failpoint"
-	"github.com/pingcap/log"
-	"github.com/tikv/client-go/v2/tikv"
 	"go.uber.org/zap"
 )
 
@@ -81,6 +81,7 @@ type configOverrider func(*mysql.Config)
 // method to communicate with server and run tests
 type testServerClient struct {
 	port         uint
+	secondPort   uint
 	statusPort   uint
 	statusScheme string
 }
@@ -89,6 +90,7 @@ type testServerClient struct {
 func newTestServerClient() *testServerClient {
 	return &testServerClient{
 		port:         0,
+		secondPort:   0,
 		statusPort:   0,
 		statusScheme: "http",
 	}

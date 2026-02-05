@@ -85,6 +85,7 @@ const (
 	nmPort                   = "P"
 	nmCors                   = "cors"
 	nmSocket                 = "socket"
+	nmSecondSocket           = "second-socket"
 	nmEnableBinlog           = "enable-binlog"
 	nmRunDDL                 = "run-ddl"
 	nmLogLevel               = "L"
@@ -125,6 +126,7 @@ var (
 	port             = flag.String(nmPort, "4000", "tidb server port")
 	cors             = flag.String(nmCors, "", "tidb server allow cors origin")
 	socket           = flag.String(nmSocket, "/tmp/tidb-{Port}.sock", "The socket file to use for connection.")
+	secondSocket     = flag.String(nmSecondSocket, "/tmp/tidb-{SecondPort}.sock", "The socket file to use for second connection.")
 	enableBinlog     = flagBoolean(nmEnableBinlog, false, "enable generate binlog")
 	runDDL           = flagBoolean(nmRunDDL, true, "run ddl worker on this tidb-server")
 	ddlLease         = flag.String(nmDdlLease, "45s", "schema lease duration, very dangerous to change only if you know what you do")
@@ -443,6 +445,9 @@ func overrideConfig(cfg *config.Config) {
 	if actualFlags[nmSocket] {
 		cfg.Socket = *socket
 	}
+	if actualFlags[nmSecondSocket] {
+		cfg.SecondSocket = *secondSocket
+	}
 	if actualFlags[nmEnableBinlog] {
 		cfg.Binlog.Enable = *enableBinlog
 	}
@@ -611,8 +616,11 @@ func setGlobalVars() {
 	variable.SetSysVar(variable.LowerCaseTableNames, strconv.Itoa(cfg.LowerCaseTableNames))
 	variable.SetSysVar(variable.LogBin, variable.BoolToOnOff(cfg.Binlog.Enable))
 	variable.SetSysVar(variable.Port, fmt.Sprintf("%d", cfg.Port))
+	variable.SetSysVar(variable.SecondPort, fmt.Sprintf("%d", cfg.SecondPort))
 	cfg.Socket = strings.Replace(cfg.Socket, "{Port}", fmt.Sprintf("%d", cfg.Port), 1)
+	cfg.SecondSocket = strings.Replace(cfg.SecondSocket, "{SecondPort}", fmt.Sprintf("%d", cfg.SecondPort), 1)
 	variable.SetSysVar(variable.Socket, cfg.Socket)
+	variable.SetSysVar(variable.SecondSocket, cfg.SecondSocket)
 	variable.SetSysVar(variable.DataDir, cfg.Path)
 	variable.SetSysVar(variable.TiDBSlowQueryFile, cfg.Log.SlowQueryFile)
 	variable.SetSysVar(variable.TiDBIsolationReadEngines, strings.Join(cfg.IsolationRead.Engines, ","))

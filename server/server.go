@@ -126,6 +126,7 @@ type Server struct {
 	listener          net.Listener
 	secondListener    net.Listener
 	socket            net.Listener
+	secondSocket      net.Listener
 	rwlock            sync.RWMutex
 	concurrentLimiter *TokenLimiter
 	clients           map[uint64]*clientConn
@@ -381,8 +382,26 @@ func NewServer(cfg *config.Config, driver IDriver) (*Server, error) {
 		logutil.BgLogger().Info("server is running MySQL protocol", zap.String("socket", s.cfg.Socket))
 	}
 
+	if s.cfg.SecondSocket != "" {
+
+		err := cleanupStaleSocket(s.cfg.SecondSocket)
+		if err != nil {
+			return nil, errors.Trace(err)
+		}
+
+		if s.secondSocket, err = net.Listen("unix", s.cfg.SecondSocket); err != nil {
+			return nil, errors.Trace(err)
+		}
+		logutil.BgLogger().Info("server is running PostgreSQL protocol", zap.String("socket", s.cfg.SecondSocket))
+	}
+
 	if s.socket == nil && s.listener == nil {
 		err = errors.New("Server not configured to listen on either -socket or -host and -port")
+		return nil, errors.Trace(err)
+	}
+
+	if s.secondSocket == nil && s.secondListener == nil {
+		err = errors.New("Server not configured to listen on either -secondSocket or -host and -second-port")
 		return nil, errors.Trace(err)
 	}
 
@@ -487,6 +506,7 @@ func (s *Server) Run() error {
 	go s.startNetworkListener(s.listener, false, errChan)
 	go s.startNetworkListener(s.secondListener, false, errChan)
 	go s.startNetworkListener(s.socket, true, errChan)
+	go s.startNetworkListener(s.secondSocket, true, errChan)
 	err := <-errChan
 	if err != nil {
 		return err
@@ -608,6 +628,11 @@ func (s *Server) Close() {
 		err := s.socket.Close()
 		terror.Log(errors.Trace(err))
 		s.socket = nil
+	}
+	if s.secondSocket != nil {
+		err := s.secondSocket.Close()
+		terror.Log(errors.Trace(err))
+		s.secondSocket = nil
 	}
 	if s.statusServer != nil {
 		err := s.statusServer.Close()

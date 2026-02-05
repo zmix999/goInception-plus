@@ -683,6 +683,7 @@ var defaultSysVars = []*SysVar{
 		return checkCharacterSet(normalizedValue, CharacterSetClient)
 	}},
 	{Scope: ScopeNone, Name: Port, Value: "4000", Type: TypeUnsigned, MinValue: 0, MaxValue: math.MaxUint16},
+	{Scope: ScopeNone, Name: SecondPort, Value: "5000", Type: TypeUnsigned, MinValue: 0, MaxValue: math.MaxUint16},
 	{Scope: ScopeNone, Name: LowerCaseTableNames, Value: "2"},
 	{Scope: ScopeNone, Name: LogBin, Value: Off, Type: TypeBool},
 	{Scope: ScopeGlobal | ScopeSession, Name: CharacterSetResults, Value: mysql.DefaultCharset, skipInit: true, Validation: func(vars *SessionVars, normalizedValue string, originalValue string, scope ScopeFlag) (string, error) {
@@ -751,6 +752,7 @@ var defaultSysVars = []*SysVar{
 		return normalizedValue, nil
 	}},
 	{Scope: ScopeNone, Name: Socket, Value: ""},
+	{Scope: ScopeNone, Name: SecondSocket, Value: ""},
 	{Scope: ScopeGlobal | ScopeSession, Name: CharacterSetConnection, Value: mysql.DefaultCharset, skipInit: true, Validation: func(vars *SessionVars, normalizedValue string, originalValue string, scope ScopeFlag) (string, error) {
 		return checkCharacterSet(normalizedValue, CharacterSetConnection)
 	}, SetSession: func(s *SessionVars, val string) error {
@@ -1992,13 +1994,15 @@ const (
 	// PluginLoad is the name of 'plugin_load' system variable.
 	PluginLoad = "plugin_load"
 	// Port is the name for 'port' system variable.
-	Port = "port"
+	Port       = "port"
+	SecondPort = "second_port"
 	// DataDir is the name for 'datadir' system variable.
 	DataDir = "datadir"
 	// Profiling is the name for 'Profiling' system variable.
 	Profiling = "profiling"
 	// Socket is the name for 'socket' system variable.
-	Socket = "socket"
+	Socket       = "socket"
+	SecondSocket = "second_socket"
 	// BinlogOrderCommits is the name for 'binlog_order_commits' system variable.
 	BinlogOrderCommits = "binlog_order_commits"
 	// MasterVerifyChecksum is the name for 'master_verify_checksum' system variable.

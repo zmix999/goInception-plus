@@ -7,11 +7,13 @@ import (
 
 	"github.com/jackc/pglogrepl"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jinzhu/gorm"
 	"github.com/pingcap/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmix999/goInception-plus/parser/mysql"
 	"github.com/zmix999/goInception-plus/util"
+	postgresDialector "gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func (s *session) PostgreSQLCheckOptions() error {
@@ -72,14 +74,11 @@ func (s *session) PostgreSQLCheckOptions() error {
 			s.opt.User, s.opt.Password, s.opt.Host, s.opt.Port)
 	}
 
-	db, err := gorm.Open("postgres", addr)
+	db, err := gorm.Open(postgresDialector.Open(addr), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 
 	if err != nil {
 		return fmt.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
 	}
-
-	// 禁用日志记录器，不显示任何日志
-	db.LogMode(false)
 
 	s.db = db
 
@@ -112,8 +111,7 @@ func (s *session) PostgreSQLCheckOptions() error {
 	s.PostgreSQLServerVersion()
 
 	if s.opt.tranBatch > 1 {
-		s.ddlDB, _ = gorm.Open("postgres", addr)
-		s.ddlDB.LogMode(false)
+		s.ddlDB, _ = gorm.Open(postgresDialector.Open(addr), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	}
 	return nil
 }

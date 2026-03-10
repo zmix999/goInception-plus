@@ -114,7 +114,14 @@ func (s *session) PostgreSQLcheckBackupTableSqlStmtColumnType(dbname string) (lo
 
 	var res string
 
-	rows, err2 := s.backupdb.DB().Query(sql)
+	db, err := s.backupdb.DB()
+	if err != nil {
+		log.Errorf("con:%d failed to get database connection: %v", s.sessionVars.ConnectionID, err)
+		s.appendErrorMsg(err.Error())
+		return
+	}
+
+	rows, err2 := db.Query(sql)
 	s.checkError(err2)
 	if rows != nil {
 		defer rows.Close()
@@ -137,7 +144,13 @@ func (s *session) PostgreSQLcheckBackupTableHostMaxLength(dbname string) (length
 
 	var res string
 
-	rows, err2 := s.backupdb.DB().Query(sql)
+	db, err := s.backupdb.DB()
+	if err != nil {
+		log.Errorf("con:%d failed to get database connection: %v", s.sessionVars.ConnectionID, err)
+		s.appendErrorMsg(err.Error())
+		return 0
+	}
+	rows, err2 := db.Query(sql)
 	s.checkError(err2)
 	if rows != nil {
 		defer rows.Close()

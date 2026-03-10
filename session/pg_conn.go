@@ -40,7 +40,14 @@ func isInvalidConnError(err error) bool {
 func (s *session) PostgreSQLraw(sqlStr string) (rows *sql.Rows, err error) {
 	// 连接断开无效时,自动重试
 	for i := 0; i < maxBadConnRetries; i++ {
-		rows, err = s.db.DB().Query(sqlStr)
+		var sqlDB *sql.DB
+		sqlDB, err = s.db.DB()
+		if err != nil {
+			log.Errorf("con:%d failed to get sql.DB: %v", s.sessionVars.ConnectionID, err)
+			return nil, err
+		}
+
+		rows, err = sqlDB.Query(sqlStr)
 		if err == nil {
 			return
 		}
@@ -69,7 +76,14 @@ func (s *session) PostgreSQLexecSQL(sqlStr string, retry bool) (res sql.Result, 
 	log.Debug("PostgreSQLexecSQL")
 	// 连接断开无效时,自动重试
 	for i := 0; i < maxBadConnRetries; i++ {
-		res, err = s.db.DB().Exec(sqlStr)
+		var sqlDB *sql.DB
+		sqlDB, err = s.db.DB()
+		if err != nil {
+			log.Errorf("con:%d failed to get sql.DB: %v", s.sessionVars.ConnectionID, err)
+			return nil, err
+		}
+
+		res, err = sqlDB.Exec(sqlStr)
 		if err == nil {
 			return
 		}
@@ -97,7 +111,14 @@ func (s *session) PostgreSQLexecDDL(sqlStr string, retry bool) (res sql.Result, 
 	log.Debug("PostgreSQLexecDDL")
 	// 连接断开无效时,自动重试
 	for i := 0; i < maxBadConnRetries; i++ {
-		res, err = s.ddlDB.DB().Exec(sqlStr)
+		var sqlDB *sql.DB
+		sqlDB, err = s.ddlDB.DB()
+		if err != nil {
+			log.Errorf("con:%d failed to get sql.DB: %v", s.sessionVars.ConnectionID, err)
+			return nil, err
+		}
+
+		res, err = sqlDB.Exec(sqlStr)
 		if err == nil {
 			return
 		}
@@ -173,8 +194,14 @@ func (s *session) PostgreSQLinitConnection() (err error) {
 
 	// 连接断开无效时,自动重试
 	for i := 0; i < maxBadConnRetries; i++ {
+		var sqlDB *sql.DB
+		sqlDB, err = s.db.DB()
+		if err != nil {
+			log.Errorf("con:%d failed to get sql.DB: %v", s.sessionVars.ConnectionID, err)
+			return err
+		}
 		if name == "" {
-			err = s.db.DB().Ping()
+			err = sqlDB.Ping()
 		}
 		if err == nil {
 			// 连接重连时,清除线程ID缓存

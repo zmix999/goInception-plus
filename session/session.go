@@ -51,7 +51,6 @@ import (
 	"github.com/zmix999/goInception-plus/table/temptable"
 	"go.uber.org/zap"
 
-	"github.com/jinzhu/gorm"
 	tikvstore "github.com/tikv/client-go/v2/kv"
 	"github.com/tikv/client-go/v2/tikv"
 	tikvutil "github.com/tikv/client-go/v2/util"
@@ -91,6 +90,7 @@ import (
 	"github.com/zmix999/goInception-plus/util/sqlexec"
 	"github.com/zmix999/goInception-plus/util/tableutil"
 	"github.com/zmix999/goInception-plus/util/timeutil"
+	"gorm.io/gorm"
 )
 
 var (

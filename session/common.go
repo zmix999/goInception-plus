@@ -13,11 +13,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jinzhu/copier"
+	log "github.com/sirupsen/logrus"
 	"github.com/zmix999/goInception-plus/parser/ast"
 	"github.com/zmix999/goInception-plus/types"
-	"github.com/jinzhu/copier"
-	"github.com/jinzhu/gorm"
-	log "github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 // HTML escaping.

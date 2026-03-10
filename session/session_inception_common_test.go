@@ -25,6 +25,8 @@ import (
 	"testing"
 	"time"
 
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/tikv/client-go/v2/testutils"
 	"github.com/zmix999/goInception-plus/config"
 	"github.com/zmix999/goInception-plus/domain"
 	"github.com/zmix999/goInception-plus/kv"
@@ -39,14 +41,14 @@ import (
 	"github.com/zmix999/goInception-plus/util/logutil"
 	"github.com/zmix999/goInception-plus/util/testkit"
 	"github.com/zmix999/goInception-plus/util/testleak"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/tikv/client-go/v2/testutils"
 
-	"github.com/jinzhu/gorm"
 	. "github.com/pingcap/check"
 	repllog "github.com/siddontang/go-log/log"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
+	mysqlDialector "gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 // var _ = Suite(&testCommon{})
@@ -233,7 +235,9 @@ func (s *testCommon) tearDownSuite(c *C) {
 		testleak.AfterTest(c)()
 
 		if s.db != nil {
-			s.db.Close()
+			if sqlDB, err := s.db.DB(); err == nil {
+				sqlDB.Close()
+			}
 		}
 	}
 }
@@ -558,19 +562,27 @@ func (s *testCommon) getAddr() string {
 
 func (s *testCommon) mysqlServerVersion() error {
 	inc := config.GetGlobalConfig().Inc
-	if s.db == nil || s.db.DB().Ping() != nil {
-		addr := fmt.Sprintf("%s:%s@tcp(%s:%d)/mysql?charset=utf8mb4&parseTime=True&loc=Local&maxAllowedPacket=4194304&autocommit=1",
-			inc.BackupUser, inc.BackupPassword, inc.BackupHost, inc.BackupPort)
-
-		db, err := gorm.Open("mysql", addr)
+	addr := fmt.Sprintf("%s:%s@tcp(%s:%d)/mysql?charset=utf8mb4&parseTime=True&loc=Local&maxAllowedPacket=4194304&autocommit=1",
+		inc.BackupUser, inc.BackupPassword, inc.BackupHost, inc.BackupPort)
+	if s.db == nil {
+		db, err := gorm.Open(mysqlDialector.Open(addr), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 		if err != nil {
 			return err
 		}
-		// 禁用日志记录器，不显示任何日志
-		db.LogMode(false)
 		s.db = db
+	} else {
+		sqlDB, err := s.db.DB()
+		if err != nil {
+			return err
+		}
+		if err := sqlDB.Ping(); err != nil {
+			db, err := gorm.Open(mysqlDialector.Open(addr), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+			if err != nil {
+				return err
+			}
+			s.db = db
+		}
 	}
-
 	var name, value string
 	sql := `show variables where Variable_name in
 		('explicit_defaults_for_timestamp','innodb_large_prefix',
@@ -638,17 +650,19 @@ func (s *testCommon) mysqlServerVersion() error {
 func (s *testCommon) assertRows(c *C, rows [][]interface{}, rollbackSqls ...string) error {
 	c.Assert(len(rows), Not(Equals), 0)
 	inc := config.GetGlobalConfig().Inc
-	if s.db == nil || s.db.DB().Ping() != nil {
+	sqlDb, err := s.db.DB()
+	if err != nil {
+		return err
+	}
+	if s.db == nil || sqlDb.Ping() != nil {
 		addr := fmt.Sprintf("%s:%s@tcp(%s:%d)/mysql?charset=utf8mb4&parseTime=True&loc=Local&maxAllowedPacket=4194304&autocommit=1",
 			inc.BackupUser, inc.BackupPassword, inc.BackupHost, inc.BackupPort)
 
-		db, err := gorm.Open("mysql", addr)
+		db, err := gorm.Open(mysqlDialector.Open(addr), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 		if err != nil {
 			log.Info(err)
 			return err
 		}
-		// 禁用日志记录器，不显示任何日志
-		db.LogMode(false)
 		s.db = db
 	}
 
@@ -909,16 +923,17 @@ func (s *testCommon) getObjectName(sql string) (name string) {
 
 func (s *testCommon) queryStatistics() []int {
 	inc := config.GetGlobalConfig().Inc
-	if s.db == nil || s.db.DB().Ping() != nil {
-
+	sqlDb, err := s.db.DB()
+	if err != nil {
+		fmt.Println(err)
+	}
+	if s.db == nil || sqlDb.Ping() != nil {
 		addr := fmt.Sprintf("%s:%s@tcp(%s:%d)/mysql?charset=utf8mb4&parseTime=True&loc=Local&maxAllowedPacket=4194304&autocommit=1",
 			inc.BackupUser, inc.BackupPassword, inc.BackupHost, inc.BackupPort)
-		db, err := gorm.Open("mysql", addr)
+		db, err := gorm.Open(mysqlDialector.Open(addr), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 		if err != nil {
 			fmt.Println(err)
 		}
-		// 禁用日志记录器，不显示任何日志
-		db.LogMode(false)
 		s.db = db
 	}
 
@@ -967,17 +982,19 @@ func trim(s string) string {
 
 func (s *testCommon) query(table, opid string) string {
 	inc := config.GetGlobalConfig().Inc
-	if s.db == nil || s.db.DB().Ping() != nil {
+	sqlDb, err := s.db.DB()
+	if err != nil {
+		fmt.Println(err)
+	}
+	if s.db == nil || sqlDb.Ping() != nil {
 		addr := fmt.Sprintf("%s:%s@tcp(%s:%d)/mysql?charset=utf8mb4&parseTime=True&loc=Local&maxAllowedPacket=4194304&autocommit=1",
 			inc.BackupUser, inc.BackupPassword, inc.BackupHost, inc.BackupPort)
 
-		db, err := gorm.Open("mysql", addr)
+		db, err := gorm.Open(mysqlDialector.Open(addr), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 		if err != nil {
 			fmt.Println(err)
 			return err.Error()
 		}
-		// 禁用日志记录器，不显示任何日志
-		db.LogMode(false)
 		s.db = db
 	}
 

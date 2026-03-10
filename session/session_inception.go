@@ -20,7 +20,6 @@ import (
 	"time"
 
 	mysqlDriver "github.com/go-sql-driver/mysql"
-	"github.com/jinzhu/gorm"
 	"github.com/percona/go-mysql/query"
 	"github.com/pingcap/errors"
 	log "github.com/sirupsen/logrus"
@@ -40,6 +39,10 @@ import (
 	"github.com/zmix999/goInception-plus/util"
 	"github.com/zmix999/goInception-plus/util/sqlexec"
 	"github.com/zmix999/goInception-plus/util/stringutil"
+	mysqlDialector "gorm.io/driver/mysql"
+	postgresDialector "gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var (
@@ -1148,12 +1151,10 @@ func (s *session) executeTransaction(records []*Record) int {
 
 	if s.dbName != "" {
 		res := tx.Exec(fmt.Sprintf("USE `%s`", s.dbName))
-		if errs := res.GetErrors(); len(errs) > 0 {
+		if res.Error != nil {
 			tx.Rollback()
 			s.myRecord = records[0]
-			for _, err := range errs {
-				s.checkError(err)
-			}
+			s.checkError(res.Error)
 			return 2
 		}
 	}
@@ -1188,14 +1189,12 @@ func (s *session) executeTransaction(records []*Record) int {
 
 			if s.needTransactionMark() {
 				res := s.markTransactionStart(tx, txMarkData)
-				if errs := res.GetErrors(); len(errs) > 0 {
+				if res.Error != nil {
 					tx.Rollback()
-					log.Errorf("con:%d %v", s.sessionVars.ConnectionID, errs)
+					log.Errorf("con:%d %v", s.sessionVars.ConnectionID, res.Error)
 					record.StageStatus = StatusExecFail
 					record.ExecComplete = false
-					for _, err := range errs {
-						s.checkError(err)
-					}
+					s.checkError(res.Error)
 					return 2
 				}
 			}
@@ -1209,13 +1208,13 @@ func (s *session) executeTransaction(records []*Record) int {
 		record.ExecTime = fmt.Sprintf("%.3f", time.Since(start).Seconds())
 		record.ExecTimestamp = time.Now().Unix()
 
-		errs := res.GetErrors()
+		errs := res.Error
 
-		if len(errs) == 0 && s.opt.Backup && s.needTransactionMark() && i == len(records)-1 {
-			errs = s.markTransactionEnd(tx, txMarkData).GetErrors()
+		if errs == nil && s.opt.Backup && s.needTransactionMark() && i == len(records)-1 {
+			errs = s.markTransactionEnd(tx, txMarkData).Error
 		}
 
-		if len(errs) > 0 {
+		if errs != nil {
 			tx.Rollback()
 			log.Errorf("con:%d %v", s.sessionVars.ConnectionID, errs)
 
@@ -1224,9 +1223,7 @@ func (s *session) executeTransaction(records []*Record) int {
 				s.myRecord = r
 				r.StageStatus = StatusExecFail
 				r.ExecComplete = false
-				for _, err := range errs {
-					s.checkError(err)
-				}
+				s.checkError(errs)
 				if j >= i {
 					break
 				}
@@ -10368,7 +10365,13 @@ func (s *session) InitDisableTypes() {
 }
 
 func (s *session) checkBackupdb() {
-	if err := s.backupdb.DB().Ping(); err != nil {
+	sqlDb, err := s.backupdb.DB()
+	if err != nil {
+		log.Errorf("con:%d failed to get database connection: %v", s.sessionVars.ConnectionID, err)
+		s.appendErrorMsg(err.Error())
+		return
+	}
+	if err := sqlDb.Ping(); err != nil {
 		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
 		var addr string
 		if s.inc.BackupDbType == "mysql" {
@@ -10383,14 +10386,22 @@ func (s *session) checkBackupdb() {
 				s.inc.BackupUser, s.inc.BackupPassword, s.inc.BackupHost, s.inc.BackupPort, s.inc.BackupDb)
 		}
 
-		db, err := gorm.Open(s.inc.BackupDbType, addr)
-		if err != nil {
-			log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
-			s.appendErrorMsg(err.Error())
-			return
+		if s.inc.BackupDbType == "mysql" {
+			backupdb, err := gorm.Open(mysqlDialector.Open(addr), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+			if err != nil {
+				fmt.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+				s.appendErrorMsg(err.Error())
+				return
+			}
+			s.backupdb = backupdb
+		} else if s.inc.BackupDbType == "postgresql" {
+			backupdb, err := gorm.Open(postgresDialector.Open(addr), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+			if err != nil {
+				fmt.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+				s.appendErrorMsg(err.Error())
+				return
+			}
+			s.backupdb = backupdb
 		}
-		// 禁用日志记录器，不显示任何日志
-		db.LogMode(false)
-		s.backupdb = db
 	}
 }

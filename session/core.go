@@ -24,6 +24,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pingcap/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/zmix999/goInception-plus/config"
 	"github.com/zmix999/goInception-plus/parser"
 	"github.com/zmix999/goInception-plus/parser/ast"
@@ -32,10 +34,11 @@ import (
 	"github.com/zmix999/goInception-plus/util"
 	"github.com/zmix999/goInception-plus/util/sqlexec"
 	"github.com/zmix999/goInception-plus/util/timeutil"
-	"github.com/jinzhu/gorm"
-	"github.com/pingcap/errors"
-	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
+	mysqlDialector "gorm.io/driver/mysql"
+	postgresDialector "gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func (s *session) makeNewResult() ([]Record, error) {
@@ -139,13 +142,19 @@ func (s *session) init() {
 // clear 清理变量或map等信息
 func (s *session) clear() {
 	if s.db != nil {
-		defer s.db.Close()
+		if sqlDB, err := s.db.DB(); err == nil {
+			defer sqlDB.Close()
+		}
 	}
 	if s.ddlDB != nil {
-		defer s.ddlDB.Close()
+		if sqlDB, err := s.ddlDB.DB(); err == nil {
+			defer sqlDB.Close()
+		}
 	}
 	if s.backupdb != nil {
-		defer s.backupdb.Close()
+		if sqlDB, err := s.backupdb.DB(); err == nil {
+			defer sqlDB.Close()
+		}
 	}
 
 	s.dbName = ""
@@ -481,14 +490,11 @@ func (s *session) checkOptions() error {
 			addr, s.inc.SqlMode)
 	}
 
-	db, err := gorm.Open("mysql", fmt.Sprintf("%s&autocommit=1", addr))
+	db, err := gorm.Open(mysqlDialector.Open(fmt.Sprintf("%s&autocommit=1", addr)), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 
 	if err != nil {
 		return fmt.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
 	}
-
-	// 禁用日志记录器，不显示任何日志
-	db.LogMode(false)
 
 	s.db = db
 
@@ -540,8 +546,7 @@ func (s *session) checkOptions() error {
 	}
 
 	if s.opt.tranBatch > 1 {
-		s.ddlDB, _ = gorm.Open("mysql", fmt.Sprintf("%s&autocommit=1", addr))
-		s.ddlDB.LogMode(false)
+		s.ddlDB, _ = gorm.Open(mysqlDialector.Open(fmt.Sprintf("%s&autocommit=1", addr)), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	}
 	return nil
 }
@@ -560,14 +565,24 @@ func (s *session) inintbackupdb() {
 			s.inc.BackupUser, s.inc.BackupPassword, s.inc.BackupHost, s.inc.BackupPort, s.inc.BackupDb)
 	}
 
-	backupdb, err := gorm.Open(s.inc.BackupDbType, addr)
-
-	if err != nil {
-		fmt.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+	if s.inc.BackupDbType == "mysql" {
+		backupdb, err := gorm.Open(mysqlDialector.Open(addr), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+		if err != nil {
+			fmt.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+			s.appendErrorMsg(err.Error())
+			return
+		}
+		s.backupdb = backupdb
+	} else if s.inc.BackupDbType == "postgresql" {
+		backupdb, err := gorm.Open(postgresDialector.Open(addr), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+		if err != nil {
+			fmt.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+			s.appendErrorMsg(err.Error())
+			return
+		}
+		s.backupdb = backupdb
 	}
 
-	backupdb.LogMode(false)
-	s.backupdb = backupdb
 }
 
 func printMemStats() {

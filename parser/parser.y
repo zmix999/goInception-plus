@@ -317,6 +317,7 @@ import (
 	autoRandomBase         "AUTO_RANDOM_BASE"
 	avg                    "AVG"
 	avgRowLength           "AVG_ROW_LENGTH"
+	before                 "BEFORE"
 	backend                "BACKEND"
 	backup                 "BACKUP"
 	backups                "BACKUPS"
@@ -1129,7 +1130,7 @@ import (
 	PasswordOrLockOption                   "Single password or lock option for create user statement"
 	PasswordOrLockOptionList               "Password or lock options for create user statement"
 	PasswordOrLockOptions                  "Optional password or lock options for create user statement"
-	ColumnPosition                         "Column position [First|After ColumnName]"
+	ColumnPosition                         "Column position [First|After|Before ColumnName]"
 	PrepareSQL                             "Prepare statement sql string"
 	Priority                               "Statement priority"
 	PriorityOpt                            "Statement priority option"
@@ -2497,6 +2498,13 @@ ColumnPosition:
 	{
 		$$ = &ast.ColumnPosition{
 			Tp:             ast.ColumnPositionAfter,
+			RelativeColumn: $2.(*ast.ColumnName),
+		}
+	}
+|	"BEFORE" ColumnName
+	{
+		$$ = &ast.ColumnPosition{
+			Tp:             ast.ColumnPositionBefore,
 			RelativeColumn: $2.(*ast.ColumnName),
 		}
 	}
@@ -6106,6 +6114,7 @@ UnReservedKeyword:
 |	"AFTER"
 |	"ALWAYS"
 |	"AVG"
+|	"BEFORE"
 |	"BEGIN"
 |	"BIT"
 |	"BOOL"

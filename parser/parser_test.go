@@ -19,6 +19,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/pingcap/errors"
+	"github.com/stretchr/testify/require"
 	"github.com/zmix999/goInception-plus/parser"
 	"github.com/zmix999/goInception-plus/parser/ast"
 	"github.com/zmix999/goInception-plus/parser/charset"
@@ -28,8 +30,6 @@ import (
 	"github.com/zmix999/goInception-plus/parser/opcode"
 	"github.com/zmix999/goInception-plus/parser/terror"
 	"github.com/zmix999/goInception-plus/parser/test_driver"
-	"github.com/pingcap/errors"
-	"github.com/stretchr/testify/require"
 )
 
 func TestSimple(t *testing.T) {
@@ -2682,6 +2682,7 @@ func TestDDL(t *testing.T) {
 		{"ALTER TABLE t ADD COLUMN a SMALLINT UNSIGNED FIRST", true, "ALTER TABLE `t` ADD COLUMN `a` SMALLINT UNSIGNED FIRST"},
 		{"ALTER TABLE t ADD COLUMN a SMALLINT UNSIGNED AFTER b", true, "ALTER TABLE `t` ADD COLUMN `a` SMALLINT UNSIGNED AFTER `b`"},
 		{"ALTER TABLE t ADD COLUMN IF NOT EXISTS a SMALLINT UNSIGNED AFTER b", true, "ALTER TABLE `t` ADD COLUMN IF NOT EXISTS `a` SMALLINT UNSIGNED AFTER `b`"},
+		{"ALTER TABLE t ADD COLUMN a SMALLINT UNSIGNED BEFORE b", true, "ALTER TABLE `t` ADD COLUMN `a` SMALLINT UNSIGNED BEFORE `b`"},
 		{"ALTER TABLE employees ADD PARTITION", true, "ALTER TABLE `employees` ADD PARTITION"},
 		{"ALTER TABLE employees ADD PARTITION ( PARTITION P1 VALUES LESS THAN (2010))", true, "ALTER TABLE `employees` ADD PARTITION (PARTITION `P1` VALUES LESS THAN (2010))"},
 		{"ALTER TABLE employees ADD PARTITION ( PARTITION P2 VALUES LESS THAN MAXVALUE)", true, "ALTER TABLE `employees` ADD PARTITION (PARTITION `P2` VALUES LESS THAN (MAXVALUE))"},

@@ -196,6 +196,7 @@ var tokenMapPub = map[string]int{
 	"STATS_COL_CHOICE":         statsColChoice,
 	"STATS_COL_LIST":           statsColList,
 	"AVG":                      avg,
+	"BEFORE":                   before,
 	"BACKEND":                  backend,
 	"BACKUP":                   backup,
 	"BACKUPS":                  backups,

@@ -14,6 +14,7 @@
 package ast
 
 import (
+	"github.com/pingcap/errors"
 	"github.com/zmix999/goInception-plus/parser/auth"
 	"github.com/zmix999/goInception-plus/parser/format"
 	"github.com/zmix999/goInception-plus/parser/model"
@@ -21,7 +22,6 @@ import (
 	"github.com/zmix999/goInception-plus/parser/terror"
 	"github.com/zmix999/goInception-plus/parser/tidb"
 	"github.com/zmix999/goInception-plus/parser/types"
-	"github.com/pingcap/errors"
 )
 
 var (
@@ -2454,6 +2454,7 @@ const (
 	ColumnPositionNone ColumnPositionType = iota
 	ColumnPositionFirst
 	ColumnPositionAfter
+	ColumnPositionBefore
 )
 
 // ColumnPosition represent the position of the newly added column
@@ -2474,6 +2475,11 @@ func (n *ColumnPosition) Restore(ctx *format.RestoreCtx) error {
 		ctx.WriteKeyWord("FIRST")
 	case ColumnPositionAfter:
 		ctx.WriteKeyWord("AFTER ")
+		if err := n.RelativeColumn.Restore(ctx); err != nil {
+			return errors.Annotate(err, "An error occurred while restore ColumnPosition.RelativeColumn")
+		}
+	case ColumnPositionBefore:
+		ctx.WriteKeyWord("BEFORE ")
 		if err := n.RelativeColumn.Restore(ctx); err != nil {
 			return errors.Annotate(err, "An error occurred while restore ColumnPosition.RelativeColumn")
 		}

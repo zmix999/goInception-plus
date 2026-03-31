@@ -194,3 +194,5 @@ replace github.com/dgrijalva/jwt-go => github.com/form3tech-oss/jwt-go v3.2.6-0.
 replace gopkg.in/gcfg.v1 => github.com/hanchuanchuan/gcfg.v1 v0.0.0-20190302111942-77c0f3dcc0b3
 
 replace github.com/etcd-io/gofail => go.etcd.io/gofail v0.0.0-20180808172546-51ce9a71510a
+
+replace github.com/zmix999/goInception-plus/parser => ./parser

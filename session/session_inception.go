@@ -3171,9 +3171,22 @@ func (s *session) mysqlGetTableSize(t *TableInfo) {
 		return
 	}
 
-	sql := fmt.Sprintf(`select (DATA_LENGTH + INDEX_LENGTH)/1024/1024 as v
+	var sql string
+	if s.dbType == DBTypeOceanBase {
+		sql = fmt.Sprintf(`SELECT /*+ READ_CONSISTENCY(WEAK) */
+			round(sum(t2.data_size/1024/1024), 2) v
+			FROM oceanbase.DBA_OB_TABLE_LOCATIONS t1,
+			oceanbase.DBA_OB_TABLET_REPLICAS t2
+			WHERE t1.svr_ip = t2.svr_ip
+			AND t1.ls_id = t2.ls_id
+			AND t1.tablet_id = t2.tablet_id
+			AND t1.database_name = '%s'
+			AND t1.table_name = '%s'`, t.Schema, t.Name)
+	} else {
+		sql = fmt.Sprintf(`select (DATA_LENGTH + INDEX_LENGTH)/1024/1024 as v
 		from information_schema.tables
 		where table_schema='%s' and table_name='%s';`, t.Schema, t.Name)
+	}
 
 	var res float64
 
@@ -3791,7 +3804,7 @@ func (s *session) checkTableOptions(t *TableInfo, options []*ast.TableOption, ta
 				s.appendErrorNo(ER_CANT_SET_ENGINE, table)
 			}
 		case ast.TableOptionCharset:
-			if s.inc.EnableSetCharset && s.dbType != DBTypeOceanBase {
+			if s.inc.EnableSetCharset {
 				s.checkAlterCharset(t, opt.StrValue, opt.UintValue)
 			} else {
 				s.appendErrorNo(ER_TABLE_CHARSET_MUST_NULL, table)
@@ -4163,6 +4176,7 @@ func (s *session) checkAlterTable(node *ast.AlterTableStmt, sql string, mergeOnl
 		// 设置osc开关
 		s.checkAlterUseOsc(table)
 		s.checkDDLInstant(node, table)
+		s.checkDDLOffline(node, table)
 	} else {
 		s.PostgreSQLShowTableStatus(table)
 		s.PostgreSQLGetTableSize(table)
@@ -4567,6 +4581,89 @@ func checkDDLInstantMySQL80(node *ast.AlterTableStmt, t *TableInfo, dbVersion in
 		canInstant = true
 	}
 	return canInstant
+}
+
+// checkDDLOffline 检查Oceanbase是否为Offline DDL, 当支持时自动关闭pt-osc.
+func (s *session) checkDDLOffline(node *ast.AlterTableStmt, t *TableInfo) {
+	if !s.myRecord.useOsc || s.dbType != DBTypeOceanBase {
+		return
+	}
+	if s.checkDDLOfflineOperation(node, t) {
+		s.myRecord.useOsc = true
+	}
+}
+
+func (s *session) checkDDLOfflineOperation(node *ast.AlterTableStmt, t *TableInfo) bool {
+	log.Debug("checkDDLOfflineOperation")
+
+	OnlineSpecs := 0
+	OfflineSpecs := 0
+	var foundField FieldInfo
+
+	for _, alter := range node.Specs {
+		switch alter.Tp {
+		case ast.AlterTableModifyColumn:
+			for _, nc := range alter.NewColumns {
+				for _, field := range t.Fields {
+					if strings.EqualFold(field.Field, nc.Name.Name.O) {
+						foundField = field
+						break
+					}
+				}
+				if nc.Tp.CompactStr() != foundField.Type {
+					OfflineSpecs++
+				}
+				for _, op := range nc.Options {
+					switch op.Tp {
+					case ast.ColumnOptionAutoIncrement:
+						OfflineSpecs++
+					default:
+						OnlineSpecs++
+					}
+				}
+			}
+			if alter.Position.Tp != ast.ColumnPositionNone {
+				OfflineSpecs++
+			}
+		case ast.AlterTableAddColumns:
+			for _, nc := range alter.NewColumns {
+				for _, op := range nc.Options {
+					switch op.Tp {
+					case ast.ColumnOptionAutoIncrement:
+						OfflineSpecs++
+					case ast.ColumnOptionGenerated:
+						OfflineSpecs++
+					default:
+						OnlineSpecs++
+					}
+				}
+			}
+			if alter.Position.Tp != ast.ColumnPositionNone && s.dbVersion < 42500 {
+				OfflineSpecs++
+			} else {
+				OnlineSpecs++
+			}
+		case ast.AlterTableDropColumn:
+			OfflineSpecs++
+		case ast.AlterTablePartition:
+			OfflineSpecs++
+		case ast.AlterTableOption:
+			for _, op := range alter.Options {
+				switch op.Tp {
+				case ast.TableOptionCharset:
+					if op.UintValue == 1 {
+						OfflineSpecs++
+					}
+				default:
+					OnlineSpecs++
+				}
+			}
+		}
+	}
+	if OfflineSpecs > 0 && OnlineSpecs >= 0 {
+		return true
+	}
+	return false
 }
 
 // checkDDLInstant 检查是否支持 ALGORITHM=INSTANT, 当支持时自动关闭pt-osc/gh-ost.

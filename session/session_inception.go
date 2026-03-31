@@ -2159,6 +2159,21 @@ func (s *session) setLockWaitTimeout() {
 	}
 }
 
+func (s *session) setOptimizerSwitch() {
+	log.Debug("setOptimizerSwitch")
+
+	sql := "set session optimizer_switch='hypergraph_optimizer=off';"
+
+	if _, err := s.execSQL(sql, true); err != nil {
+		log.Errorf("con:%d %v", s.sessionVars.ConnectionID, err)
+		if myErr, ok := err.(*mysqlDriver.MySQLError); ok {
+			s.appendErrorMsg(myErr.Message)
+		} else {
+			s.appendErrorMsg(err.Error())
+		}
+	}
+}
+
 func (s *session) checkBinlogIsOn() bool {
 	log.Debug("checkBinlogIsOn")
 
@@ -8609,6 +8624,9 @@ func (s *session) explainOrAnalyzeSql(sql string) {
 	explain = append(explain, "EXPLAIN ")
 	if s.dbType == DBTypeOceanBase {
 		explain = append(explain, "FORMAT=JSON ")
+	}
+	if s.dbType == DBTypeMysql && s.dbVersion >= 90000 {
+		explain = append(explain, "FORMAT=TRADITIONAL ")
 	}
 	explain = append(explain, sql)
 

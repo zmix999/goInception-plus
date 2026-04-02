@@ -16,11 +16,11 @@ package ast
 import (
 	"strings"
 
+	"github.com/pingcap/errors"
 	"github.com/zmix999/goInception-plus/parser/auth"
 	"github.com/zmix999/goInception-plus/parser/format"
 	"github.com/zmix999/goInception-plus/parser/model"
 	"github.com/zmix999/goInception-plus/parser/mysql"
-	"github.com/pingcap/errors"
 )
 
 var (
@@ -1104,8 +1104,9 @@ type SelectStmt struct {
 	// Kind refer to three kind of statement: SelectStmt, TableStmt and ValuesStmt
 	Kind SelectStmtKind
 	// Lists is filled only when Kind == SelectStmtKindValues
-	Lists []*RowExpr
-	With  *WithClause
+	Lists     []*RowExpr
+	With      *WithClause
+	IntoLists []ExprNode
 }
 
 func (*SelectStmt) resultSet() {}
@@ -1371,10 +1372,14 @@ func (n *SelectStmt) Restore(ctx *format.RestoreCtx) error {
 		}
 	}
 
-	if n.SelectIntoOpt != nil {
-		ctx.WritePlain(" ")
-		if err := n.SelectIntoOpt.Restore(ctx); err != nil {
-			return errors.Annotate(err, "An error occurred while restore SelectStmt.SelectIntoOpt")
+	if n.IntoLists != nil {
+		for i, v := range n.IntoLists {
+			if i != 0 {
+				ctx.WritePlain(", ")
+			}
+			if err := v.Restore(ctx); err != nil {
+				return errors.Annotatef(err, "An error occurred while restore SelectStmt.IntoLists[%d]", i)
+			}
 		}
 	}
 	return nil
@@ -1501,6 +1506,14 @@ func (n *SelectStmt) Accept(v Visitor) (Node, bool) {
 			}
 			n.LockInfo.Tables[i] = node.(*TableName)
 		}
+	}
+
+	for i, val := range n.IntoLists {
+		node, ok := val.Accept(v)
+		if !ok {
+			return n, false
+		}
+		n.IntoLists[i] = node.(ExprNode)
 	}
 
 	return v.Leave(n)
@@ -2668,6 +2681,9 @@ const (
 	ShowPlacementForTable
 	ShowPlacementForPartition
 	ShowPlacementLabels
+	ShowCreateProcedure
+	ShowCreateFunction
+	ShowCreateTrigger
 )
 
 const (
@@ -3019,6 +3035,21 @@ func (n *ShowStmt) Restore(ctx *format.RestoreCtx) error {
 			ctx.WriteKeyWord("PLACEMENT")
 		case ShowPlacementLabels:
 			ctx.WriteKeyWord("PLACEMENT LABELS")
+		case ShowCreateProcedure:
+			ctx.WriteKeyWord("CREATE PROCEDURE ")
+			if err := n.Table.Restore(ctx); err != nil {
+				return errors.Annotate(err, "An error occurred while restore ShowStmt.Procedure")
+			}
+		case ShowCreateFunction:
+			ctx.WriteKeyWord("CREATE FUNCTION ")
+			if err := n.Table.Restore(ctx); err != nil {
+				return errors.Annotate(err, "An error occurred while restore ShowStmt.Procedure")
+			}
+		case ShowCreateTrigger:
+			ctx.WriteKeyWord("CREATE TRIGGER ")
+			if err := n.Table.Restore(ctx); err != nil {
+				return errors.Annotate(err, "An error occurred while restore ShowStmt.Procedure")
+			}
 		default:
 			return errors.New("Unknown ShowStmt type")
 		}

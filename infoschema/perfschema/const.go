@@ -14,7 +14,7 @@
 
 package perfschema
 
-// perfSchemaTables is a shortcut to involve all table names.
+// perfSchemaTables is a shortcut to involv all table names.
 var perfSchemaTables = []string{
 	tableGlobalStatus,
 	tableSessionStatus,
@@ -283,7 +283,6 @@ const tableTransCurrent = "CREATE TABLE if not exists performance_schema." + tab
 	"NESTING_EVENT_TYPE		ENUM('TRANSACTION','STATEMENT','STAGE'));"
 
 // tableTransHistory contains the column name definitions for table events_transactions_history, same as MySQL.
-//
 const tableTransHistory = "CREATE TABLE if not exists performance_schema." + tableNameEventsTransactionsHistory + " (" +
 	"THREAD_ID		BIGINT(20) UNSIGNED NOT NULL," +
 	"EVENT_ID		BIGINT(20) UNSIGNED NOT NULL," +

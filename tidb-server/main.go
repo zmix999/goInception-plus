@@ -64,7 +64,6 @@ import (
 	"github.com/zmix999/goInception-plus/util/logutil"
 	"github.com/zmix999/goInception-plus/util/memory"
 	"github.com/zmix999/goInception-plus/util/printer"
-	"github.com/zmix999/goInception-plus/util/profile"
 	"github.com/zmix999/goInception-plus/util/sem"
 	"github.com/zmix999/goInception-plus/util/signal"
 	"github.com/zmix999/goInception-plus/util/sys/linux"
@@ -260,12 +259,6 @@ func setCPUAffinity() {
 	}
 	runtime.GOMAXPROCS(len(cpu))
 	metrics.MaxProcs.Set(float64(runtime.GOMAXPROCS(0)))
-}
-
-func setHeapProfileTracker() {
-	c := config.GetGlobalConfig()
-	d := parseDuration(c.Performance.MemProfileInterval)
-	go profile.HeapProfileForGlobalMemTracker(d)
 }
 
 func registerStores() {

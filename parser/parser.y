@@ -253,7 +253,6 @@ import (
 	rename            "RENAME"
 	returnKwd         "RETURN"
 	returns           "RETURNS"
-	returnedSqlstate  "RETURNED_SQLSTATE"
 	repeat            "REPEAT"
 	replace           "REPLACE"
 	require           "REQUIRE"
@@ -598,6 +597,7 @@ import (
 	rowCount               "ROW_COUNT"
 	rowFormat              "ROW_FORMAT"
 	rtree                  "RTREE"
+	returnedSqlstate  	   "RETURNED_SQLSTATE"
 	san                    "SAN"
 	second                 "SECOND"
 	secondaryEngine        "SECONDARY_ENGINE"
@@ -6568,6 +6568,7 @@ UnReservedKeyword:
 |	"MYSQL_ERRNO"
 |	"SCHEMA_NAME"
 |	"FOUND"
+|	"RETURNED_SQLSTATE"
 
 TiDBKeyword:
 	"ADMIN"

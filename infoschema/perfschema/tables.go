@@ -15,26 +15,16 @@
 package perfschema
 
 import (
-	"fmt"
-	"net/http"
-	"sort"
 	"strings"
-	"sync"
-	"time"
 
-	"github.com/pingcap/errors"
-	"github.com/pingcap/failpoint"
 	"github.com/zmix999/goInception-plus/infoschema"
 	"github.com/zmix999/goInception-plus/kv"
 	"github.com/zmix999/goInception-plus/meta/autoid"
 	"github.com/zmix999/goInception-plus/parser/model"
-	"github.com/zmix999/goInception-plus/parser/terror"
 	"github.com/zmix999/goInception-plus/sessionctx"
 	"github.com/zmix999/goInception-plus/table"
 	"github.com/zmix999/goInception-plus/table/tables"
 	"github.com/zmix999/goInception-plus/types"
-	"github.com/zmix999/goInception-plus/util"
-	"github.com/zmix999/goInception-plus/util/profile"
 )
 
 const (
@@ -220,33 +210,18 @@ func initTableIndices(t *perfSchemaTable) error {
 func (vt *perfSchemaTable) getRows(ctx sessionctx.Context, cols []*table.Column) (fullRows [][]types.Datum, err error) {
 	switch vt.meta.Name.O {
 	case tableNameTiDBProfileCPU:
-		fullRows, err = (&profile.Collector{}).ProfileGraph("cpu")
 	case tableNameTiDBProfileMemory:
-		fullRows, err = (&profile.Collector{}).ProfileGraph("heap")
 	case tableNameTiDBProfileMutex:
-		fullRows, err = (&profile.Collector{}).ProfileGraph("mutex")
 	case tableNameTiDBProfileAllocs:
-		fullRows, err = (&profile.Collector{}).ProfileGraph("allocs")
 	case tableNameTiDBProfileBlock:
-		fullRows, err = (&profile.Collector{}).ProfileGraph("block")
 	case tableNameTiDBProfileGoroutines:
-		fullRows, err = (&profile.Collector{}).ProfileGraph("goroutine")
 	case tableNameTiKVProfileCPU:
-		interval := fmt.Sprintf("%d", profile.CPUProfileInterval/time.Second)
-		fullRows, err = dataForRemoteProfile(ctx, "tikv", "/debug/pprof/profile?seconds="+interval, false)
 	case tableNamePDProfileCPU:
-		interval := fmt.Sprintf("%d", profile.CPUProfileInterval/time.Second)
-		fullRows, err = dataForRemoteProfile(ctx, "pd", "/pd/api/v1/debug/pprof/profile?seconds="+interval, false)
 	case tableNamePDProfileMemory:
-		fullRows, err = dataForRemoteProfile(ctx, "pd", "/pd/api/v1/debug/pprof/heap", false)
 	case tableNamePDProfileMutex:
-		fullRows, err = dataForRemoteProfile(ctx, "pd", "/pd/api/v1/debug/pprof/mutex", false)
 	case tableNamePDProfileAllocs:
-		fullRows, err = dataForRemoteProfile(ctx, "pd", "/pd/api/v1/debug/pprof/allocs", false)
 	case tableNamePDProfileBlock:
-		fullRows, err = dataForRemoteProfile(ctx, "pd", "/pd/api/v1/debug/pprof/block", false)
 	case tableNamePDProfileGoroutines:
-		fullRows, err = dataForRemoteProfile(ctx, "pd", "/pd/api/v1/debug/pprof/goroutine?debug=2", true)
 	}
 	if err != nil {
 		return
@@ -282,122 +257,4 @@ func (vt *perfSchemaTable) IterRecords(ctx sessionctx.Context, cols []*table.Col
 		}
 	}
 	return nil
-}
-
-func dataForRemoteProfile(ctx sessionctx.Context, nodeType, uri string, isGoroutine bool) ([][]types.Datum, error) {
-	var (
-		servers []infoschema.ServerInfo
-		err     error
-	)
-	switch nodeType {
-	case "tikv":
-		servers, err = infoschema.GetStoreServerInfo(ctx)
-	case "pd":
-		servers, err = infoschema.GetPDServerInfo(ctx)
-	default:
-		return nil, errors.Errorf("%s does not support profile remote component", nodeType)
-	}
-	failpoint.Inject("mockRemoteNodeStatusAddress", func(val failpoint.Value) {
-		// The cluster topology is injected by `failpoint` expression and
-		// there is no extra checks for it. (let the test fail if the expression invalid)
-		if s := val.(string); len(s) > 0 {
-			servers = servers[:0]
-			for _, server := range strings.Split(s, ";") {
-				parts := strings.Split(server, ",")
-				if parts[0] != nodeType {
-					continue
-				}
-				servers = append(servers, infoschema.ServerInfo{
-					ServerType: parts[0],
-					Address:    parts[1],
-					StatusAddr: parts[2],
-				})
-			}
-			// erase error
-			err = nil
-		}
-	})
-	if err != nil {
-		return nil, errors.Trace(err)
-	}
-
-	type result struct {
-		addr string
-		rows [][]types.Datum
-		err  error
-	}
-
-	wg := sync.WaitGroup{}
-	ch := make(chan result, len(servers))
-	for _, server := range servers {
-		statusAddr := server.StatusAddr
-		if len(statusAddr) == 0 {
-			ctx.GetSessionVars().StmtCtx.AppendWarning(errors.Errorf("TiKV node %s does not contain status address", server.Address))
-			continue
-		}
-
-		wg.Add(1)
-		go func(address string) {
-			util.WithRecovery(func() {
-				defer wg.Done()
-				url := fmt.Sprintf("%s://%s%s", util.InternalHTTPSchema(), statusAddr, uri)
-				req, err := http.NewRequest(http.MethodGet, url, nil)
-				if err != nil {
-					ch <- result{err: errors.Trace(err)}
-					return
-				}
-				// Forbidden PD follower proxy
-				req.Header.Add("PD-Allow-follower-handle", "true")
-				// TiKV output svg format in default
-				req.Header.Add("Content-Type", "application/protobuf")
-				resp, err := util.InternalHTTPClient().Do(req)
-				if err != nil {
-					ch <- result{err: errors.Trace(err)}
-					return
-				}
-				defer func() {
-					terror.Log(resp.Body.Close())
-				}()
-				if resp.StatusCode != http.StatusOK {
-					ch <- result{err: errors.Errorf("request %s failed: %s", url, resp.Status)}
-					return
-				}
-				collector := profile.Collector{}
-				var rows [][]types.Datum
-				if isGoroutine {
-					rows, err = collector.ParseGoroutines(resp.Body)
-				} else {
-					rows, err = collector.ProfileReaderToDatums(resp.Body)
-				}
-				if err != nil {
-					ch <- result{err: errors.Trace(err)}
-					return
-				}
-				ch <- result{addr: address, rows: rows}
-			}, nil)
-		}(statusAddr)
-	}
-
-	wg.Wait()
-	close(ch)
-
-	// Keep the original order to make the result more stable
-	var results []result
-	for result := range ch {
-		if result.err != nil {
-			ctx.GetSessionVars().StmtCtx.AppendWarning(result.err)
-			continue
-		}
-		results = append(results, result)
-	}
-	sort.Slice(results, func(i, j int) bool { return results[i].addr < results[j].addr })
-	var finalRows [][]types.Datum
-	for _, result := range results {
-		addr := types.NewStringDatum(result.addr)
-		for _, row := range result.rows {
-			// Insert the node address in front of rows
-			finalRows = append(finalRows, append([]types.Datum{addr}, row...))
-		}
-	}
-	return finalRows, nil
 }
